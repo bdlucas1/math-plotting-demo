@@ -5,7 +5,7 @@ import itertools
 import webbrowser
 import inspect
 
-# pip install numpy dash plotly webview
+# pip install numpy dash plotly pywebview
 import webview
 import numpy as np
 import dash
