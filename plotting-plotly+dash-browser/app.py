@@ -45,6 +45,8 @@ class Browser():
             # real windows will be provided later
             webview.create_window("hidden", hidden=True)
             webview.start()
+        elif args.browser == "webbrowser":
+            time.sleep(1e6)
 
     #atexit.register(start)
 
@@ -233,7 +235,7 @@ class ShellFrontEnd(DashFrontEnd):
 
         # initial layout is empty save for a Location component
         # which causes the desired plot to be displayed as detailed below
-        self.app.layout =  dash.html.Div([dash.dcc.Location(id="url")], id="page-content")
+        self.app.layout = dash.html.Div([dash.dcc.Location(id="url")], id="page-content", className="shell-front-end")
 
         # to display plot x browser is instructed to fetch url with path /plotx 
         # when browser fetches /plotx, it is served the initial (empty) layout defined above
@@ -267,11 +269,19 @@ class BrowserFrontEnd(DashFrontEnd):
         out_id = f"out-{n}"
 
         layout = dash.html.Div([
-            dash.html.Label(f"in {n}"),
-            dash.dcc.Input(id=in_id, type="text", value="", debounce=True, spellCheck=False),
-            dash.html.Label(f"out {n}"),
-            dash.html.Div(id=out_id)
-        ])
+            dash.html.Div([
+                dash.html.Div([
+                    dash.html.Label(f"in {n}"),
+                    dash.dcc.Input(
+                        id=in_id, type="text", value="", placeholder="Enter expression",
+                        debounce=True, spellCheck=False),
+                ], className="cell input"),
+                dash.html.Div([
+                    dash.html.Label(f"out {n}"),
+                    dash.html.Div(id=out_id)
+                ], className="cell output")
+            ], className="pair")
+        ], className="browser-front-end")
 
         @self.app.callback(
             dash.Output(out_id, "children"),
