@@ -20,7 +20,10 @@ parser.add_argument("--fe", choices=["shell", "browser"], default="shell")
 parser.add_argument("--browser", choices=["webview", "webbrowser"], default="webview")
 args = parser.parse_args()
 
-class Shower():
+# load a url into a browser, using either:
+# webview - pop up new standalone window using pywebview
+# webbrowser - instruct system browser to open a new window
+class Browser():
 
     def __init__(self):
         self.n = 0
@@ -46,6 +49,11 @@ class Shower():
     #atexit.register(start)
 
 
+#
+# provides functions that return Dash layouts for corresponding to various Mathematica graphical functions
+# like plot3d, manipulate, ...
+#
+
 # slider spec to be passed to manipulate
 S = collections.namedtuple("S", ["name", "lo", "init", "hi", "step"])
 
@@ -57,6 +65,7 @@ class Graphics:
     def __init__(self):
         self.n = 0
 
+    # we need a pointer to the app in order to register callbacks for things like sliders
     def set_app(self, app):
         self.app = app
 
@@ -149,6 +158,15 @@ class Graphics:
         return self.layout(plot, sliders)
         
 
+#
+# standin for mathics interpreter
+# takes string expressions, returns layouts
+# called by front end to handle user input and get an output layout to display
+# 
+# to simplify the demo, instead of accepting actual math expressions,
+# we just accept a fixed set of strings "a", "b", ... and call Graphics
+# to get a layout to return to the front end
+#
 class Interpreter:
 
     def compute(self, input):
@@ -158,7 +176,7 @@ class Interpreter:
             r = x**2 + y**2
             return np.sin(r * freq) / (np.sqrt(r) + 1) * amp
 
-        if input == "1":
+        if input == "a":
 
             # plot the function at fixed values of freq and amp
             return graphics.plot3d(
@@ -168,7 +186,7 @@ class Interpreter:
                 top_level=True
             )
 
-        elif input == "2":
+        elif input == "b":
             
             # plot the function with sliders to adjust freq and amp
             return graphics.manipulate(
@@ -183,28 +201,39 @@ class Interpreter:
             )
 
 
-# this is a standin for the read-eval-print loop of the shell
-# except here we just call some plotting functions
-# if you squint you'll see that these look like the corresponding Mathematica functions,
-# the main difference being instead of passing in code we pass in a callback that executes the code
-# set up plotting, then call shell_loop
-
-class ShellFrontEnd:
+# common to ShellFrontEnd and BrowserFrontEnd
+class DashFrontEnd:
 
     def __init__(self):
 
-        # map from plot names to plot layouts, one per plot
-        self.plots = {}
-
-        # create dash app and specify initial layout, which is empty
-        # save for a Location component which causes the desired plot to be displayed
-        # as detailed below
+        # create app, set options
         self.app = dash.Dash(__name__)
-        self.app.layout = dash.html.Div([dash.dcc.Location(id="url")], id="page-content")
         self.app.enable_dev_tools(debug = args.debug, dev_tools_silence_routes_logging = not args.debug)
 
         # this allows graphics to register callbacks for things like sliders
         graphics.set_app(self.app)
+
+        # start server on its own thread, allowing something else to run on main thread
+        # make_server picks a free port because we passed 0 as port number
+        self.server = werkzeug.serving.make_server("127.0.0.1", 0, self.app.server)
+        threading.Thread(target = self.server.serve_forever).start()
+        print("using port", self.server.server_port)
+
+
+# read expressions from terminal, display results in a browser winddow
+class ShellFrontEnd(DashFrontEnd):
+
+    def __init__(self):
+
+        # initialize app and start server
+        super().__init__()
+
+        # map from plot names to plot layouts, one per plot
+        self.plots = {}
+
+        # initial layout is empty save for a Location component
+        # which causes the desired plot to be displayed as detailed below
+        self.app.layout =  dash.html.Div([dash.dcc.Location(id="url")], id="page-content")
 
         # to display plot x browser is instructed to fetch url with path /plotx 
         # when browser fetches /plotx, it is served the initial (empty) layout defined above
@@ -219,23 +248,18 @@ class ShellFrontEnd:
             # returning this value updates page-content div with layout for plotx
             return self.plots[path[1:]]
 
-        # start server on its own thread, allowing something else to run on main thread
-        # make_server picks a free port because we passed 0 as port number
-        self.server = werkzeug.serving.make_server("127.0.0.1", 0, self.app.server)
-        server_thread = threading.Thread(target = self.server.serve_forever)
-        server_thread.start()
-        print("using port", self.server.server_port)
-
         # TODO: actual REPL loop
-        for s in ["1", "2"]:
+        # this is a standin for the read-eval-print loop of the shell
+        # except here we just call some plotting functions to automate things
+        for s in ["a", "b"]:
             layout = interpreter.compute(s)
             plot_name = f"plot{len(self.plots)}"
             self.plots[plot_name] = layout
             url = f"http://127.0.0.1:{self.server.server_port}/{plot_name}"
-            shower.show(url)
+            browser.show(url)
 
-
-class BrowserFrontEnd:
+# accept expressions from an input field, display expressions in an output box
+class BrowserFrontEnd(DashFrontEnd):
 
     def pair(self, n=0):
 
@@ -244,7 +268,7 @@ class BrowserFrontEnd:
 
         layout = dash.html.Div([
             dash.html.Label(f"in {n}"),
-            dash.dcc.Input(id=in_id, type="text", value="", debounce=True),
+            dash.dcc.Input(id=in_id, type="text", value="", debounce=True, spellCheck=False),
             dash.html.Label(f"out {n}"),
             dash.html.Div(id=out_id)
         ])
@@ -261,32 +285,21 @@ class BrowserFrontEnd:
 
     def __init__(self):
 
-        # create dash app and specify initial layout, which is empty
-        # save for a Location component which causes the desired plot to be displayed
-        # as detailed below
-        self.app = dash.Dash(__name__)
+        # initialize app and start server
+        super().__init__()
+
+        # initial layout is input f
         self.app.layout = self.pair()
-        self.app.enable_dev_tools(debug = args.debug, dev_tools_silence_routes_logging = not args.debug)
 
-        # this allows graphics to register callbacks for things like sliders
-        graphics.set_app(self.app)
-
-        # start server on its own thread, allowing something else to run on main thread
-        # make_server picks a free port because we passed 0 as port number
-        self.server = werkzeug.serving.make_server("127.0.0.1", 0, self.app.server)
-        server_thread = threading.Thread(target = self.server.serve_forever)
-        server_thread.start()
-        print("using port", self.server.server_port)
-
+        # point a browser at our page
         url = f"http://127.0.0.1:{self.server.server_port}"
-        shower.show(url)
+        browser.show(url)
 
 
-
-shower = Shower()
+browser = Browser()
 graphics = Graphics()
 interpreter = Interpreter()
 front_end = ShellFrontEnd if args.fe=="shell" else BrowserFrontEnd
 threading.Thread(target = front_end).start()
-shower.start()
+browser.start()
 
