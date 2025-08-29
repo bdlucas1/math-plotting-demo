@@ -56,8 +56,10 @@ class Shower():
 
 class Graphics:
 
-    def __init__(self, app):
+    def __init__(self):
         self.n = 0
+
+    def set_app(self, app):
         self.app = app
 
     def layout(self, plot, sliders = []):
@@ -151,9 +153,6 @@ class Graphics:
 
 class Interpreter:
 
-    def __init__(self, graphics):
-        self.graphics = graphics
-
     def compute(self, input):
         
         # function to be plotted
@@ -164,7 +163,7 @@ class Interpreter:
         if input == "1":
 
             # plot the function at fixed values of freq and amp
-            return self.graphics.plot3d(
+            return graphics.plot3d(
                 lambda x, y: ripples(x, y, amp=1, freq=1),
                 A("x", -3, 3, 200), # x axis spec
                 A("y", -3, 3, 200), # y axis spec
@@ -174,8 +173,8 @@ class Interpreter:
         elif input == "2":
             
             # plot the function with sliders to adjust freq and amp
-            return self.graphics.manipulate(
-                lambda amp, freq: self.graphics.plot3d(
+            return graphics.manipulate(
+                lambda amp, freq: graphics.plot3d(
                     lambda x, y: ripples(x, y, amp, freq),
                     A("x", -3, 3, 200), # x axis spec
                     A("y", -3, 3, 200), # y axis spec
@@ -228,9 +227,7 @@ class ShellFrontEnd:
         server_thread.start()
         print("using port", self.server.server_port)
 
-        graphics = Graphics(self.app)
-        interpreter = Interpreter(graphics)
-
+        graphics.set_app(self.app)
 
         # TODO: actual REPL loop
         for s in ["1", "2"]:
@@ -271,19 +268,6 @@ class BrowserFrontEnd:
         self.app.layout = self.pair()
         self.app.enable_dev_tools(debug = debug, dev_tools_silence_routes_logging = not debug)
 
-        # to display plot x browser is instructed to fetch url with path /plotx 
-        # when browser fetches /plotx, it is served the initial (empty) layout defined above
-        # then the dcc.Location component in that layout triggers this callback,
-        # which receives the path /plotx of the loaded url
-        # and updates the page-content div of the initial (empty) layout with the actual layout for /plotx
-        @self.app.callback(
-            dash.Output("page-content", "children"), # we update the page-content layout with the layout for plot x
-            dash.Input("url", "pathname")            # we receive the url path /plotx
-        )
-        def layout_for_path(path):
-            # returning this value updates page-content div with layout for plotx
-            return self.plots[path[1:]]
-
         # start server on its own thread, allowing something else to run on main thread
         # make_server picks a free port because we passed 0 as port number
         self.server = werkzeug.serving.make_server("127.0.0.1", 0, self.app.server)
@@ -296,15 +280,10 @@ class BrowserFrontEnd:
 
 
 
-    
-if False:
+shower = Shower()
+graphics = Graphics()
+interpreter = Interpreter()
+#threading.Thread(target = lambda: ShellFrontEnd()).start()
+threading.Thread(target = lambda: BrowserFrontEnd()).start()
+shower.start()
 
-    shower = Shower()
-    threading.Thread(target = lambda: ShellFrontEnd()).start()
-    shower.start()
-
-else:
-
-    shower = Shower()
-    threading.Thread(target = lambda: BrowserFrontEnd()).start()
-    shower.start()
