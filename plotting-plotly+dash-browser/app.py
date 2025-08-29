@@ -54,9 +54,147 @@ class Shower():
     #atexit.register(start)
 
 
-class Plotter:
+class Graphics:
 
-    def __init__(self, shower):
+    def __init__(self, app):
+        self.n = 0
+        self.app = app
+
+    def layout(self, plot, sliders = []):
+
+        # component ids have to be unique across the entire app,
+        # so we make them unique by using this function to prepend a unique prefix
+        id = lambda id_name: f"g{self.n}-{id_name}"
+
+        # compute a slider from a slider spec (S namedtuple)
+        def slider(s):
+            # TODO: handling of tick marks and step needs work; this code is just for demo purposes
+            marks = {value: f"{value:g}" for value in np.arange(s.lo, s.hi, s.step)}
+            return [
+                dash.html.Label(s.name),
+                dash.dcc.Slider(
+                    id=id(s.name), marks=marks, updatemode="drag",
+                    min=s.lo, max=s.hi, step=s.step/10, value=s.init,
+                )
+            ]
+
+        # TODO: do this via initial update? that doesn't work though if there are no sliders...
+        init_values = [s.init for s in sliders]
+
+        # compute the layout for the plot and store it in self.plots under plot_name
+        layout = dash.html.Div([
+            dash.dcc.Graph(id=id("figure"), figure=plot(*init_values), className="graph"),
+            dash.html.Div(list(itertools.chain(*[slider(s) for s in sliders])), className="sliders")
+        ], className="plot")
+        
+        # define callbacks for the sliders
+        # whenever any slider moves we call plot() passing it the slider values
+        # to recompute the plot for the new slider values
+        if sliders:
+            @self.app.callback(
+                dash.Output(id("figure"), "figure"),
+                *(dash.Input(id(s.name), "value") for s in sliders),
+                prevent_initial_call=True
+            )
+            def update(*args):
+                return plot(**{s.name: value for s, value in zip(sliders,args)})
+
+        return layout
+
+
+    # implement something like Mathematica Plot3D
+    # see examples below
+    def plot3d(self, f, xlims, ylims, zlims = None, top_level = False):
+
+        xs = np.linspace(xlims.lo, xlims.hi, xlims.count)
+        ys = np.linspace(ylims.lo, ylims.hi, ylims.count)
+        xs, ys = np.meshgrid(xs, ys)
+        zs = f(**{xlims.name: xs, ylims.name: ys})
+
+        # fake it
+        title = inspect.getsource(f)
+        title = title[title.index(":")+1 : title.rindex(",")]
+
+        def plot():
+            figure = go.Figure(
+                data = [go.Surface(x=xs, y=ys, z=zs, colorscale="Viridis", colorbar=dict(thickness=10))],
+                layout = go.Layout(
+                    title = dict(
+                        text = title,
+                        y = 0.9
+                    ),
+                    margin = dict(l=0, r=0, t=60, b=0),
+                    scene = dict(
+                        xaxis_title="x",
+                        yaxis_title="y",
+                        zaxis_title="z",
+                        aspectmode="cube"
+                    ),
+                )
+            )
+            if zlims:
+                figure.update_layout(scene = dict(zaxis = dict(range=zlims)))
+            return figure
+
+        if top_level:
+            return self.layout(plot, [])
+        else:
+            return plot()
+
+    
+    # implement something like Mathematica Manipulate
+    # see examples below
+    def manipulate(self, plot, *sliders):
+        return self.layout(plot, sliders)
+        
+
+
+class Interpreter:
+
+    def __init__(self, graphics):
+        self.graphics = graphics
+
+    def compute(self, input):
+        
+        # function to be plotted
+        def ripples(x, y, amp, freq):
+            r = x**2 + y**2
+            return np.sin(r * freq) / (np.sqrt(r) + 1) * amp
+
+        if input == "1":
+
+            # plot the function at fixed values of freq and amp
+            return self.graphics.plot3d(
+                lambda x, y: ripples(x, y, amp=1, freq=1),
+                A("x", -3, 3, 200), # x axis spec
+                A("y", -3, 3, 200), # y axis spec
+                top_level=True
+            )
+
+        elif input == "2":
+            
+            # plot the function with sliders to adjust freq and amp
+            return self.graphics.manipulate(
+                lambda amp, freq: self.graphics.plot3d(
+                    lambda x, y: ripples(x, y, amp, freq),
+                    A("x", -3, 3, 200), # x axis spec
+                    A("y", -3, 3, 200), # y axis spec
+                    zlims=[-1, 1],      # z axis limits
+                ),
+                S("freq", 0.1, 1.0, 2.0, 0.2), # freq slider spec
+                S("amp", 0.0, 1.2, 2.0, 0.2),  # amp slider spec
+            )
+
+
+# this is a standin for the read-eval-print loop of the shell
+# except here we just call some plotting functions
+# if you squint you'll see that these look like the corresponding Mathematica functions,
+# the main difference being instead of passing in code we pass in a callback that executes the code
+# set up plotting, then call shell_loop
+
+class ShellFrontEnd:
+
+    def __init__(self):
 
         self.shower = shower
 
@@ -90,151 +228,17 @@ class Plotter:
         server_thread.start()
         print("using port", self.server.server_port)
 
-    # show() calls the supplied plot() function to get a plotly figure,
-    # then computes the layout for the plot,
-    # including sliders as specified to re-compute the plot by calling plot() as the sliders change
-    # stores the computed layout in self.plots under the name plot0, plot1, ...,
-    # then opens a browser window to fetch and display the layout using the url /plotx
-    def show(self, plot, sliders = []):
-        
-        # plot0, plot1, ...
-        plot_name = f"plot{len(self.plots)}"
-
-        # component ids have to be unique across the entire app,
-        # so we make them unique by using this function to prepend the plot name
-        id = lambda id_name: f"{plot_name}-{id_name}"
-
-        # compute a slider from a slider spec (S namedtuple)
-        def slider(s):
-            # TODO: handling of tick marks and step needs work; this code is just for demo purposes
-            marks = {value: f"{value:g}" for value in np.arange(s.lo, s.hi, s.step)}
-            return [
-                dash.html.Label(s.name),
-                dash.dcc.Slider(
-                    id=id(s.name), marks=marks, updatemode="drag",
-                    min=s.lo, max=s.hi, step=s.step/10, value=s.init,
-                )
-            ]
-
-        # TODO: do this via initial update? that doesn't work though if there are no sliders...
-        init_values = [s.init for s in sliders]
-
-        # compute the layout for the plot and store it in self.plots under plot_name
-        self.plots[plot_name] = dash.html.Div([
-            dash.dcc.Graph(id=id("figure"), figure=plot(*init_values), className="graph"),
-            dash.html.Div(list(itertools.chain(*[slider(s) for s in sliders])), className="sliders")
-        ], className="plot")
-        
-        # define callbacks for the sliders
-        # whenever any slider moves we call plot() passing it the slider values
-        # to recompute the plot for the new slider values
-        if sliders:
-            @self.app.callback(
-                dash.Output(id("figure"), "figure"),
-                *(dash.Input(id(s.name), "value") for s in sliders),
-                prevent_initial_call=True
-            )
-            def update(*args):
-                return plot(**{s.name: value for s, value in zip(sliders,args)})
-
-        # display it
-        url = f"http://127.0.0.1:{self.server.server_port}/{plot_name}"
-        self.shower.show(url)
+        graphics = Graphics(self.app)
+        interpreter = Interpreter(graphics)
 
 
-    # implement something like Mathematica Plot3D
-    # see examples below
-    def plot3d(self, f, xlims, ylims, zlims = None, show = False):
-
-        xs = np.linspace(xlims.lo, xlims.hi, xlims.count)
-        ys = np.linspace(ylims.lo, ylims.hi, ylims.count)
-        xs, ys = np.meshgrid(xs, ys)
-        zs = f(**{xlims.name: xs, ylims.name: ys})
-
-        # fake it
-        title = inspect.getsource(f)
-        title = title[title.index(":")+1 : title.rindex(",")]
-
-        def plot():
-            figure = go.Figure(
-                data = [go.Surface(x=xs, y=ys, z=zs, colorscale="Viridis", colorbar=dict(thickness=10))],
-                layout = go.Layout(
-                    title = dict(
-                        text = title,
-                        y = 0.9
-                    ),
-                    margin = dict(l=0, r=0, t=60, b=0),
-                    scene = dict(
-                        xaxis_title="x",
-                        yaxis_title="y",
-                        zaxis_title="z",
-                        aspectmode="cube"
-                    ),
-                )
-            )
-            if zlims:
-                figure.update_layout(scene = dict(zaxis = dict(range=zlims)))
-            return figure
-
-        if show:
-            self.show(plot)
-        else:
-            return plot()
-    
-    # implement something like Mathematica Manipulate
-    # see examples below
-    def manipulate(self, plot, *sliders):
-        self.show(plot, sliders)
-
-
-class Interpreter:
-
-    def __init__(self, plotter):
-        self.plotter = plotter
-
-    def compute(self, input):
-        
-        # function to be plotted
-        def ripples(x, y, amp, freq):
-            r = x**2 + y**2
-            return np.sin(r * freq) / (np.sqrt(r) + 1) * amp
-
-        if input == "1":
-
-            # plot the function at fixed values of freq and amp
-            self.plotter.plot3d(
-                lambda x, y: ripples(x, y, amp=1, freq=1),
-                A("x", -3, 3, 200), # x axis spec
-                A("y", -3, 3, 200), # y axis spec
-                show=True
-            )
-
-        elif input == "2":
-            
-            # plot the function with sliders to adjust freq and amp
-            self.plotter.manipulate(
-                lambda amp, freq: plotter.plot3d(
-                    lambda x, y: ripples(x, y, amp, freq),
-                    A("x", -3, 3, 200), # x axis spec
-                    A("y", -3, 3, 200), # y axis spec
-                    zlims=[-1, 1],      # z axis limits
-                ),
-                S("freq", 0.1, 1.0, 2.0, 0.2), # freq slider spec
-                S("amp", 0.0, 1.2, 2.0, 0.2),  # amp slider spec
-            )
-
-
-# this is a standin for the read-eval-print loop of the shell
-# except here we just call some plotting functions
-# if you squint you'll see that these look like the corresponding Mathematica functions,
-# the main difference being instead of passing in code we pass in a callback that executes the code
-# set up plotting, then call shell_loop
-
-class ShellFrontEnd:
-    def __init__(self, intepreter):
         # TODO: actual REPL loop
-        interpreter.compute("1")
-        interpreter.compute("2")
+        for s in ["1", "2"]:
+            layout = interpreter.compute(s)
+            plot_name = f"plot{len(self.plots)}"
+            self.plots[plot_name] = layout
+            url = f"http://127.0.0.1:{self.server.server_port}/{plot_name}"
+            self.shower.show(url)
 
 
 class BrowserFrontEnd:
@@ -258,9 +262,7 @@ class BrowserFrontEnd:
 
         return layout
 
-    def __init__(self, shower, interpreter):
-
-        self.interpreter = interpreter
+    def __init__(self):
 
         # create dash app and specify initial layout, which is empty
         # save for a Location component which causes the desired plot to be displayed
@@ -298,15 +300,11 @@ class BrowserFrontEnd:
 if False:
 
     shower = Shower()
-    plotter = Plotter(shower)
-    interpreter = Interpreter(plotter)
-    threading.Thread(target = lambda: ShellFrontEnd(interpreter)).start()
-    shower.start() # xxx do this with atexit? would need to make other threads daemons...
+    threading.Thread(target = lambda: ShellFrontEnd()).start()
+    shower.start()
 
 else:
 
     shower = Shower()
-    plotter = Plotter(shower)
-    interpreter = Interpreter(plotter)
-    threading.Thread(target = lambda: BrowserFrontEnd(shower, interpreter)).start()
+    threading.Thread(target = lambda: BrowserFrontEnd()).start()
     shower.start()
