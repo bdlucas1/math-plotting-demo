@@ -5,6 +5,7 @@ import itertools
 import webbrowser
 import inspect
 import atexit
+import argparse
 
 # pip install numpy dash plotly pywebview
 import webview
@@ -13,19 +14,11 @@ import dash
 import werkzeug
 import plotly.graph_objects as go
 
-# pick one
-debug = False
-#debug = True
-
-# pick a method for displaying plots
-browser = "webview" # pop up a new window with an embedded webview (essentially a standalone browser)
-#browser = "webbrowser" # ask the default system browser to display plot
-
-# slider spec to be passed to manipulate
-S = collections.namedtuple("S", ["name", "lo", "init", "hi", "step"])
-
-# plotting axis spec to be passed to plot3d et al
-A = collections.namedtuple("A", ["name", "lo", "hi", "count"])
+parser = argparse.ArgumentParser(description="Graphics demo")
+parser.add_argument("--debug", action="store_true")
+parser.add_argument("--fe", choices=["shell", "browser"], default="shell")
+parser.add_argument("--browser", choices=["webview", "webbrowser"], default="webview")
+args = parser.parse_args()
 
 class Shower():
 
@@ -35,16 +28,15 @@ class Shower():
     def show(self, url):
         # display a browser window that fetches the current plot
         print("showing", url)
-        if browser == "webview":
+        if args.browser == "webview":
             offset = 50 * self.n
             self.n += 1
             webview.create_window(url, url, x=100+offset, y=100+offset, width=600, height=600)
-        elif browser == "webbrowser":
+        elif args.browser == "webbrowser":
             webbrowser.open_new(url)
 
-        
     def start(self):
-        if browser == "webview":
+        if args.browser == "webview":
             # webview needs to run on main thread :( and blocks, so we start other things on their own thread
             # webview needs a window before we can call start() :(, so we make a hidden one
             # real windows will be provided later
@@ -151,6 +143,12 @@ class Graphics:
         return self.layout(plot, sliders)
         
 
+# slider spec to be passed to manipulate
+S = collections.namedtuple("S", ["name", "lo", "init", "hi", "step"])
+
+# plotting axis spec to be passed to plot3d et al
+A = collections.namedtuple("A", ["name", "lo", "hi", "count"])
+
 class Interpreter:
 
     def compute(self, input):
@@ -203,7 +201,7 @@ class ShellFrontEnd:
         # as detailed below
         self.app = dash.Dash(__name__)
         self.app.layout = dash.html.Div([dash.dcc.Location(id="url")], id="page-content")
-        self.app.enable_dev_tools(debug = debug, dev_tools_silence_routes_logging = not debug)
+        self.app.enable_dev_tools(debug = args.debug, dev_tools_silence_routes_logging = not args.debug)
 
         # this allows graphics to register callbacks for things like sliders
         graphics.set_app(self.app)
@@ -270,7 +268,7 @@ class BrowserFrontEnd:
         # as detailed below
         self.app = dash.Dash(__name__)
         self.app.layout = self.pair()
-        self.app.enable_dev_tools(debug = debug, dev_tools_silence_routes_logging = not debug)
+        self.app.enable_dev_tools(debug = args.debug, dev_tools_silence_routes_logging = not args.debug)
 
         # this allows graphics to register callbacks for things like sliders
         graphics.set_app(self.app)
@@ -290,7 +288,7 @@ class BrowserFrontEnd:
 shower = Shower()
 graphics = Graphics()
 interpreter = Interpreter()
-#threading.Thread(target = lambda: ShellFrontEnd()).start()
-threading.Thread(target = lambda: BrowserFrontEnd()).start()
+front_end = ShellFrontEnd if args.fe=="shell" else BrowserFrontEnd
+threading.Thread(target = front_end).start()
 shower.start()
 
