@@ -4,6 +4,7 @@ import collections
 import itertools
 import webbrowser
 import inspect
+import atexit
 
 # pip install numpy dash plotly pywebview
 import webview
@@ -26,20 +27,38 @@ S = collections.namedtuple("S", ["name", "lo", "init", "hi", "step"])
 # plotting axis spec to be passed to plot3d et al
 A = collections.namedtuple("A", ["name", "lo", "hi", "count"])
 
-def show_url(url):
+class Shower():
+
+    def __init__(self):
+        self.n = 0
+
+    def show(self, url):
+        # display a browser window that fetches the current plot
+        print("showing", url)
+        if browser == "webview":
+            offset = 50 * self.n
+            self.n += 1
+            webview.create_window(url, url, x=100+offset, y=100+offset, width=600, height=600)
+        elif browser == "webbrowser":
+            webbrowser.open_new(url)
+
         
-    # display a browser window that fetches the current plot
-    print("showing", url)
-    if browser == "webview":
-        offset = 0 # xxx 50 * len(self.plots)
-        webview.create_window(url, url, x=100+offset, y=100+offset, width=600, height=600)
-    elif browser == "webbrowser":
-        webbrowser.open_new(url)
+    def start(self):
+        if browser == "webview":
+            # webview needs to run on main thread :( and blocks, so we start other things on their own thread
+            # webview needs a window before we can call start() :(, so we make a hidden one
+            # real windows will be provided later
+            webview.create_window("hidden", hidden=True)
+            webview.start()
+
+    #atexit.register(start)
 
 
 class Plotter:
 
-    def __init__(self):
+    def __init__(self, shower):
+
+        self.shower = shower
 
         # map from plot names to plot layouts, one per plot
         self.plots = {}
@@ -70,8 +89,6 @@ class Plotter:
         server_thread = threading.Thread(target = self.server.serve_forever)
         server_thread.start()
         print("using port", self.server.server_port)
-
-
 
     # show() calls the supplied plot() function to get a plotly figure,
     # then computes the layout for the plot,
@@ -122,7 +139,7 @@ class Plotter:
 
         # display it
         url = f"http://127.0.0.1:{self.server.server_port}/{plot_name}"
-        show_url(url)
+        self.shower.show(url)
 
 
     # implement something like Mathematica Plot3D
@@ -215,25 +232,81 @@ class Interpreter:
 
 class ShellFrontEnd:
     def __init__(self, intepreter):
+        # TODO: actual REPL loop
         interpreter.compute("1")
         interpreter.compute("2")
 
 
-plotter = Plotter()
-interpreter = Interpreter(plotter)
-threading.Thread(target = lambda: ShellFrontEnd(interpreter)).start()
+class BrowserFrontEnd:
 
-#
-#
-#
+    def pair(self, n=0):
 
-if browser == "webview":
-    # webview needs to run on main thread :( and blocks, so we start other things on their own thread above
-    # webview needs a window before we can call start() :(, so we make a hidden one
-    # real windows will be provided later
-    webview.create_window("hidden", hidden=True)
-    webview.start()
+        in_id = f"in-{n}"
+
+        layout = dash.html.Div([
+            dash.html.Label(f"in {n}"),
+            dash.dcc.Input(id=in_id, type="text", value="", debounce=True),
+            dash.html.Label(f"out {n}"),
+            dash.html.Div(id=f"out-{n}")
+        ])
+
+        @self.app.callback(
+            dash.Input(in_id, "value")
+        )
+        def update_output_div(input_value):
+            print(f"You entered: {input_value}")
+
+        return layout
+
+    def __init__(self, shower, interpreter):
+
+        self.interpreter = interpreter
+
+        # create dash app and specify initial layout, which is empty
+        # save for a Location component which causes the desired plot to be displayed
+        # as detailed below
+        self.app = dash.Dash(__name__)
+        self.app.layout = self.pair()
+        self.app.enable_dev_tools(debug = debug, dev_tools_silence_routes_logging = not debug)
+
+        # to display plot x browser is instructed to fetch url with path /plotx 
+        # when browser fetches /plotx, it is served the initial (empty) layout defined above
+        # then the dcc.Location component in that layout triggers this callback,
+        # which receives the path /plotx of the loaded url
+        # and updates the page-content div of the initial (empty) layout with the actual layout for /plotx
+        @self.app.callback(
+            dash.Output("page-content", "children"), # we update the page-content layout with the layout for plot x
+            dash.Input("url", "pathname")            # we receive the url path /plotx
+        )
+        def layout_for_path(path):
+            # returning this value updates page-content div with layout for plotx
+            return self.plots[path[1:]]
+
+        # start server on its own thread, allowing something else to run on main thread
+        # make_server picks a free port because we passed 0 as port number
+        self.server = werkzeug.serving.make_server("127.0.0.1", 0, self.app.server)
+        server_thread = threading.Thread(target = self.server.serve_forever)
+        server_thread.start()
+        print("using port", self.server.server_port)
+
+        url = f"http://127.0.0.1:{self.server.server_port}"
+        shower.show(url)
 
 
 
+    
+if False:
 
+    shower = Shower()
+    plotter = Plotter(shower)
+    interpreter = Interpreter(plotter)
+    threading.Thread(target = lambda: ShellFrontEnd(interpreter)).start()
+    shower.start() # xxx do this with atexit? would need to make other threads daemons...
+
+else:
+
+    shower = Shower()
+    plotter = Plotter(shower)
+    interpreter = Interpreter(plotter)
+    threading.Thread(target = lambda: BrowserFrontEnd(shower, interpreter)).start()
+    shower.start()
