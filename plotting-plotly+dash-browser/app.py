@@ -46,6 +46,12 @@ class Shower():
     #atexit.register(start)
 
 
+# slider spec to be passed to manipulate
+S = collections.namedtuple("S", ["name", "lo", "init", "hi", "step"])
+
+# plotting axis spec to be passed to plot3d et al
+A = collections.namedtuple("A", ["name", "lo", "hi", "count"])
+
 class Graphics:
 
     def __init__(self):
@@ -142,12 +148,6 @@ class Graphics:
     def manipulate(self, plot, *sliders):
         return self.layout(plot, sliders)
         
-
-# slider spec to be passed to manipulate
-S = collections.namedtuple("S", ["name", "lo", "init", "hi", "step"])
-
-# plotting axis spec to be passed to plot3d et al
-A = collections.namedtuple("A", ["name", "lo", "hi", "count"])
 
 class Interpreter:
 
@@ -254,9 +254,7 @@ class BrowserFrontEnd:
             dash.Input(in_id, "value")
         )
         def update_output_div(input_value):
-            print(f"You entered: {input_value}")
             graphics_layout = interpreter.compute(input_value)
-            print("xxx gl", graphics_layout)
             return graphics_layout
 
         return layout
