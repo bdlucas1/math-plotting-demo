@@ -66,6 +66,7 @@ class Graphics:
 
         # component ids have to be unique across the entire app,
         # so we make them unique by using this function to prepend a unique prefix
+        self.n += 1
         id = lambda id_name: f"g{self.n}-{id_name}"
 
         # compute a slider from a slider spec (S namedtuple)
@@ -150,7 +151,6 @@ class Graphics:
         return self.layout(plot, sliders)
         
 
-
 class Interpreter:
 
     def compute(self, input):
@@ -195,8 +195,6 @@ class ShellFrontEnd:
 
     def __init__(self):
 
-        self.shower = shower
-
         # map from plot names to plot layouts, one per plot
         self.plots = {}
 
@@ -206,6 +204,9 @@ class ShellFrontEnd:
         self.app = dash.Dash(__name__)
         self.app.layout = dash.html.Div([dash.dcc.Location(id="url")], id="page-content")
         self.app.enable_dev_tools(debug = debug, dev_tools_silence_routes_logging = not debug)
+
+        # this allows graphics to register callbacks for things like sliders
+        graphics.set_app(self.app)
 
         # to display plot x browser is instructed to fetch url with path /plotx 
         # when browser fetches /plotx, it is served the initial (empty) layout defined above
@@ -227,15 +228,13 @@ class ShellFrontEnd:
         server_thread.start()
         print("using port", self.server.server_port)
 
-        graphics.set_app(self.app)
-
         # TODO: actual REPL loop
         for s in ["1", "2"]:
             layout = interpreter.compute(s)
             plot_name = f"plot{len(self.plots)}"
             self.plots[plot_name] = layout
             url = f"http://127.0.0.1:{self.server.server_port}/{plot_name}"
-            self.shower.show(url)
+            shower.show(url)
 
 
 class BrowserFrontEnd:
@@ -243,19 +242,24 @@ class BrowserFrontEnd:
     def pair(self, n=0):
 
         in_id = f"in-{n}"
+        out_id = f"out-{n}"
 
         layout = dash.html.Div([
             dash.html.Label(f"in {n}"),
             dash.dcc.Input(id=in_id, type="text", value="", debounce=True),
             dash.html.Label(f"out {n}"),
-            dash.html.Div(id=f"out-{n}")
+            dash.html.Div(id=out_id)
         ])
 
         @self.app.callback(
+            dash.Output(out_id, "children"),
             dash.Input(in_id, "value")
         )
         def update_output_div(input_value):
             print(f"You entered: {input_value}")
+            graphics_layout = interpreter.compute(input_value)
+            print("xxx gl", graphics_layout)
+            return graphics_layout
 
         return layout
 
@@ -267,6 +271,9 @@ class BrowserFrontEnd:
         self.app = dash.Dash(__name__)
         self.app.layout = self.pair()
         self.app.enable_dev_tools(debug = debug, dev_tools_silence_routes_logging = not debug)
+
+        # this allows graphics to register callbacks for things like sliders
+        graphics.set_app(self.app)
 
         # start server on its own thread, allowing something else to run on main thread
         # make_server picks a free port because we passed 0 as port number
