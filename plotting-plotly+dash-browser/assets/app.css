@@ -51,14 +51,18 @@
     flex-direction: column;
     gap: 0.5em;
 
-    .cell {
+    .pair {
 
         border-left: 1px solid gray;
-        padding: 0.5em;
+        padding-left: 1em;
 
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         gap: 1em;
+
+        textarea {
+            field-sizing: content;
+        }
 
         .plot {
 
@@ -81,25 +85,7 @@
             }
         }
 
-        label {
-            white-space: nowrap;
-            align-self: baseline;
-        }
-
-        input {
-            align-self: baseline;
-        }
-
     }
 
-    .pair {
-
-        border-left: 1px solid gray;
-        padding-left: 0.5em;
-
-        display: flex;
-        flex-direction: column;
-        gap: 0.5em;
-    }
 }
 

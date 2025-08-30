@@ -263,34 +263,59 @@ class ShellFrontEnd(DashFrontEnd):
 # accept expressions from an input field, display expressions in an output box
 class BrowserFrontEnd(DashFrontEnd):
 
+    # creates a layout for an input field and an output div
     def pair(self, n=0):
 
         in_id = f"in-{n}"
+        trigger_id = in_id + "-trigger"
         out_id = f"out-{n}"
+        pair_id = f"pair-{n}"
 
+        # create an input field, a div to hold output, and a hidden button
+        # to signal that the user has pressed shift-enter
+        instructions = "Type one of a, b, c, ... followed by shift-enter"
         layout = dash.html.Div([
             dash.html.Div([
-                dash.html.Div([
-                    dash.html.Label(f"in {n}"),
-                    dash.dcc.Input(
-                        id=in_id, type="text", value="", placeholder="Enter expression",
-                        debounce=True, spellCheck=False),
-                ], className="cell input"),
-                dash.html.Div([
-                    dash.html.Label(f"out {n}"),
-                    dash.html.Div(id=out_id)
-                ], className="cell output")
-            ], className="pair")
+                dash.dcc.Textarea(id=in_id, value="", placeholder=instructions, spellCheck=False),
+                dash.html.Button("trigger", trigger_id, hidden=True),
+                dash.html.Div([], id=out_id, className="output")
+            ], id=pair_id, className="pair"),
         ], className="browser-front-end")
 
+        # TextArea triggers callbacks on every keystroke, but we only want to know
+        # when user has pressed shift-enter, so we add a client-side event listener to the input field
+        # that listens for shift-enter and triggers a click event on the hidden button
+        self.app.clientside_callback(
+            """
+            (id) => {
+                document.getElementById(id).addEventListener("keydown", (event) => {
+                    if (event.key === "Enter" && event.shiftKey) {
+                        event.preventDefault()
+                        document.getElementById(id+"-trigger").click();
+                    }
+                })
+                return window.dash_clientside.no_update;
+            }
+            """,
+            dash.Output(in_id, "id"),
+            dash.Input(in_id, 'id')
+        )
+
+        # callback is triggered by "click" on the hidden button signalling the user has pressed shift-enter
+        # it receives the value of the in_id textarea, asks the interpreter to evaluate it and compute a layout,
+        # then updates the out_id div with the layout
         @self.app.callback(
             dash.Output(out_id, "children"),
-            dash.Input(in_id, "value")
+            dash.Input(trigger_id, "n_clicks"),
+            dash.State(in_id, "value"),
+            prevent_initial_call = True
         )
-        def update_output_div(input_value):
+        def update_output_div(_, input_value):
+            print("evaluating", input_value)
             graphics_layout = interpreter.compute(input_value)
             return graphics_layout
 
+        # return input+output pair
         return layout
 
     def __init__(self):
