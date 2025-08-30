@@ -275,12 +275,10 @@ class BrowserFrontEnd(DashFrontEnd):
         # to signal that the user has pressed shift-enter
         instructions = "Type one of a, b, c, ... followed by shift-enter"
         layout = dash.html.Div([
-            dash.html.Div([
-                dash.dcc.Textarea(id=in_id, value="", placeholder=instructions, spellCheck=False, className="input"),
-                dash.html.Button("trigger", trigger_id, hidden=True),
-                dash.html.Div([], id=out_id, className="output")
-            ], id=pair_id, className="pair"),
-        ], className="browser-front-end")
+            dash.dcc.Textarea(id=in_id, value="", placeholder=instructions, spellCheck=False, className="input"),
+            dash.html.Button("trigger", trigger_id, hidden=True),
+            dash.html.Div([], id=out_id, className="output")
+        ], id=pair_id, className="pair"),
 
         # TextArea triggers callbacks on every keystroke, but we only want to know
         # when user has pressed shift-enter, so we add a client-side event listener to the input field
@@ -329,8 +327,8 @@ class BrowserFrontEnd(DashFrontEnd):
         # initialize app and start server
         super().__init__()
 
-        # initial layout is input f
-        self.app.layout = self.pair()
+        # initial layout is an input+output pair
+        self.app.layout = dash.html.Div(self.pair(), className="browser-front-end")
 
         # point a browser at our page
         url = f"http://127.0.0.1:{self.server.server_port}"
