@@ -60,8 +60,9 @@
         flex-direction: column;
         gap: 1em;
 
-        textarea {
-            field-sizing: content;
+        .input {
+            border: none;
+            outline: none;
         }
 
         .plot {

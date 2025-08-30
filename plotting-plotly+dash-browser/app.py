@@ -276,7 +276,7 @@ class BrowserFrontEnd(DashFrontEnd):
         instructions = "Type one of a, b, c, ... followed by shift-enter"
         layout = dash.html.Div([
             dash.html.Div([
-                dash.dcc.Textarea(id=in_id, value="", placeholder=instructions, spellCheck=False),
+                dash.dcc.Textarea(id=in_id, value="", placeholder=instructions, spellCheck=False, className="input"),
                 dash.html.Button("trigger", trigger_id, hidden=True),
                 dash.html.Div([], id=out_id, className="output")
             ], id=pair_id, className="pair"),
@@ -285,14 +285,20 @@ class BrowserFrontEnd(DashFrontEnd):
         # TextArea triggers callbacks on every keystroke, but we only want to know
         # when user has pressed shift-enter, so we add a client-side event listener to the input field
         # that listens for shift-enter and triggers a click event on the hidden button
+        # also autosize textarea to exactly contain text
         self.app.clientside_callback(
             """
             (id) => {
-                document.getElementById(id).addEventListener("keydown", (event) => {
+                ta = document.getElementById(id)
+                ta.addEventListener("keydown", (event) => {
                     if (event.key === "Enter" && event.shiftKey) {
                         event.preventDefault()
                         document.getElementById(id+"-trigger").click();
                     }
+                })
+                ta.addEventListener("input", (event) => {
+                    ta.style.height = "auto"
+                    ta.style.height = (ta.scrollHeight + 5) + "px"
                 })
                 return window.dash_clientside.no_update;
             }
