@@ -52,7 +52,7 @@ class Browser():
 
 
 #
-# provides functions that return Dash layouts for corresponding to various Mathematica graphical functions
+# provides functions that return Dash layouts corresponding to various Mathematica graphical functions
 # like plot3d, manipulate, ...
 #
 
@@ -278,8 +278,9 @@ class BrowserFrontEnd(DashFrontEnd):
             dash.dcc.Textarea(id=in_id, value="", placeholder=instructions, spellCheck=False, className="input"),
             dash.html.Button("trigger", trigger_id, hidden=True),
             dash.html.Div([], id=out_id, className="output")
-        ], id=pair_id, className="pair"),
+        ], id=pair_id, className="pair")
 
+        # TODO: this only works for the first one
         # TextArea triggers callbacks on every keystroke, but we only want to know
         # when user has pressed shift-enter, so we add a client-side event listener to the input field
         # that listens for shift-enter and triggers a click event on the hidden button
@@ -308,7 +309,10 @@ class BrowserFrontEnd(DashFrontEnd):
         # callback is triggered by "click" on the hidden button signalling the user has pressed shift-enter
         # it receives the value of the in_id textarea, asks the interpreter to evaluate it and compute a layout,
         # then updates the out_id div with the layout
+        # commented out code would add another input+output pair, but the callback for shift-enter
+        # only works for the first one, so don't add additional ones for now
         @self.app.callback(
+            #dash.Output(self.top_id, "children"),
             dash.Output(out_id, "children"),
             dash.Input(trigger_id, "n_clicks"),
             dash.State(in_id, "value"),
@@ -316,6 +320,9 @@ class BrowserFrontEnd(DashFrontEnd):
         )
         def update_output_div(_, input_value):
             print("evaluating", input_value)
+            #patch = dash.Patch()
+            #patch.append(self.pair(n+1))
+            #return (patch, graphics_layout)
             graphics_layout = interpreter.compute(input_value)
             return graphics_layout
 
@@ -328,7 +335,8 @@ class BrowserFrontEnd(DashFrontEnd):
         super().__init__()
 
         # initial layout is an input+output pair
-        self.app.layout = dash.html.Div(self.pair(), className="browser-front-end")
+        self.top_id = "browser-front-end"
+        self.app.layout = dash.html.Div([self.pair()], id=self.top_id)
 
         # point a browser at our page
         url = f"http://127.0.0.1:{self.server.server_port}"
