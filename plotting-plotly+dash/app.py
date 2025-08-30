@@ -252,9 +252,14 @@ class ShellFrontEnd(DashFrontEnd):
 
         # TODO: actual REPL loop
         # this is a standin for the read-eval-print loop of the shell
-        # except here we just call some plotting functions to automate things
+        # here we just evaluate the "expressions" "a" and "b" and display the resulting graphics
         for s in ["a", "b"]:
+
+            # call the "intepreter" to simulate evaluating the "expression" s
+            # and getting a layout back
             layout = interpreter.compute(s)
+
+            # store the layout in self.plots, then bring up a browser window to show it
             plot_name = f"plot{len(self.plots)}"
             self.plots[plot_name] = layout
             url = f"http://127.0.0.1:{self.server.server_port}/{plot_name}"
