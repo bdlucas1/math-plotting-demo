@@ -216,6 +216,7 @@ class DashFrontEnd:
         graphics.set_app(self.app)
 
         # start server on its own thread, allowing something else to run on main thread
+        # pass it self.app.server which is a Flask WSGI compliant app so could be hooked to any WSGI compliant server
         # make_server picks a free port because we passed 0 as port number
         self.server = werkzeug.serving.make_server("127.0.0.1", 0, self.app.server)
         threading.Thread(target = self.server.serve_forever).start()
