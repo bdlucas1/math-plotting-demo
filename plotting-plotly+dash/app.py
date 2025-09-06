@@ -10,9 +10,11 @@ import argparse
 # pip install numpy dash plotly pywebview
 import webview
 import numpy as np
+import mathics.session
 import dash
 import werkzeug
 import plotly.graph_objects as go
+
 
 parser = argparse.ArgumentParser(description="Graphics demo")
 parser.add_argument("--debug", action="store_true")
@@ -202,6 +204,51 @@ class Interpreter:
                 S("amp", 0.0, 1.2, 2.0, 0.2),  # amp slider spec
             )
 
+        else:
+
+            def to_python(expr, variables):
+                if not hasattr(expr, "head"):
+                    if str(expr).startswith("Global`"):
+                        variable = str(expr)[len("Global`"):]
+                        variables.append(variable)
+                        return variable
+                elif str(expr.head) == "System`Sin":
+                    return f"np.sin({to_python(expr.elements[0], variables)})"
+                elif str(expr.head) == "System`Plus":
+                    arg1 = to_python(expr.elements[0], variables)
+                    arg2 = to_python(expr.elements[1], variables)
+                    return f"({arg1})+({arg2})"
+                else:
+                    return str(expr)
+
+            session = mathics.session.MathicsSession()
+            res = session.parse(input)
+
+            if str(res.head) == "System`Plot3D":
+
+                # generate a string that is a Python expr equivalent to the Mathics expr to be plotted,
+                # wrap it in a string using Python lambda to define a function of the variables in the expr,
+                # then evaluate the string to get a Python function that can be called
+                variables = []                                 # e.g. the list ["x", "y"]
+                expr = to_python(res.elements[0], variables)   # e.g. the string "np.sin((x)+(y)"
+                fun = f"lambda {','.join(variables)}: {expr}"  # e.g. the string "lambda x, y: np.sin((x)+(y))"
+                fun = eval(fun)                                # e.g. the Python function lambda x, y: np.sin((x)+(y))
+
+                print(fun(3,4))
+
+
+
+
+# pretty print expr
+def pp(expr, indent=1):
+    if not hasattr(expr, "elements"):
+        print("  " * indent + str(expr))
+    else:
+        print("  " * indent + str(expr.head))
+        for elt in expr.elements:
+            pp(elt, indent + 1)
+
+
 
 # common to ShellFrontEnd and BrowserFrontEnd
 class DashFrontEnd:
@@ -254,7 +301,7 @@ class ShellFrontEnd(DashFrontEnd):
         # TODO: actual REPL loop
         # this is a standin for the read-eval-print loop of the shell
         # here we just evaluate the "expressions" "a" and "b" and display the resulting graphics
-        for s in ["a", "b"]:
+        for s in ["Plot3D[Sin[x+y], {x,0,10}, {y,0,10}]", "a", "b"]:
 
             # call the "intepreter" to simulate evaluating the "expression" s
             # and getting a layout back
