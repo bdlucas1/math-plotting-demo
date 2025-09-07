@@ -174,6 +174,12 @@ class Graphics:
 #
 class Interpreter:
 
+    demos = [
+        "Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3,200}, {y,-3,3,200}]",
+        "a",
+        #"b"
+    ]
+
     def compute(self, input):
         
         # function to be plotted
@@ -207,37 +213,44 @@ class Interpreter:
 
         else:
 
-            funs = {"System`Sin": "np.sin"}
-            binops = {"System`Plus": "+"}
+            funs = {"System`Sin": "np.sin", "System`Cos": "np.cos", "System`Sqrt": "np.sqrt"}
+            listfuns = {"System`Plus": "sum"}
+            binops = {"System`Power": "**", "System`Times": "*"}
 
             def to_python_expr(expr, vars):
                 if not hasattr(expr, "head"):
                     if str(expr).startswith("Global`"):
                         var = str(expr).split("`")[1]
-                        vars.append(var)
+                        vars.add(var)
                         return var
                     else:
-                        raise(f"Unknown {str(expr)}")
+                        return str(expr)
                 elif str(expr.head) in funs:
                     fun = funs[str(expr.head)]
                     args = (to_python_expr(e, vars) for e in expr.elements)
                     return f"{fun}({",".join(args)})"
+                elif str(expr.head) in listfuns:
+                    fun = listfuns[str(expr.head)]
+                    args = (to_python_expr(e, vars) for e in expr.elements)
+                    return f"{fun}([{",".join(args)}])"
                 elif str(expr.head) in binops:
                     arg1 = to_python_expr(expr.elements[0], vars)
                     arg2 = to_python_expr(expr.elements[1], vars)
                     return f"({arg1}{binops[str(expr.head)]}{arg2})"
                 else:
-                    raise(f"Unknown head {expr.head}")
+                    raise Exception(f"Unknown head {expr.head}")
 
             # generate a string that is a Python expr equivalent to the Mathics expr to be plotted,
             # wrap it in a string using Python lambda to define a function of the vars in the expr,
             # then evaluate the string to get a Python function that can be called
             def to_python_fun(expr):
-                vars = []                                 # e.g. the Python list ["x", "y"]
+                vars = set()                                   # e.g. the Python list ["x", "y"]
+                pp(expr)
                 expr = to_python_expr(res.elements[0], vars)   # e.g. the string "np.sin((x)+(y)"
                 fun = f"lambda {','.join(vars)}: {expr}"       # e.g. the string "lambda x, y: np.sin((x)+(y))"
                 return eval(fun)                               # e.g. the Python function lambda x, y: np.sin((x)+(y))
 
+            # construct an A (axis spec Python object) from Mathics expr like {x,0,10,200}
             def to_python_lims(expr):
                 return A(str(expr.elements[0]).split("`")[1], *[e.to_python() for e in expr.elements[1:]])
 
@@ -253,13 +266,11 @@ class Interpreter:
                     top_level=True
                 )
 
-                #NEXT: get x, y limits
-                #      call Graphics.plot3d
-                #      rename Graphics to Layout
                 #      do same for Manipulate
                 #      switch demo to use mathics-like exprs
                 #      add Plot options
                 #      add List, other kinds of HTML-formatting to Layout
+                #      rename Graphics to Layout
 
 
 
@@ -325,7 +336,7 @@ class ShellFrontEnd(DashFrontEnd):
         # TODO: actual REPL loop
         # this is a standin for the read-eval-print loop of the shell
         # here we just evaluate the "expressions" "a" and "b" and display the resulting graphics
-        for s in ["Plot3D[Sin[x+y], {x,0,10,200}, {y,0,10,200}]", "a", "b"]:
+        for s in Interpreter.demos:
 
             # call the "intepreter" to simulate evaluating the "expression" s
             # and getting a layout back
