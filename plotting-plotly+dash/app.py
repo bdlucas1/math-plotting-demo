@@ -228,10 +228,8 @@ class Interpreter:
             return eval(fun)                               # e.g. the Python function lambda x, y: np.sin((x)+(y))
 
         # construct an A (axis spec Python object) from Mathics expr like {x,0,10,200}
-        def to_python_lims(expr):
+        def to_python_axis_spec(expr):
             return A(str(expr.elements[0]).split("`")[1], *[e.to_python() for e in expr.elements[1:]])
-
-
 
         # function to be plotted
         def ripples(x, y, amp, freq):
@@ -264,7 +262,6 @@ class Interpreter:
 
         else:
 
-
             session = mathics.session.MathicsSession()
             res = session.parse(input)
 
@@ -272,8 +269,8 @@ class Interpreter:
 
                 return graphics.plot3d(
                     to_python_fun(res.elements[0]),
-                    to_python_lims(res.elements[1]),
-                    to_python_lims(res.elements[2]),
+                    to_python_axis_spec(res.elements[1]),
+                    to_python_axis_spec(res.elements[2]),
                     top_level=True
                 )
 
