@@ -182,6 +182,57 @@ class Interpreter:
 
     def compute(self, input):
         
+        funs = {
+            "System`Sin": "np.sin",
+            "System`Cos": "np.cos",
+            "System`Sqrt": "np.sqrt"
+        }
+        listfuns = {
+            "System`Plus": "sum" # TODO: np.sum?
+        }
+        binops = {
+            "System`Power": "**",
+            "System`Times": "*" # TODO: should be listfun?
+        }
+
+        def to_python_expr(expr, vars):
+            if not hasattr(expr, "head"):
+                if str(expr).startswith("Global`"):
+                    var = str(expr).split("`")[1]
+                    vars.add(var)
+                    return var
+                else:
+                    return str(expr)
+            elif str(expr.head) in funs:
+                fun = funs[str(expr.head)]
+                args = (to_python_expr(e, vars) for e in expr.elements)
+                return f"{fun}({",".join(args)})"
+            elif str(expr.head) in listfuns:
+                fun = listfuns[str(expr.head)]
+                args = (to_python_expr(e, vars) for e in expr.elements)
+                return f"{fun}([{",".join(args)}])"
+            elif str(expr.head) in binops:
+                arg1 = to_python_expr(expr.elements[0], vars)
+                arg2 = to_python_expr(expr.elements[1], vars)
+                return f"({arg1}{binops[str(expr.head)]}{arg2})"
+            else:
+                raise Exception(f"Unknown head {expr.head}")
+
+        # generate a string that is a Python expr equivalent to the Mathics expr to be plotted,
+        # wrap it in a string using Python lambda to define a function of the vars in the expr,
+        # then evaluate the string to get a Python function that can be called
+        def to_python_fun(expr):
+            vars = set()                                   # e.g. the Python list ["x", "y"]
+            expr = to_python_expr(res.elements[0], vars)   # e.g. the string "np.sin((x)+(y)"
+            fun = f"lambda {','.join(vars)}: {expr}"       # e.g. the string "lambda x, y: np.sin((x)+(y))"
+            return eval(fun)                               # e.g. the Python function lambda x, y: np.sin((x)+(y))
+
+        # construct an A (axis spec Python object) from Mathics expr like {x,0,10,200}
+        def to_python_lims(expr):
+            return A(str(expr.elements[0]).split("`")[1], *[e.to_python() for e in expr.elements[1:]])
+
+
+
         # function to be plotted
         def ripples(x, y, amp, freq):
             r = x**2 + y**2
@@ -213,54 +264,6 @@ class Interpreter:
 
         else:
 
-            funs = {
-                "System`Sin": "np.sin",
-                "System`Cos": "np.cos",
-                "System`Sqrt": "np.sqrt"
-            }
-            listfuns = {
-                "System`Plus": "sum" # TODO: np.sum?
-            }
-            binops = {
-                "System`Power": "**",
-                "System`Times": "*" # TODO: should be listfun?
-            }
-
-            def to_python_expr(expr, vars):
-                if not hasattr(expr, "head"):
-                    if str(expr).startswith("Global`"):
-                        var = str(expr).split("`")[1]
-                        vars.add(var)
-                        return var
-                    else:
-                        return str(expr)
-                elif str(expr.head) in funs:
-                    fun = funs[str(expr.head)]
-                    args = (to_python_expr(e, vars) for e in expr.elements)
-                    return f"{fun}({",".join(args)})"
-                elif str(expr.head) in listfuns:
-                    fun = listfuns[str(expr.head)]
-                    args = (to_python_expr(e, vars) for e in expr.elements)
-                    return f"{fun}([{",".join(args)}])"
-                elif str(expr.head) in binops:
-                    arg1 = to_python_expr(expr.elements[0], vars)
-                    arg2 = to_python_expr(expr.elements[1], vars)
-                    return f"({arg1}{binops[str(expr.head)]}{arg2})"
-                else:
-                    raise Exception(f"Unknown head {expr.head}")
-
-            # generate a string that is a Python expr equivalent to the Mathics expr to be plotted,
-            # wrap it in a string using Python lambda to define a function of the vars in the expr,
-            # then evaluate the string to get a Python function that can be called
-            def to_python_fun(expr):
-                vars = set()                                   # e.g. the Python list ["x", "y"]
-                expr = to_python_expr(res.elements[0], vars)   # e.g. the string "np.sin((x)+(y)"
-                fun = f"lambda {','.join(vars)}: {expr}"       # e.g. the string "lambda x, y: np.sin((x)+(y))"
-                return eval(fun)                               # e.g. the Python function lambda x, y: np.sin((x)+(y))
-
-            # construct an A (axis spec Python object) from Mathics expr like {x,0,10,200}
-            def to_python_lims(expr):
-                return A(str(expr.elements[0]).split("`")[1], *[e.to_python() for e in expr.elements[1:]])
 
             session = mathics.session.MathicsSession()
             res = session.parse(input)
