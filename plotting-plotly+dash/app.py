@@ -207,20 +207,27 @@ class Interpreter:
 
         else:
 
+            funs = {"System`Sin": "np.sin"}
+            binops = {"System`Plus": "+"}
+
             def to_python_expr(expr, vars):
                 if not hasattr(expr, "head"):
                     if str(expr).startswith("Global`"):
                         var = str(expr).split("`")[1]
                         vars.append(var)
                         return var
-                elif str(expr.head) == "System`Sin":
-                    return f"np.sin({to_python_expr(expr.elements[0], vars)})"
+                    else:
+                        raise(f"Unknown {str(expr)}")
+                elif str(expr.head) in funs:
+                    fun = funs[str(expr.head)]
+                    args = (to_python_expr(e, vars) for e in expr.elements)
+                    return f"{fun}({",".join(args)})"
                 elif str(expr.head) == "System`Plus":
                     arg1 = to_python_expr(expr.elements[0], vars)
                     arg2 = to_python_expr(expr.elements[1], vars)
-                    return f"({arg1})+({arg2})"
+                    return f"({arg1}+{arg2})"
                 else:
-                    return str(expr)
+                    raise(f"Unknown head {expr.head}")
 
             # generate a string that is a Python expr equivalent to the Mathics expr to be plotted,
             # wrap it in a string using Python lambda to define a function of the vars in the expr,
@@ -242,8 +249,8 @@ class Interpreter:
                 return graphics.plot3d(
                     to_python_fun(res.elements[0]),
                     to_python_lims(res.elements[1]),
-                    to_python_lims(res.elements[2])
-                    , top_level=True
+                    to_python_lims(res.elements[2]),
+                    top_level=True
                 )
 
                 #NEXT: get x, y limits
