@@ -285,12 +285,34 @@ class Interpreter:
             return self.compute_expr(expr)
 
 
+    """
+    TODO:
+        move this to Graphics
+        rename Graphics to Layout
+        rename this to layout_expr
+        decide:
+            pass globals as args to a lambda, or
+            use eval() and specify env
+            or pass env as separate arg vals?
+                and emit vals["x"] for Global`x
+                and augment env on the way in
+            or use kwargs (don't think that's useful...)
+    """
+
+
+    # TODO: rename this layout and move it to Layout
+    # TODO: merge Graphics into Layout
     def compute_expr(self, expr):
 
         if str(expr.head) == "System`Plot3D":
 
             return graphics.plot3d(
-                self.to_python_fun(expr.elements[0]),
+                #self.to_python_fun(expr.elements[0]),
+                # TODO: just pass in the expr and let graphics.plot3d call eval
+                # TODO: just move graphics.plot3d and this function to Layout
+                # TODO: call eval with dict base on axis specs instead of hardcoded "x" and "y"
+                # TODO: move eval into Interpreter as eval_expr
+                lambda x, y: eval(self.to_python_expr(expr.elements[0], set()), globals(), {"x":x, "y":y}),
                 self.to_python_axis_spec(expr.elements[1]),
                 self.to_python_axis_spec(expr.elements[2]),
                 top_level=True
