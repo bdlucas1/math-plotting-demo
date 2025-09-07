@@ -126,8 +126,9 @@ class Graphics:
         zs = f(**{xlims.name: xs, ylims.name: ys})
 
         # fake it
-        title = inspect.getsource(f)
-        title = title[title.index(":")+1 : title.rindex(",")]
+        #title = inspect.getsource(f)
+        #title = title[title.index(":")+1 : title.rindex(",")]
+        title = "xxx"
 
         def plot():
             figure = go.Figure(
@@ -206,36 +207,52 @@ class Interpreter:
 
         else:
 
-            def to_python(expr, variables):
+            def to_python_expr(expr, vars):
                 if not hasattr(expr, "head"):
                     if str(expr).startswith("Global`"):
-                        variable = str(expr)[len("Global`"):]
-                        variables.append(variable)
-                        return variable
+                        var = str(expr).split("`")[1]
+                        vars.append(var)
+                        return var
                 elif str(expr.head) == "System`Sin":
-                    return f"np.sin({to_python(expr.elements[0], variables)})"
+                    return f"np.sin({to_python_expr(expr.elements[0], vars)})"
                 elif str(expr.head) == "System`Plus":
-                    arg1 = to_python(expr.elements[0], variables)
-                    arg2 = to_python(expr.elements[1], variables)
+                    arg1 = to_python_expr(expr.elements[0], vars)
+                    arg2 = to_python_expr(expr.elements[1], vars)
                     return f"({arg1})+({arg2})"
                 else:
                     return str(expr)
+
+            # generate a string that is a Python expr equivalent to the Mathics expr to be plotted,
+            # wrap it in a string using Python lambda to define a function of the vars in the expr,
+            # then evaluate the string to get a Python function that can be called
+            def to_python_fun(expr):
+                vars = []                                 # e.g. the Python list ["x", "y"]
+                expr = to_python_expr(res.elements[0], vars)   # e.g. the string "np.sin((x)+(y)"
+                fun = f"lambda {','.join(vars)}: {expr}"       # e.g. the string "lambda x, y: np.sin((x)+(y))"
+                return eval(fun)                               # e.g. the Python function lambda x, y: np.sin((x)+(y))
+
+            def to_python_lims(expr):
+                return A(str(expr.elements[0]).split("`")[1], *[e.to_python() for e in expr.elements[1:]])
 
             session = mathics.session.MathicsSession()
             res = session.parse(input)
 
             if str(res.head) == "System`Plot3D":
 
-                # generate a string that is a Python expr equivalent to the Mathics expr to be plotted,
-                # wrap it in a string using Python lambda to define a function of the variables in the expr,
-                # then evaluate the string to get a Python function that can be called
-                variables = []                                 # e.g. the list ["x", "y"]
-                expr = to_python(res.elements[0], variables)   # e.g. the string "np.sin((x)+(y)"
-                fun = f"lambda {','.join(variables)}: {expr}"  # e.g. the string "lambda x, y: np.sin((x)+(y))"
-                fun = eval(fun)                                # e.g. the Python function lambda x, y: np.sin((x)+(y))
+                return graphics.plot3d(
+                    to_python_fun(res.elements[0]),
+                    to_python_lims(res.elements[1]),
+                    to_python_lims(res.elements[2])
+                    , top_level=True
+                )
 
-                print(fun(3,4))
-
+                #NEXT: get x, y limits
+                #      call Graphics.plot3d
+                #      rename Graphics to Layout
+                #      do same for Manipulate
+                #      switch demo to use mathics-like exprs
+                #      add Plot options
+                #      add List, other kinds of HTML-formatting to Layout
 
 
 
@@ -301,7 +318,7 @@ class ShellFrontEnd(DashFrontEnd):
         # TODO: actual REPL loop
         # this is a standin for the read-eval-print loop of the shell
         # here we just evaluate the "expressions" "a" and "b" and display the resulting graphics
-        for s in ["Plot3D[Sin[x+y], {x,0,10}, {y,0,10}]", "a", "b"]:
+        for s in ["Plot3D[Sin[x+y], {x,0,10,200}, {y,0,10,200}]", "a", "b"]:
 
             # call the "intepreter" to simulate evaluating the "expression" s
             # and getting a layout back
