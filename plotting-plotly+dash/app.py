@@ -397,9 +397,12 @@ class ShellFrontEnd(DashFrontEnd):
             # returning this value updates page-content div with layout for plotx
             return self.plots[path[1:]]
 
-        # TODO: actual REPL loop
         # this is a standin for the read-eval-print loop of the shell
         # here we just evaluate the "expressions" "a" and "b" and display the resulting graphics
+        # TODO: print s on stdout
+        # TODO: then actual REPL loop
+        # TODO: add s as title
+
         for s in demos:
 
             # call the "intepreter" to simulate evaluating the "expression" s
