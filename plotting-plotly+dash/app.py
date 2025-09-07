@@ -222,10 +222,10 @@ class Interpreter:
                     fun = funs[str(expr.head)]
                     args = (to_python_expr(e, vars) for e in expr.elements)
                     return f"{fun}({",".join(args)})"
-                elif str(expr.head) == "System`Plus":
+                elif str(expr.head) in binops:
                     arg1 = to_python_expr(expr.elements[0], vars)
                     arg2 = to_python_expr(expr.elements[1], vars)
-                    return f"({arg1}+{arg2})"
+                    return f"({arg1}{binops[str(expr.head)]}{arg2})"
                 else:
                     raise(f"Unknown head {expr.head}")
 
