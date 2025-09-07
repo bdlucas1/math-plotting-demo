@@ -213,9 +213,18 @@ class Interpreter:
 
         else:
 
-            funs = {"System`Sin": "np.sin", "System`Cos": "np.cos", "System`Sqrt": "np.sqrt"}
-            listfuns = {"System`Plus": "sum"}
-            binops = {"System`Power": "**", "System`Times": "*"}
+            funs = {
+                "System`Sin": "np.sin",
+                "System`Cos": "np.cos",
+                "System`Sqrt": "np.sqrt"
+            }
+            listfuns = {
+                "System`Plus": "sum" # TODO: np.sum?
+            }
+            binops = {
+                "System`Power": "**",
+                "System`Times": "*" # TODO: should be listfun?
+            }
 
             def to_python_expr(expr, vars):
                 if not hasattr(expr, "head"):
@@ -245,7 +254,6 @@ class Interpreter:
             # then evaluate the string to get a Python function that can be called
             def to_python_fun(expr):
                 vars = set()                                   # e.g. the Python list ["x", "y"]
-                pp(expr)
                 expr = to_python_expr(res.elements[0], vars)   # e.g. the string "np.sin((x)+(y)"
                 fun = f"lambda {','.join(vars)}: {expr}"       # e.g. the string "lambda x, y: np.sin((x)+(y))"
                 return eval(fun)                               # e.g. the Python function lambda x, y: np.sin((x)+(y))
