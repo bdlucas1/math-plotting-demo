@@ -232,7 +232,6 @@ class Interpreter:
             arg2 = self.to_python_expr(expr.elements[1], vars)
             return f"({arg1}{binops[str(expr.head)]}{arg2})"
         else:
-            print("xxx EXC")
             raise Exception(f"Unknown head {expr.head}")
 
     # generate a string that is a Python expr equivalent to the Mathics expr to be plotted,
@@ -282,34 +281,39 @@ class Interpreter:
 
         else:
 
-            res = self.parse(input)
-
-            if str(res.head) == "System`Plot3D":
-
-                return graphics.plot3d(
-                    self.to_python_fun(res.elements[0]),
-                    self.to_python_axis_spec(res.elements[1]),
-                    self.to_python_axis_spec(res.elements[2]),
-                    top_level=True
-                )
-
-            elif str(res.head) == "Global`Manipulate":
-
-                print("=== Manipulate")
-                pp(res.elements[0])
-                print("xxx calling self.to_python_fun with", res.elements[0])
-                plot_fun = self.to_python_fun(res.elements[0])
+            expr = self.parse(input)
+            return self.compute_expr(expr)
 
 
-                #      do same for Manipulate
-                #      switch demo to use mathics-like exprs
-                #      add Plot options
-                #      add List, other kinds of HTML-formatting to Layout
-                #      rename Graphics to Layout
+    def compute_expr(self, expr):
+
+        if str(expr.head) == "System`Plot3D":
+
+            return graphics.plot3d(
+                self.to_python_fun(expr.elements[0]),
+                self.to_python_axis_spec(expr.elements[1]),
+                self.to_python_axis_spec(expr.elements[2]),
+                top_level=True
+            )
+
+        elif str(expr.head) == "Global`Manipulate":
+
+            print("=== Manipulate")
+            #pp(expr.elements[0])
+            #plot_fun = self.to_python_fun(expr.elements[0])
+
+            return self.compute_expr(expr.elements[0])
 
 
-            else:
-                raise Exception(f"Uknown head {res.head}")
+            #      do same for Manipulate
+            #      switch demo to use mathics-like exprs
+            #      add Plot options
+            #      add List, other kinds of HTML-formatting to Layout
+            #      rename Graphics to Layout
+
+
+        else:
+            raise Exception(f"Uknown head {expr.head}")
 
 
 # pretty print expr
