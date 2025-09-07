@@ -176,8 +176,13 @@ class Interpreter:
 
     demos = [
         "Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3,200}, {y,-3,3,200}]",
-        "a",
-        #"b"
+        #"""
+        #    Manipulate[
+        #        Plot3D[Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp, {x,-3,3,200}, {y,-3,3,200}],
+        #        {freq, 0.1, 1.0, 2.0, 0.2}, (* freq slider spec *)
+        #        {amp, 0.0, 1.2, 2.0, 0.2}  (* amp slider spec *)
+        #    ]
+        #"""
     ]
 
     def compute(self, input):
@@ -225,6 +230,7 @@ class Interpreter:
             vars = set()                                   # e.g. the Python list ["x", "y"]
             expr = to_python_expr(res.elements[0], vars)   # e.g. the string "np.sin((x)+(y)"
             fun = f"lambda {','.join(vars)}: {expr}"       # e.g. the string "lambda x, y: np.sin((x)+(y))"
+            if args.debug: print("fun:", fun)
             return eval(fun)                               # e.g. the Python function lambda x, y: np.sin((x)+(y))
 
         # construct an A (axis spec Python object) from Mathics expr like {x,0,10,200}
@@ -274,12 +280,22 @@ class Interpreter:
                     top_level=True
                 )
 
+            elif str(res.head) == "Global`Manipulate":
+
+                plot_fun = to_python_fun(res.elements[0])
+                print("Manipulate")
+                pp(res)
+
+
                 #      do same for Manipulate
                 #      switch demo to use mathics-like exprs
                 #      add Plot options
                 #      add List, other kinds of HTML-formatting to Layout
                 #      rename Graphics to Layout
 
+
+            else:
+                raise Exception(f"Uknown head {res.head}")
 
 
 # pretty print expr
