@@ -65,7 +65,7 @@ S = collections.namedtuple("S", ["name", "lo", "init", "hi", "step"])
 # plotting axis spec to be passed to plot3d et al
 A = collections.namedtuple("A", ["name", "lo", "hi", "count"])
 
-class Graphics:
+class Layout:
 
     def __init__(self):
         self.n = 0
@@ -74,7 +74,7 @@ class Graphics:
     def set_app(self, app):
         self.app = app
 
-    def layout(self, plot, sliders = []):
+    def _layout(self, plot, sliders = []):
 
         # component ids have to be unique across the entire app,
         # so we make them unique by using this function to prepend a unique prefix
@@ -94,11 +94,11 @@ class Graphics:
             ]
 
         # TODO: do this via initial update? that doesn't work though if there are no sliders...
-        init_values = [s.init for s in sliders]
+        init_values = {s.name: s.init for s in sliders}
 
         # compute the layout for the plot and store it in self.plots under plot_name
         layout = dash.html.Div([
-            dash.dcc.Graph(id=id("figure"), figure=plot(*init_values), className="graph"),
+            dash.dcc.Graph(id=id("figure"), figure=plot(init_values), className="graph"),
             dash.html.Div(list(itertools.chain(*[slider(s) for s in sliders])), className="sliders")
         ], className="plot")
         
@@ -112,26 +112,28 @@ class Graphics:
                 prevent_initial_call=True
             )
             def update(*args):
-                return plot(**{s.name: value for s, value in zip(sliders,args)})
+                return plot({s.name: value for s, value in zip(sliders,args)})
 
         return layout
 
 
+
+    
     # implement something like Mathematica Plot3D
     # see examples below
-    def plot3d(self, f, xlims, ylims, zlims = None, top_level = False):
+    def plot3d(self, fun_expr, xlims, ylims, zlims = None, top_level = False, vals = {}):
 
         xs = np.linspace(xlims.lo, xlims.hi, xlims.count)
         ys = np.linspace(ylims.lo, ylims.hi, ylims.count)
         xs, ys = np.meshgrid(xs, ys)
-        zs = f(**{xlims.name: xs, ylims.name: ys})
+        zs = interpreter.eval(fun_expr, vals | {xlims.name: xs, ylims.name: ys})
 
         # fake it
         #title = inspect.getsource(f)
         #title = title[title.index(":")+1 : title.rindex(",")]
         title = "xxx"
 
-        def plot():
+        def plot(_): # TODO: do we really want to ignore the arg?
             figure = go.Figure(
                 data = [go.Surface(x=xs, y=ys, z=zs, colorscale="Viridis", colorbar=dict(thickness=10))],
                 layout = go.Layout(
@@ -153,16 +155,45 @@ class Graphics:
             return figure
 
         if top_level:
-            return self.layout(plot, [])
+            return self._layout(plot, [])
         else:
-            return plot()
+            return plot({}) # TODO: do we really need to pass an arg?
 
-    
-    # implement something like Mathematica Manipulate
-    # see examples below
-    def manipulate(self, plot, *sliders):
-        return self.layout(plot, sliders)
-        
+
+    def manipulate(self, plot_expr, *sliders):
+
+
+        def plot(vals):
+            return self.layout(plot_expr, top_level=False, vals=vals)
+        return self._layout(plot, sliders)
+
+    # construct an A (axis spec Python object) from Mathics expr like {x,0,10,200}
+    def to_python_axis_spec(self, expr):
+        return A(str(expr.elements[0]).split("`")[1], *[e.to_python() for e in expr.elements[1:]])
+
+    def layout(self, expr, top_level=True, vals={}):
+
+        if str(expr.head) == "System`Plot3D":
+
+            return self.plot3d(
+                expr.elements[0],
+                self.to_python_axis_spec(expr.elements[1]),
+                self.to_python_axis_spec(expr.elements[2]),
+                top_level=top_level,
+                vals=vals
+            )
+
+        elif str(expr.head) == "Global`Manipulate":
+
+            # TODO: sliders from expr
+            # TODO: add zlim
+            return self.manipulate(
+                expr.elements[0],
+                S("freq", 0.1, 1.0, 2.0, 0.2),
+                S("amp", 0.0, 1.2, 2.0, 0.2)
+            )
+
+
 
 demos = [
     "Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3,200}, {y,-3,3,200}]",
@@ -183,7 +214,7 @@ demos = [
 # called by front end to handle user input and get an output layout to display
 # 
 # to simplify the demo, instead of accepting actual math expressions,
-# we just accept a fixed set of strings "a", "b", ... and call Graphics
+# we just accept a fixed set of strings "a", "b", ... and call Layout
 # to get a layout to return to the front end
 #
 class Interpreter:
@@ -194,7 +225,7 @@ class Interpreter:
     def parse(self, expr):
         return self.session.parse(expr)
 
-    def to_python_expr(self, expr, vars):
+    def to_python_expr(self, expr):
 
         funs = {
             "System`Sin": "np.sin",
@@ -214,40 +245,30 @@ class Interpreter:
 
         if not hasattr(expr, "head"):
             if str(expr).startswith("Global`"):
-                var = str(expr).split("`")[1]
-                vars.add(var)
-                return var
+                return str(expr).split("`")[1]
             else:
                 return str(expr)
         elif str(expr.head) in funs:
             fun = funs[str(expr.head)]
-            args = (self.to_python_expr(e, vars) for e in expr.elements)
+            args = (self.to_python_expr(e) for e in expr.elements)
             return f"{fun}({",".join(args)})"
         elif str(expr.head) in listfuns:
             fun = listfuns[str(expr.head)]
-            args = (self.to_python_expr(e, vars) for e in expr.elements)
+            args = (self.to_python_expr(e) for e in expr.elements)
             return f"{fun}([{",".join(args)}])"
         elif str(expr.head) in binops:
-            arg1 = self.to_python_expr(expr.elements[0], vars)
-            arg2 = self.to_python_expr(expr.elements[1], vars)
+            arg1 = self.to_python_expr(expr.elements[0])
+            arg2 = self.to_python_expr(expr.elements[1])
             return f"({arg1}{binops[str(expr.head)]}{arg2})"
         else:
             raise Exception(f"Unknown head {expr.head}")
 
-    # generate a string that is a Python expr equivalent to the Mathics expr to be plotted,
-    # wrap it in a string using Python lambda to define a function of the vars in the expr,
-    # then evaluate the string to get a Python function that can be called
-    def to_python_fun(self, expr):
-        vars = set()                              # e.g. the Python list ["x", "y"]
-        expr = self.to_python_expr(expr, vars)    # e.g. the string "np.sin((x)+(y)"
-        fun = f"lambda {','.join(vars)}: {expr}"  # e.g. the string "lambda x, y: np.sin((x)+(y))"
-        print("fun:", fun)
-        return eval(fun)                          # e.g. the Python function lambda x, y: np.sin((x)+(y))
+    def eval(self, expr, vals):
+        python_expr = self.to_python_expr(expr)
+        return eval(python_expr, globals(), vals)
 
-    # construct an A (axis spec Python object) from Mathics expr like {x,0,10,200}
-    def to_python_axis_spec(self, expr):
-        return A(str(expr.elements[0]).split("`")[1], *[e.to_python() for e in expr.elements[1:]])
 
+    """
     def compute(self, input):
 
         # function to be plotted
@@ -258,7 +279,7 @@ class Interpreter:
         if input == "a":
 
             # plot the function at fixed values of freq and amp
-            return graphics.plot3d(
+            return layout.plot3d(
                 lambda x, y: ripples(x, y, amp=1, freq=1),
                 A("x", -3, 3, 200), # x axis spec
                 A("y", -3, 3, 200), # y axis spec
@@ -268,8 +289,8 @@ class Interpreter:
         elif input == "b":
             
             # plot the function with sliders to adjust freq and amp
-            return graphics.manipulate(
-                lambda amp, freq: graphics.plot3d(
+            return layout.manipulate(
+                lambda amp, freq: layout.plot3d(
                     lambda x, y: ripples(x, y, amp, freq),
                     A("x", -3, 3, 200), # x axis spec
                     A("y", -3, 3, 200), # y axis spec
@@ -283,42 +304,15 @@ class Interpreter:
 
             expr = self.parse(input)
             return self.compute_expr(expr)
-
-
-    """
-    TODO:
-        move this to Graphics
-        rename Graphics to Layout
-        rename this to layout_expr
-        decide:
-            pass globals as args to a lambda, or
-            use eval() and specify env
-            or pass env as separate arg vals?
-                and emit vals["x"] for Global`x
-                and augment env on the way in
-            or use kwargs (don't think that's useful...)
     """
 
 
-    # TODO: rename this layout and move it to Layout
-    # TODO: merge Graphics into Layout
+    """
     def compute_expr(self, expr):
 
-        if str(expr.head) == "System`Plot3D":
 
-            return graphics.plot3d(
-                #self.to_python_fun(expr.elements[0]),
-                # TODO: just pass in the expr and let graphics.plot3d call eval
-                # TODO: just move graphics.plot3d and this function to Layout
-                # TODO: call eval with dict base on axis specs instead of hardcoded "x" and "y"
-                # TODO: move eval into Interpreter as eval_expr
-                lambda x, y: eval(self.to_python_expr(expr.elements[0], set()), globals(), {"x":x, "y":y}),
-                self.to_python_axis_spec(expr.elements[1]),
-                self.to_python_axis_spec(expr.elements[2]),
-                top_level=True
-            )
 
-        elif str(expr.head) == "Global`Manipulate":
+        if str(expr.head) == "Global`Manipulate":
 
             print("=== Manipulate")
             #pp(expr.elements[0])
@@ -331,11 +325,12 @@ class Interpreter:
             #      switch demo to use mathics-like exprs
             #      add Plot options
             #      add List, other kinds of HTML-formatting to Layout
-            #      rename Graphics to Layout
+            #      rename Layout to Layout
 
 
         else:
             raise Exception(f"Uknown head {expr.head}")
+    """
 
 
 # pretty print expr
@@ -358,8 +353,8 @@ class DashFrontEnd:
         self.app = dash.Dash(__name__)
         self.app.enable_dev_tools(debug = args.debug, dev_tools_silence_routes_logging = not args.debug)
 
-        # this allows graphics to register callbacks for things like sliders
-        graphics.set_app(self.app)
+        # this allows layout to register callbacks for things like sliders
+        layout.set_app(self.app)
 
         # start server on its own thread, allowing something else to run on main thread
         # pass it self.app.server which is a Flask WSGI compliant app so could be hooked to any WSGI compliant server
@@ -398,20 +393,16 @@ class ShellFrontEnd(DashFrontEnd):
             return self.plots[path[1:]]
 
         # this is a standin for the read-eval-print loop of the shell
-        # here we just evaluate the "expressions" "a" and "b" and display the resulting graphics
+        # here we just evaluate the "expressions" "a" and "b" and display the resulting layout
         # TODO: print s on stdout
         # TODO: then actual REPL loop
         # TODO: add s as title
 
         for s in demos:
 
-            # call the "intepreter" to simulate evaluating the "expression" s
-            # and getting a layout back
-            layout = interpreter.compute(s)
-
-            # store the layout in self.plots, then bring up a browser window to show it
             plot_name = f"plot{len(self.plots)}"
-            self.plots[plot_name] = layout
+            expr = interpreter.parse(s)
+            self.plots[plot_name] = layout.layout(expr)
             url = f"http://127.0.0.1:{self.server.server_port}/{plot_name}"
             browser.show(url)
 
@@ -477,9 +468,9 @@ class BrowserFrontEnd(DashFrontEnd):
             print("evaluating", input_value)
             #patch = dash.Patch()
             #patch.append(self.pair(n+1))
-            #return (patch, graphics_layout)
-            graphics_layout = interpreter.compute(input_value)
-            return graphics_layout
+            #return (patch, layout)
+            layout = interpreter.compute(input_value)
+            return layout
 
         # return input+output pair
         return layout
@@ -499,7 +490,7 @@ class BrowserFrontEnd(DashFrontEnd):
 
 
 browser = Browser()
-graphics = Graphics()
+layout = Layout()
 interpreter = Interpreter()
 front_end = ShellFrontEnd if args.fe=="shell" else BrowserFrontEnd
 threading.Thread(target = front_end).start()
