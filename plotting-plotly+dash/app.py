@@ -74,7 +74,7 @@ class Layout:
     def set_app(self, app):
         self.app = app
 
-    def _layout(self, plot, sliders = []):
+    def _layout(self, make_figure, sliders = []):
 
         # component ids have to be unique across the entire app,
         # so we make them unique by using this function to prepend a unique prefix
@@ -98,12 +98,12 @@ class Layout:
 
         # compute the layout for the plot and store it in self.plots under plot_name
         layout = dash.html.Div([
-            dash.dcc.Graph(id=id("figure"), figure=plot(init_values), className="graph"),
+            dash.dcc.Graph(id=id("figure"), figure=make_figure(init_values), className="graph"),
             dash.html.Div(list(itertools.chain(*[slider(s) for s in sliders])), className="sliders")
         ], className="plot")
         
         # define callbacks for the sliders
-        # whenever any slider moves we call plot() passing it the slider values
+        # whenever any slider moves we call make_figure() passing it the slider values
         # to recompute the plot for the new slider values
         if sliders:
             @self.app.callback(
@@ -112,7 +112,7 @@ class Layout:
                 prevent_initial_call=True
             )
             def update(*args):
-                return plot({s.name: value for s, value in zip(sliders,args)})
+                return make_figure({s.name: value for s, value in zip(sliders,args)})
 
         return layout
 
@@ -166,10 +166,10 @@ class Layout:
     def manipulate(self, plot_expr, *sliders):
 
 
-        def plot(vals):
+        def make_figure(vals):
             return self.layout(plot_expr, top_level=False, vals=vals)
         # TODO: is plot callback the best way to do _layout?
-        return self._layout(plot, sliders)
+        return self._layout(make_figure, sliders)
 
     # construct an A (axis spec Python object) from Mathics expr like {x,0,10,200}
     def to_python_axis_spec(self, expr):
