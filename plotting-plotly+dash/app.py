@@ -74,7 +74,7 @@ class Layout:
     def set_app(self, app):
         self.app = app
 
-    def _layout(self, make_figure, sliders = []):
+    def graph_with_sliders(self, make_figure, sliders = []):
 
         # component ids have to be unique across the entire app,
         # so we make them unique by using this function to prepend a unique prefix
@@ -116,9 +116,6 @@ class Layout:
 
         return layout
 
-
-
-    
     # implement something like Mathematica Plot3D
     # see examples below
     def plot3d(self, fun_expr, xlims, ylims, zlims = None, top_level = False, vals = {}):
@@ -133,7 +130,7 @@ class Layout:
         #title = title[title.index(":")+1 : title.rindex(",")]
         title = "xxx"
 
-        def plot(_): # TODO: do we really want to ignore the arg?
+        def make_figure(_): # TODO: do we really want to ignore the arg?
             figure = go.Figure(
                 data = [go.Surface(x=xs, y=ys, z=zs, colorscale="Viridis", colorbar=dict(thickness=10))],
                 layout = go.Layout(
@@ -155,12 +152,12 @@ class Layout:
             return figure
 
         # TODO: this seems more convoluted than necessary?
-        # is the whole thing with passing a function to self._layout the right way to do it,
+        # is the whole thing with passing a function to self.graph_with_sliders the right way to do it,
         #     or is it just an artifact of the previous demo that used lambda
         if top_level:
-            return self._layout(plot, [])
+            return self.graph_with_sliders(make_figure, [])
         else:
-            return plot({}) # TODO: do we really need to pass an arg?
+            return make_figure({}) # TODO: do we really need to pass an arg?
 
 
     def manipulate(self, plot_expr, *sliders):
@@ -168,8 +165,8 @@ class Layout:
 
         def make_figure(vals):
             return self.layout(plot_expr, top_level=False, vals=vals)
-        # TODO: is plot callback the best way to do _layout?
-        return self._layout(make_figure, sliders)
+        # TODO: is plot callback the best way to do graph_with_sliders?
+        return self.graph_with_sliders(make_figure, sliders)
 
     # construct an A (axis spec Python object) from Mathics expr like {x,0,10,200}
     def to_python_axis_spec(self, expr):
