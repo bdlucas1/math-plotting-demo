@@ -154,6 +154,9 @@ class Layout:
                 figure.update_layout(scene = dict(zaxis = dict(range=zlims)))
             return figure
 
+        # TODO: this seems more convoluted than necessary?
+        # is the whole thing with passing a function to self._layout the right way to do it,
+        #     or is it just an artifact of the previous demo that used lambda
         if top_level:
             return self._layout(plot, [])
         else:
@@ -165,6 +168,7 @@ class Layout:
 
         def plot(vals):
             return self.layout(plot_expr, top_level=False, vals=vals)
+        # TODO: is plot callback the best way to do _layout?
         return self._layout(plot, sliders)
 
     # construct an A (axis spec Python object) from Mathics expr like {x,0,10,200}
@@ -175,6 +179,7 @@ class Layout:
 
         if str(expr.head) == "System`Plot3D":
 
+            # TODO: embed self.plot3d here?
             return self.plot3d(
                 expr.elements[0],
                 self.to_python_axis_spec(expr.elements[1]),
@@ -187,6 +192,7 @@ class Layout:
 
             # TODO: sliders from expr
             # TODO: add zlim
+            # TODO: embed self.manipulate here?
             return self.manipulate(
                 expr.elements[0],
                 S("freq", 0.1, 1.0, 2.0, 0.2),
@@ -207,6 +213,9 @@ demos = [
 ]
 
 
+
+# TODO: move this up front
+# TODO: add pp()
 
 #
 # standin for mathics interpreter
@@ -266,71 +275,6 @@ class Interpreter:
     def eval(self, expr, vals):
         python_expr = self.to_python_expr(expr)
         return eval(python_expr, globals(), vals)
-
-
-    """
-    def compute(self, input):
-
-        # function to be plotted
-        def ripples(x, y, amp, freq):
-            r = x**2 + y**2
-            return np.sin(r * freq) / (np.sqrt(r) + 1) * amp
-
-        if input == "a":
-
-            # plot the function at fixed values of freq and amp
-            return layout.plot3d(
-                lambda x, y: ripples(x, y, amp=1, freq=1),
-                A("x", -3, 3, 200), # x axis spec
-                A("y", -3, 3, 200), # y axis spec
-                top_level=True
-            )
-
-        elif input == "b":
-            
-            # plot the function with sliders to adjust freq and amp
-            return layout.manipulate(
-                lambda amp, freq: layout.plot3d(
-                    lambda x, y: ripples(x, y, amp, freq),
-                    A("x", -3, 3, 200), # x axis spec
-                    A("y", -3, 3, 200), # y axis spec
-                    zlims=[-1, 1],      # z axis limits
-                ),
-                S("freq", 0.1, 1.0, 2.0, 0.2), # freq slider spec
-                S("amp", 0.0, 1.2, 2.0, 0.2),  # amp slider spec
-            )
-
-        else:
-
-            expr = self.parse(input)
-            return self.compute_expr(expr)
-    """
-
-
-    """
-    def compute_expr(self, expr):
-
-
-
-        if str(expr.head) == "Global`Manipulate":
-
-            print("=== Manipulate")
-            #pp(expr.elements[0])
-            #plot_fun = self.to_python_fun(expr.elements[0])
-
-            return self.compute_expr(expr.elements[0])
-
-
-            #      do same for Manipulate
-            #      switch demo to use mathics-like exprs
-            #      add Plot options
-            #      add List, other kinds of HTML-formatting to Layout
-            #      rename Layout to Layout
-
-
-        else:
-            raise Exception(f"Uknown head {expr.head}")
-    """
 
 
 # pretty print expr
