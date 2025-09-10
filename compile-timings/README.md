@@ -9,15 +9,15 @@ Five compilation/execution strategies tried. The first two are based
 on code lifted directly from the [current Plot
 implementation](https://github.com/Mathics3/mathics-core/blob/master/mathics/eval/drawing/plot.py):
 
-* none: has_compile is false. Just wraps expression in N[] and
-  evaluates it. The 40,000 evaluations of the expression are done
-  point-by-point, i.e. invoking the compiled expression 40,000 times.
+* [none](https://github.com/bdlucas1/math-plotting-demo/blob/62297f94db02cc39f784cb5e4135db8662e45d17/compile-timings/compile-timings.py#L48): has_compile is false. Just wraps expression in N[] and
+  evaluates it. The 40,000 evaluations of the expression are [done
+  point-by-point](https://github.com/bdlucas1/math-plotting-demo/blob/62297f94db02cc39f784cb5e4135db8662e45d17/compile-timings/compile-timings.py#L177), i.e. invoking the compiled expression 40,000 times.
 
-* llvm: compiles expression using llvm via
+* [llvm](https://github.com/bdlucas1/math-plotting-demo/blob/62297f94db02cc39f784cb5e4135db8662e45d17/compile-timings/compile-timings.py#L29): compiles expression using llvm via
   compile._compile. Expression is evaluated point-by-point.
 
 
-Three of the strategies are based on a quick hack I wrote to translate
+Three of the strategies are based on a [quick hack I wrote](https://github.com/bdlucas1/math-plotting-demo/blob/62297f94db02cc39f784cb5e4135db8662e45d17/compile-timings/compile-timings.py#L83) to translate
 Mathics expressions into Python, ignoring any subtleties of Mathics
 semantics.
 
@@ -27,7 +27,7 @@ semantics.
 * python_np: translates Sin, Sqrt, etc. in np.sin, np.sqrt, etc.
   Expression is evaluated point-by-point.
 
-* python_np_vec: like python_np, but evaluation is vectorized,
+* python_np_vec: like python_np, but [evaluation is vectorized](https://github.com/bdlucas1/math-plotting-demo/blob/62297f94db02cc39f784cb5e4135db8662e45d17/compile-timings/compile-timings.py#L175),
   i.e. numpy arrays of values are passed in and therefore invoke numpy
   vectorized evaluations of sin, sqrt, +, ^, etc.
 
