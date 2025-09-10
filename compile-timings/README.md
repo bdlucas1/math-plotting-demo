@@ -19,7 +19,7 @@ implementation](https://github.com/Mathics3/mathics-core/blob/master/mathics/eva
 
 Three of the strategies are based on a [quick hack I wrote](https://github.com/bdlucas1/math-plotting-demo/blob/62297f94db02cc39f784cb5e4135db8662e45d17/compile-timings/compile-timings.py#L83) to translate
 Mathics expressions into Python, ignoring any subtleties of Mathics
-semantics.
+semantics:
 
 * python_math: translates Sin, Sqrt, etc. in math.sin, math.sqrt, etc.
   Expression is evaluated point-by-point.
