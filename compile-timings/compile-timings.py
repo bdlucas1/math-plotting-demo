@@ -14,7 +14,12 @@ from mathics.builtin.scoping import dynamic_scoping
 from mathics.session import MathicsSession
 from mathics.builtin.numeric import chop
 
+#
+# "none" and "llvam" compilation strategies
+# this code is lifted directly from
 # https://github.com/Mathics3/mathics-core/blob/master/mathics/eval/drawing/plot.py
+#
+
 def compile_quiet_function(expr, arg_names, evaluation, has_compile, list_is_expected: bool = False):
     """
     Given an expression return a quiet callable version.
@@ -142,8 +147,8 @@ def choose_compile(expr, arg_names, method):
 session = MathicsSession()
 
 
-expr_str = "Sin[(x^2+y^2)*freq]*amp"
-#expr_str = "Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp"
+#expr_str = "Sin[(x^2+y^2)*freq]*amp"
+expr_str = "Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp"
 
 expr = session.parse(expr_str)
 
@@ -172,4 +177,4 @@ def f():
         for x, y in zip(xs, ys):
             fun(float(x), float(y), 1.5, 1.2)
 
-timefun(f, n=1)
+timefun(f, n=10)
