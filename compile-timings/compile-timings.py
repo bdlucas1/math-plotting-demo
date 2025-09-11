@@ -1,6 +1,7 @@
 import time
 import math
 import numpy as np
+import scipy
 
 from typing import Optional
 from math import cos, isinf, isnan, pi, sqrt
@@ -85,7 +86,8 @@ def to_python_expr(expr, lib = "np"):
     funs = {
         "System`Sin": f"{lib}.sin",
         "System`Cos": f"{lib}.cos",
-        "System`Sqrt": f"{lib}.sqrt"
+        "System`Sqrt": f"{lib}.sqrt",
+        "System`Hypergeometric1F1": "scipy.special.hyp1f1",
     }
 
     listfuns = {
@@ -101,6 +103,8 @@ def to_python_expr(expr, lib = "np"):
     if not hasattr(expr, "head"):
         if str(expr).startswith("Global`"):
             return str(expr).split("`")[1]
+        elif str(expr) == "System`I":
+            return "1j"
         else:
             return str(expr)
     elif str(expr.head) in funs:
@@ -144,27 +148,30 @@ def choose_compile(expr, arg_names, method):
 #
 #
 
+#expr_str, a, b, xlo, xhi, ylo, yhi = "Sin[(x^2+y^2)*a]*b", 1.5, 1.2, 0, 10, 0, 10
+#expr_str, a, b, xlo, xhi, ylo, yhi  = "Sin[(x^2+y^2)*a] / Sqrt[x^2+y^2+1] * b", 1.5, 1.2, 0, 10, 0, 10
+expr_str, a, b, xlo, xhi, ylo, yhi = "Hypergeometric1F1[a, b, (x + I y)^2]", 1, 2, -2, 2, -2, 2
+
+#method, n = "none", 1
+#method, n = "llvm", 1
+#method, n = "python_math", 1
+#method, n = "python_np", 10
+method, n = "python_np_vec", 10
+
+# compile expr_str
 session = MathicsSession()
-
-
-#expr_str = "Sin[(x^2+y^2)*freq]*amp"
-expr_str = "Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp"
-
 expr = session.parse(expr_str)
+fun = choose_compile(expr, ["Global`x", "Global`y", "Global`a", "Global`b"], method)
 
-#method = "none"   #  9985 ms,  15838 ms
-#method = "llvm"   # 14 ms, 15749 ms
-#method = "python_math" # 10 ms, 16 ms
-#method = "python_np" # 20 ms, 37 ms
-method = "python_np_vec" # 0.3 ms, 0.4 ms (0.2 ms @ n=10)
+# construct 40000 points on a 200x200 grid
+# xs, ys has xs and ys as two independent corresponding arrays each with shape (200,200)
+# xys has a flat list of 40000 (x,y) pairs
+xs = np.linspace(xlo, xhi, 200)
+ys = np.linspace(ylo, yhi, 200)
+xs, ys = np.meshgrid(xs, ys)
+xys = list(zip((float(x) for x in xs.ravel()), (float(y) for y in ys.ravel())))
 
-fun = choose_compile(expr, ["Global`x", "Global`y", "Global`freq", "Global`amp"], method)
-
-# 40000 points (like a 200x200 grid)
-xs = np.linspace(0, 10, 40000)
-ys = np.linspace(0, 10, 40000)
-
-def timefun(f, n=1):
+def timefun(f):
     start = time.time()
     for i in range(n):
         f()
@@ -172,9 +179,12 @@ def timefun(f, n=1):
 
 def f():
     if method == "python_np_vec":
-        fun(xs, ys, 1.5, 1.2)
+        res = fun(xs, ys, a, b)
+        #print("res.shape", res.shape)
+        #print("isfinite", np.isfinite(res))
+        #print("min max", np.min(res), np.max(res))
     else:
-        for x, y in zip(xs, ys):
-            fun(float(x), float(y), 1.5, 1.2)
+        for x, y in xys:
+            fun(x, y, a, b)
 
-timefun(f, n=10)
+timefun(f)

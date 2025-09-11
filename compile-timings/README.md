@@ -1,9 +1,11 @@
 Task: evaluate an expression at 40,000 (x,y) pairs, simulating the
-work needed to plot a function on a 200x200 grid. Two expressions tried:
+work needed to plot a function on a 200x200 grid. Three expressions tried:
 
-* expr1: Sin[(x^2+y^2) * freq] * amp
+* expr1: Sin[(x^2+y^2) * a] * b
 
-* expr2: Sin[(x^2+y^2) * freq] / Sqrt[x^2+y^2+1] * amp
+* expr2: Sin[(x^2+y^2) * a] / Sqrt[x^2+y^2+1] * b
+
+* expr3: Hypergeometric1F1[a, b, (x + I y) ^ 2]
 
 Five compilation/execution strategies tried. The first two are based
 on code lifted directly from the [current Plot
@@ -33,19 +35,19 @@ semantics:
 
 Timings for evaluating the expressions at 40,000 points.
 
-                        expr1             expr2
+                        expr1             expr2            expr3
 
-    none               9985 ms           15838 ms
-    llvm                 14 ms           15749 ms
-    python_math          10 ms              16 ms
-    python_np            20 ms              37 ms
-    python_np_vec         0.14 ms            0.19 ms
+    none               9600 ms           15600 ms          compile failed
+    llvm                 13 ms           15600 ms          compile failed
+    python_math          10 ms              14 ms          33 ms
+    python_np            19 ms              34 ms          33 ms
+    python_np_vec         0.18 ms            0.23 ms        0.70 ms
 
 
 Interpretation:
 
 * none: Execution with no compilation is not nearly fast enough to support
-  reasonable interactivity using Manipulate to vary amp and freq.
+  reasonable interactivity using Manipulate to vary a and b.
 
 * llvm: Execution with the current llvm-based compilation improves
   expr1 by almost three orders of magnitude, but not expr2.  This
@@ -66,8 +68,8 @@ Interpretation:
 * python_np_vec: But translating to Python and using the numpy library
   for sin, sqrt, etc. allows vectorized execution which gains about
   another two orders of magnitude in performance. This may not be
-  necessary for expr1 and expr2, but might be needed for interactivity
-  for some more complicated expressions.
+  necessary for these test expressions, but might be needed for
+  interactivity for some more complicated expressions.
 
 Conclusions:
 
