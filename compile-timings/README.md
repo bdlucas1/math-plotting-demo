@@ -5,7 +5,9 @@ work needed to plot a function on a 200x200 grid. Three expressions tried:
 
 * expr2: Sin[(x^2+y^2) * a] / Sqrt[x^2+y^2+1] * b
 
-* expr3: Hypergeometric1F1[a, b, (x + I y) ^ 2]
+* expr3: Hypergeometric1F1[a, b, (x + I y) ^ 2]. (Note: testing with
+  this expression is incomplete because compilation failed; see [Issue
+  1502](https://github.com/Mathics3/mathics-core/issues/1502).
 
 Five compilation/execution strategies tried. The first two are based
 on code lifted directly from the [current Plot
@@ -37,7 +39,7 @@ Timings for evaluating the expressions at 40,000 points.
 
                         expr1             expr2            expr3
 
-    none               9600 ms           15600 ms          [compile failed](https://github.com/Mathics3/mathics-core/issues/1502)
+    none               9600 ms           15600 ms          compile failed
     llvm                 13 ms           15600 ms          compile failed
     python_math          10 ms              14 ms          33 ms
     python_np            19 ms              34 ms          33 ms
