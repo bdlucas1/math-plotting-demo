@@ -37,7 +37,7 @@ Timings for evaluating the expressions at 40,000 points.
 
                         expr1             expr2            expr3
 
-    none               9600 ms           15600 ms          compile failed
+    none               9600 ms           15600 ms          [compile failed](https://github.com/Mathics3/mathics-core/issues/1502)
     llvm                 13 ms           15600 ms          compile failed
     python_math          10 ms              14 ms          33 ms
     python_np            19 ms              34 ms          33 ms
