@@ -11,6 +11,7 @@ import argparse
 # pip install numpy dash plotly pywebview
 import webview
 import numpy as np
+import scipy
 import mathics.session
 import dash
 import werkzeug
@@ -73,6 +74,7 @@ def to_python_expr(expr, lib = "np"):
         "System`Sin": f"{lib}.sin",
         "System`Cos": f"{lib}.cos",
         "System`Sqrt": f"{lib}.sqrt",
+        "System`Abs": f"{lib}.abs",
         "System`Hypergeometric1F1": "scipy.special.hyp1f1",
     }
 
@@ -116,7 +118,7 @@ def my_compile(expr, arg_names, lib = "np"):
     f = eval(python_def)
     return f
 
-
+# compute a unique id for use in html
 ids = collections.defaultdict(lambda: 0)
 def uid(s):
     ids[s] += 1
@@ -225,14 +227,14 @@ def layout_Manipulate(app, expr):
             )
         ]
 
-    # TODO: do this via initial update? that doesn't work though if there are no sliders...
-    init_values = {s.name: s.init for s in sliders}
-
     # compute the layout for the plot
     target_id = uid("target")
+    init_values = {s.name: s.init for s in sliders}
+    init_target_layout = layout_expr(app, target_expr, init_values)
+    slider_layouts = list(itertools.chain(*[slider_layout(s) for s in sliders]))
     layout = dash.html.Div([
-        dash.html.Div([layout_expr(app, target_expr, init_values)], id=target_id),
-        dash.html.Div(list(itertools.chain(*[slider_layout(s) for s in sliders])), className="sliders")
+        dash.html.Div(init_target_layout, id=target_id),
+        dash.html.Div(slider_layouts, className="sliders")
     ], className="plot")
         
     # define callbacks for the sliders
@@ -270,7 +272,14 @@ demos = [
             {freq, 0.1, 1.0, 2.0, 0.2}, (* freq slider spec *)
             {amp, 0.0, 1.2, 2.0, 0.2}  (* amp slider spec *)
         ]
+    """,
     """
+        Manipulate[
+            Plot3D[Abs[Hypergeometric1F1[a, b, (x + I y)^2]], {x, -2, 2, 200}, {y, -2, 2, 200}],
+            {a, 0.5, 1, 1.5, 0.1}, (* a slider spec *)
+            {b, 1.5, 2, 2.52, 0.1}  (* b slider spec *)
+        ]
+    """,
 ]
 
 # common to ShellFrontEnd and BrowserFrontEnd
