@@ -275,9 +275,9 @@ demos = [
     """,
     """
         Manipulate[
-            Plot3D[Abs[Hypergeometric1F1[a, b, (x + I y)^2]], {x, -2, 2, 200}, {y, -2, 2, 200}],
+            Plot3D[Abs[Hypergeometric1F1[a, b, (x + I y)^2]], {x, -2, 2, 200}, {y, -2, 2, 200}, {0, 14}],
             {a, 0.5, 1, 1.5, 0.1}, (* a slider spec *)
-            {b, 1.5, 2, 2.52, 0.1}  (* b slider spec *)
+            {b, 1.5, 2, 2.5, 0.1}  (* b slider spec *)
         ]
     """,
 ]
