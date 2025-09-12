@@ -191,6 +191,11 @@ def layout_Plot3D(app, expr, values = {}):
 
 #
 # given a Manipulate expression, compute a layout
+#
+# note that this calls unevaluated, uncompiled target_expr, like Plot3D
+# Plot3D compiles the expr, which means we are re-compiling every time the slider moves
+# we could lift that compilation into Manipulate,
+# but timings in Plot3D show that would be practically meaningless for performance
 # 
 
 def layout_Manipulate(app, expr):
