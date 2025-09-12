@@ -55,7 +55,7 @@ class Browser():
 
 
 #
-#
+# util
 #
 
 # pretty print expr
@@ -117,19 +117,19 @@ def my_compile(expr, arg_names, lib = "np"):
     return f
 
 
-
-
-#
-# provides functions that return Dash layouts corresponding to various Mathematica graphical functions
-# like plot3d, manipulate, ...
-#
-
 ids = collections.defaultdict(lambda: 0)
 def uid(s):
     ids[s] += 1
     return f"{s}-{ids[s]}"
 
+
+#
+# given a Plot3D expression, compute a layout
+# 
+
 def layout_Plot3D(app, expr, values = {}):
+
+    start = time.time()
 
     # Plot3D arg exprs
     fun_expr = expr.elements[0]
@@ -184,8 +184,14 @@ def layout_Plot3D(app, expr, values = {}):
     if zlims:
         figure.update_layout(scene = dict(zaxis = dict(range=zlims)))
 
+    print(f"Plot3D_layout {(time.time()-start)*1000:.1f} ms")
+
     return layout
 
+
+#
+# given a Manipulate expression, compute a layout
+# 
 
 def layout_Manipulate(app, expr):
 
@@ -236,6 +242,10 @@ def layout_Manipulate(app, expr):
 
 
 
+#
+# Computer a layaout 
+#
+
 def layout_expr(app, expr, values = {}):
     if str(expr.head) == "System`Plot3D":
         return layout_Plot3D(app, expr, values)
@@ -243,7 +253,7 @@ def layout_expr(app, expr, values = {}):
         return layout_Manipulate(app, expr)
 
 #
-#
+# 
 #
 
 demos = [
@@ -257,15 +267,12 @@ demos = [
     """
 ]
 
-
-
 # common to ShellFrontEnd and BrowserFrontEnd
 class DashFrontEnd:
 
     def __init__(self):
 
         # create app, set options
-        print("xxx Dash fe")
         self.app = dash.Dash(__name__, suppress_callback_exceptions=True)
         self.app.enable_dev_tools(debug = args.debug, dev_tools_silence_routes_logging = not args.debug)
 
