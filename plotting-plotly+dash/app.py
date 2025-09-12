@@ -55,148 +55,193 @@ class Browser():
 
 
 #
+#
+#
+
+# pretty print expr
+def pp(expr, indent=1):
+    if not hasattr(expr, "elements"):
+        print("  " * indent + str(expr))
+    else:
+        print("  " * indent + str(expr.head))
+        for elt in expr.elements:
+            pp(elt, indent + 1)
+
+def to_python_expr(expr, lib = "np"):
+
+    funs = {
+        "System`Sin": f"{lib}.sin",
+        "System`Cos": f"{lib}.cos",
+        "System`Sqrt": f"{lib}.sqrt",
+        "System`Hypergeometric1F1": "scipy.special.hyp1f1",
+    }
+
+    listfuns = {
+        "System`Plus": "sum", # TODO: np.sum?
+        "System`Times": "math.prod" # TODO: np.prod?
+
+    }
+
+    binops = {
+        "System`Power": "**",
+    }
+
+    if not hasattr(expr, "head"):
+        if str(expr).startswith("Global`"):
+            return str(expr).split("`")[-1]
+        elif str(expr) == "System`I":
+            return "1j"
+        else:
+            return str(expr)
+    elif str(expr.head) in funs:
+        fun = funs[str(expr.head)]
+        args = (to_python_expr(e,lib) for e in expr.elements)
+        return f"{fun}({",".join(args)})"
+    elif str(expr.head) in listfuns:
+        fun = listfuns[str(expr.head)]
+        args = (to_python_expr(e,lib) for e in expr.elements)
+        return f"{fun}([{",".join(args)}])"
+    elif str(expr.head) in binops:
+        arg1 = to_python_expr(expr.elements[0],lib)
+        arg2 = to_python_expr(expr.elements[1],lib)
+        return f"({arg1}{binops[str(expr.head)]}{arg2})"
+    else:
+        raise Exception(f"Unknown head {expr.head}")
+
+def my_compile(expr, arg_names, lib = "np"):
+    python_expr = to_python_expr(expr, lib)
+    python_arg_names = [n.split("`")[-1] for n in arg_names]
+    arg_list = ','.join(python_arg_names)
+    python_def = f"lambda {arg_list}: {python_expr}"
+    f = eval(python_def)
+    return f
+
+
+
+
+#
 # provides functions that return Dash layouts corresponding to various Mathematica graphical functions
 # like plot3d, manipulate, ...
 #
 
 # slider spec to be passed to manipulate
-S = collections.namedtuple("S", ["name", "lo", "init", "hi", "step"])
+S = collections.namedtuple("S", ["name", "lo", "init", "hi", "step", "id"])
 
 # plotting axis spec to be passed to plot3d et al
 A = collections.namedtuple("A", ["name", "lo", "hi", "count"])
 
-class Layout:
+ids = collections.defaultdict(lambda: 0)
+def uid(s):
+    ids[s] += 1
+    return f"{s}-{ids[s]}"
 
-    def __init__(self):
-        self.n = 0
+def layout_Plot3D(app, expr, values = {}):
 
-    # we need a pointer to the app in order to register callbacks for things like sliders
-    def set_app(self, app):
-        self.app = app
-
-    def graph_with_sliders(self, make_figure, sliders = []):
-
-        # component ids have to be unique across the entire app,
-        # so we make them unique by using this function to prepend a unique prefix
-        self.n += 1
-        id = lambda id_name: f"g{self.n}-{id_name}"
-
-        # compute a slider from a slider spec (S namedtuple)
-        def slider(s):
-            # TODO: handling of tick marks and step needs work; this code is just for demo purposes
-            marks = {value: f"{value:g}" for value in np.arange(s.lo, s.hi, s.step)}
-            return [
-                dash.html.Label(s.name),
-                dash.dcc.Slider(
-                    id=id(s.name), marks=marks, updatemode="drag",
-                    min=s.lo, max=s.hi, step=s.step/10, value=s.init,
-                )
-            ]
-
-        # TODO: do this via initial update? that doesn't work though if there are no sliders...
-        init_values = {s.name: s.init for s in sliders}
-
-        # compute the layout for the plot and store it in self.plots under plot_name
-        layout = dash.html.Div([
-            dash.dcc.Graph(id=id("figure"), figure=make_figure(init_values), className="graph"),
-            dash.html.Div(list(itertools.chain(*[slider(s) for s in sliders])), className="sliders")
-        ], className="plot")
+    # Plot3D arg exprs
+    fun_expr = expr.elements[0]
+    xlims_expr = expr.elements[1]
+    ylims_expr = expr.elements[2]
         
-        # define callbacks for the sliders
-        # whenever any slider moves we call make_figure() passing it the slider values
-        # to recompute the plot for the new slider values
-        if sliders:
-            @self.app.callback(
-                dash.Output(id("figure"), "figure"),
-                *(dash.Input(id(s.name), "value") for s in sliders),
-                prevent_initial_call=True
+    # compile fun
+    fun_args = [str(xlims_expr.elements[0]), str(ylims_expr.elements[0])] + list(values.keys())
+    fun = my_compile(fun_expr, fun_args)
+
+    # parse xlims, construct A namedtuple
+    def to_python_axis_spec(expr):
+        return A(str(expr.elements[0]).split("`")[-1], *[e.to_python() for e in expr.elements[1:]])
+    xlims = to_python_axis_spec(xlims_expr)
+    ylims = to_python_axis_spec(ylims_expr)
+
+    # compute xs and ys
+    xs = np.linspace(xlims.lo, xlims.hi, xlims.count)
+    ys = np.linspace(ylims.lo, ylims.hi, ylims.count)
+    xs, ys = np.meshgrid(xs, ys)
+
+    # compute zs from xs and ys using compiled function
+    zs = fun(**({xlims.name: xs, ylims.name: ys} | values))
+
+    # TODO: real title
+    # TODO: make title using html, not plotly
+    title = "xxx"
+
+    # plot it
+    figure = go.Figure(
+        data = [go.Surface(x=xs, y=ys, z=zs, colorscale="Viridis", colorbar=dict(thickness=10))],
+        layout = go.Layout(
+            title = dict(
+                text = title,
+                y = 0.9
+            ),
+            margin = dict(l=0, r=0, t=60, b=0),
+            scene = dict(
+                xaxis_title="x",
+                yaxis_title="y",
+                zaxis_title="z",
+                aspectmode="cube"
             )
-            def update(*args):
-                return make_figure({s.name: value for s, value in zip(sliders,args)})
+        )
+    )
+    layout = dash.dcc.Graph(id=uid("figure"), figure=figure, className="plot")
 
-        return layout
+    """    
+    if zlims:
+        figure.update_layout(scene = dict(zaxis = dict(range=zlims)))
+    """
+    return layout
 
-    # implement something like Mathematica Plot3D
-    # see examples below
-    def plot3d(self, fun_expr, xlims, ylims, zlims = None, top_level = False, vals = {}):
 
-        xs = np.linspace(xlims.lo, xlims.hi, xlims.count)
-        ys = np.linspace(ylims.lo, ylims.hi, ylims.count)
-        xs, ys = np.meshgrid(xs, ys)
-        zs = interpreter.eval(fun_expr, vals | {xlims.name: xs, ylims.name: ys})
+def layout_Manipulate(app, expr):
 
-        # fake it
-        #title = inspect.getsource(f)
-        #title = title[title.index(":")+1 : title.rindex(",")]
-        title = "xxx"
+    target_expr = expr.elements[0]
+    slider_exprs = expr.elements[1:]
 
-        def make_figure(_): # TODO: do we really want to ignore the arg?
-            figure = go.Figure(
-                data = [go.Surface(x=xs, y=ys, z=zs, colorscale="Viridis", colorbar=dict(thickness=10))],
-                layout = go.Layout(
-                    title = dict(
-                        text = title,
-                        y = 0.9
-                    ),
-                    margin = dict(l=0, r=0, t=60, b=0),
-                    scene = dict(
-                        xaxis_title="x",
-                        yaxis_title="y",
-                        zaxis_title="z",
-                        aspectmode="cube"
-                    ),
-                )
+    # TODO: from slider_exprs
+    sliders = [S("freq", 0.1, 1.0, 2.0, 0.2, uid("slider")), S("amp", 0.0, 1.2, 2.0, 0.2, uid("slider"))]
+
+    # compute a slider layout from a slider spec (S namedtuple)
+    def slider_layout(s):
+        # TODO: handling of tick marks and step needs work; this code is just for demo purposes
+        marks = {value: f"{value:g}" for value in np.arange(s.lo, s.hi, s.step)}
+        return [
+            dash.html.Label(s.name),
+            dash.dcc.Slider(
+                id=s.id, marks=marks, updatemode="drag",
+                min=s.lo, max=s.hi, step=s.step/10, value=s.init,
             )
-            if zlims:
-                figure.update_layout(scene = dict(zaxis = dict(range=zlims)))
-            return figure
+        ]
 
-        # TODO: this seems more convoluted than necessary?
-        # is the whole thing with passing a function to self.graph_with_sliders the right way to do it,
-        #     or is it just an artifact of the previous demo that used lambda
-        if top_level:
-            return self.graph_with_sliders(make_figure, [])
-        else:
-            return make_figure({}) # TODO: do we really need to pass an arg?
+    # TODO: do this via initial update? that doesn't work though if there are no sliders...
+    init_values = {s.name: s.init for s in sliders}
 
+    # compute the layout for the plot
+    target_id = uid("target")
+    layout = dash.html.Div([
+        dash.html.Div([layout_expr(app, target_expr, init_values)], id=target_id),
+        dash.html.Div(list(itertools.chain(*[slider_layout(s) for s in sliders])), className="sliders")
+    ], className="plot")
+        
+    # define callbacks for the sliders
+    @app.callback(
+        dash.Output(target_id, "children"),
+        *(dash.Input(s.id, "value") for s in sliders),
+        prevent_initial_call=True
+    )
+    def update(*args):
+        return layout_expr(app, target_expr, {s.name: a for s, a in zip(sliders, args)})
 
-    def manipulate(self, plot_expr, *sliders):
-
-
-        def make_figure(vals):
-            return self.layout(plot_expr, top_level=False, vals=vals)
-        # TODO: is plot callback the best way to do graph_with_sliders?
-        return self.graph_with_sliders(make_figure, sliders)
-
-    # construct an A (axis spec Python object) from Mathics expr like {x,0,10,200}
-    def to_python_axis_spec(self, expr):
-        return A(str(expr.elements[0]).split("`")[1], *[e.to_python() for e in expr.elements[1:]])
-
-    def layout(self, expr, top_level=True, vals={}):
-
-        if str(expr.head) == "System`Plot3D":
-
-            # TODO: embed self.plot3d here?
-            return self.plot3d(
-                expr.elements[0],
-                self.to_python_axis_spec(expr.elements[1]),
-                self.to_python_axis_spec(expr.elements[2]),
-                top_level=top_level,
-                vals=vals
-            )
-
-        elif str(expr.head) == "Global`Manipulate":
-
-            # TODO: sliders from expr
-            # TODO: add zlim
-            # TODO: embed self.manipulate here?
-            return self.manipulate(
-                expr.elements[0],
-                S("freq", 0.1, 1.0, 2.0, 0.2),
-                S("amp", 0.0, 1.2, 2.0, 0.2)
-            )
+    return layout
 
 
+
+def layout_expr(app, expr, values = {}):
+    if str(expr.head) == "System`Plot3D":
+        return layout_Plot3D(app, expr, values)
+    elif str(expr.head) == "Global`Manipulate":
+        return layout_Manipulate(app, expr)
+
+#
+#
+#
 
 demos = [
     "Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3,200}, {y,-3,3,200}]",
@@ -211,91 +256,15 @@ demos = [
 
 
 
-# TODO: move this up front
-# TODO: add pp()
-
-#
-# standin for mathics interpreter
-# takes string expressions, returns layouts
-# called by front end to handle user input and get an output layout to display
-# 
-# to simplify the demo, instead of accepting actual math expressions,
-# we just accept a fixed set of strings "a", "b", ... and call Layout
-# to get a layout to return to the front end
-#
-class Interpreter:
-
-    def __init__(self):
-        self.session = mathics.session.MathicsSession()
-
-    def parse(self, expr):
-        return self.session.parse(expr)
-
-    def to_python_expr(self, expr):
-
-        funs = {
-            "System`Sin": "np.sin",
-            "System`Cos": "np.cos",
-            "System`Sqrt": "np.sqrt"
-        }
-
-        listfuns = {
-            "System`Plus": "sum", # TODO: np.sum?
-            "System`Times": "math.prod" # TODO: np.prod?
-
-        }
-
-        binops = {
-            "System`Power": "**",
-        }
-
-        if not hasattr(expr, "head"):
-            if str(expr).startswith("Global`"):
-                return str(expr).split("`")[1]
-            else:
-                return str(expr)
-        elif str(expr.head) in funs:
-            fun = funs[str(expr.head)]
-            args = (self.to_python_expr(e) for e in expr.elements)
-            return f"{fun}({",".join(args)})"
-        elif str(expr.head) in listfuns:
-            fun = listfuns[str(expr.head)]
-            args = (self.to_python_expr(e) for e in expr.elements)
-            return f"{fun}([{",".join(args)}])"
-        elif str(expr.head) in binops:
-            arg1 = self.to_python_expr(expr.elements[0])
-            arg2 = self.to_python_expr(expr.elements[1])
-            return f"({arg1}{binops[str(expr.head)]}{arg2})"
-        else:
-            raise Exception(f"Unknown head {expr.head}")
-
-    def eval(self, expr, vals):
-        python_expr = self.to_python_expr(expr)
-        return eval(python_expr, globals(), vals)
-
-
-# pretty print expr
-def pp(expr, indent=1):
-    if not hasattr(expr, "elements"):
-        print("  " * indent + str(expr))
-    else:
-        print("  " * indent + str(expr.head))
-        for elt in expr.elements:
-            pp(elt, indent + 1)
-
-
-
 # common to ShellFrontEnd and BrowserFrontEnd
 class DashFrontEnd:
 
     def __init__(self):
 
         # create app, set options
-        self.app = dash.Dash(__name__)
+        print("xxx Dash fe")
+        self.app = dash.Dash(__name__, suppress_callback_exceptions=True)
         self.app.enable_dev_tools(debug = args.debug, dev_tools_silence_routes_logging = not args.debug)
-
-        # this allows layout to register callbacks for things like sliders
-        layout.set_app(self.app)
 
         # start server on its own thread, allowing something else to run on main thread
         # pass it self.app.server which is a Flask WSGI compliant app so could be hooked to any WSGI compliant server
@@ -339,11 +308,12 @@ class ShellFrontEnd(DashFrontEnd):
         # TODO: then actual REPL loop
         # TODO: add s as title
 
-        for s in demos:
+        session = mathics.session.MathicsSession()
 
+        for s in demos:
             plot_name = f"plot{len(self.plots)}"
-            expr = interpreter.parse(s)
-            self.plots[plot_name] = layout.layout(expr)
+            expr = session.parse(s)
+            self.plots[plot_name] = layout_expr(self.app, expr)
             url = f"http://127.0.0.1:{self.server.server_port}/{plot_name}"
             browser.show(url)
 
@@ -431,8 +401,6 @@ class BrowserFrontEnd(DashFrontEnd):
 
 
 browser = Browser()
-layout = Layout()
-interpreter = Interpreter()
 front_end = ShellFrontEnd if args.fe=="shell" else BrowserFrontEnd
 threading.Thread(target = front_end).start()
 browser.start()
