@@ -161,9 +161,10 @@ def layout_Plot3D(app, expr, values = {}):
     # compute zs from xs and ys using compiled function
     zs = fun(**({xlims.name: xs, ylims.name: ys} | values))
 
-    # TODO: real title
+    # TODO: real title - .format gave infinite recursion, so ...?
     # TODO: make title using html, not plotly
-    title = "xxx"
+    #title = fun_expr.format(mathics.session.Evaluation(), "foobar")
+    title = str(fun_expr).replace("Global`", "").replace("System`", "")
 
     # plot it
     figure = go.Figure(
