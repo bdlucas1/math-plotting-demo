@@ -124,12 +124,6 @@ def my_compile(expr, arg_names, lib = "np"):
 # like plot3d, manipulate, ...
 #
 
-# slider spec to be passed to manipulate
-S = collections.namedtuple("S", ["name", "lo", "init", "hi", "step", "id"])
-
-# plotting axis spec to be passed to plot3d et al
-A = collections.namedtuple("A", ["name", "lo", "hi", "count"])
-
 ids = collections.defaultdict(lambda: 0)
 def uid(s):
     ids[s] += 1
@@ -141,16 +135,21 @@ def layout_Plot3D(app, expr, values = {}):
     fun_expr = expr.elements[0]
     xlims_expr = expr.elements[1]
     ylims_expr = expr.elements[2]
+    zlims_expr = expr.elements[3] if len(expr.elements) > 3 else None
         
     # compile fun
     fun_args = [str(xlims_expr.elements[0]), str(ylims_expr.elements[0])] + list(values.keys())
     fun = my_compile(fun_expr, fun_args)
 
-    # parse xlims, construct A namedtuple
+    # parse xlims, construct namedtuple
+    A = collections.namedtuple("A", ["name", "lo", "hi", "count"])
     def to_python_axis_spec(expr):
         return A(str(expr.elements[0]).split("`")[-1], *[e.to_python() for e in expr.elements[1:]])
     xlims = to_python_axis_spec(xlims_expr)
     ylims = to_python_axis_spec(ylims_expr)
+
+    # parse zlims
+    zlims = [zlims_expr.elements[0].value, zlims_expr.elements[1].value] if zlims_expr else None
 
     # compute xs and ys
     xs = np.linspace(xlims.lo, xlims.hi, xlims.count)
@@ -182,11 +181,9 @@ def layout_Plot3D(app, expr, values = {}):
         )
     )
     layout = dash.dcc.Graph(id=uid("figure"), figure=figure, className="plot")
-
-    """    
     if zlims:
         figure.update_layout(scene = dict(zaxis = dict(range=zlims)))
-    """
+
     return layout
 
 
@@ -196,6 +193,7 @@ def layout_Manipulate(app, expr):
     slider_exprs = expr.elements[1:]
 
     # TODO: from slider_exprs
+    S = collections.namedtuple("S", ["name", "lo", "init", "hi", "step", "id"])
     sliders = [S("freq", 0.1, 1.0, 2.0, 0.2, uid("slider")), S("amp", 0.0, 1.2, 2.0, 0.2, uid("slider"))]
 
     # compute a slider layout from a slider spec (S namedtuple)
@@ -247,7 +245,7 @@ demos = [
     "Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3,200}, {y,-3,3,200}]",
     """
         Manipulate[
-            Plot3D[Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp, {x,-3,3,200}, {y,-3,3,200}],
+            Plot3D[Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp, {x,-3,3,200}, {y,-3,3,200}, {-1,1}],
             {freq, 0.1, 1.0, 2.0, 0.2}, (* freq slider spec *)
             {amp, 0.0, 1.2, 2.0, 0.2}  (* amp slider spec *)
         ]
