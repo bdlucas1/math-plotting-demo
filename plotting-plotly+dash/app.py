@@ -180,7 +180,7 @@ def layout_Plot3D(app, expr, values = {}):
             )
         )
     )
-    layout = dash.dcc.Graph(id=uid("figure"), figure=figure, className="plot")
+    layout = dash.dcc.Graph(figure=figure, className="plot")
     if zlims:
         figure.update_layout(scene = dict(zaxis = dict(range=zlims)))
 
@@ -192,9 +192,14 @@ def layout_Manipulate(app, expr):
     target_expr = expr.elements[0]
     slider_exprs = expr.elements[1:]
 
-    # TODO: from slider_exprs
+    # TODO: clean this up
     S = collections.namedtuple("S", ["name", "lo", "init", "hi", "step", "id"])
-    sliders = [S("freq", 0.1, 1.0, 2.0, 0.2, uid("slider")), S("amp", 0.0, 1.2, 2.0, 0.2, uid("slider"))]
+    def val(e):
+        if str(e).startswith("Global`"):
+            return str(e).split("`")[-1]
+        else:
+            return e.value
+    sliders = [S(*[val(e) for e in s.elements], uid("slider")) for s in slider_exprs]
 
     # compute a slider layout from a slider spec (S namedtuple)
     def slider_layout(s):
