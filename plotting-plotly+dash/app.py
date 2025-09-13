@@ -129,7 +129,7 @@ def uid(s):
 # given a Plot3D expression, compute a layout
 # 
 
-def layout_Plot3D(app, expr, values = {}):
+def layout_Plot3D(fe, expr, values = {}):
 
     start = time.time()
 
@@ -161,11 +161,8 @@ def layout_Plot3D(app, expr, values = {}):
     # compute zs from xs and ys using compiled function
     zs = fun(**({xlims.name: xs, ylims.name: ys} | values))
 
-    # TODO: real title - .format gave infinite recursion, so ...?
-    # TODO: make title using html, not plotly
     # https://github.com/Mathics3/mathics-django/blob/master/mathics_django/web/format.py#L40-L135
-    #title = fun_expr.format(mathics.session.Evaluation(), "System`OutputForm")
-    title = str(fun_expr).replace("Global`", "").replace("System`", "")
+    title = fe.session.evaluation.format_output(fun_expr, "text")
 
     # plot it
     figure = go.Figure(
@@ -202,7 +199,7 @@ def layout_Plot3D(app, expr, values = {}):
 # and it would complicate the implementation
 # 
 
-def layout_Manipulate(app, expr):
+def layout_Manipulate(fe, expr):
 
     target_expr = expr.elements[0]
     slider_exprs = expr.elements[1:]
@@ -231,7 +228,7 @@ def layout_Manipulate(app, expr):
     # compute the layout for the plot
     target_id = uid("target")
     init_values = {s.name: s.init for s in sliders}
-    init_target_layout = layout_expr(app, target_expr, init_values)
+    init_target_layout = layout_expr(fe, target_expr, init_values)
     slider_layouts = list(itertools.chain(*[slider_layout(s) for s in sliders]))
     layout = dash.html.Div([
         dash.html.Div(init_target_layout, id=target_id),
@@ -239,13 +236,13 @@ def layout_Manipulate(app, expr):
     ], className="manipulate")
         
     # define callbacks for the sliders
-    @app.callback(
+    @fe.app.callback(
         dash.Output(target_id, "children"),
         *(dash.Input(s.id, "value") for s in sliders),
         prevent_initial_call=True
     )
     def update(*args):
-        return layout_expr(app, target_expr, {s.name: a for s, a in zip(sliders, args)})
+        return layout_expr(fe, target_expr, {s.name: a for s, a in zip(sliders, args)})
 
     return layout
 
@@ -255,11 +252,11 @@ def layout_Manipulate(app, expr):
 # Computer a layaout 
 #
 
-def layout_expr(app, expr, values = {}):
+def layout_expr(fe, expr, values = {}):
     if str(expr.head) == "System`Plot3D":
-        return layout_Plot3D(app, expr, values)
+        return layout_Plot3D(fe, expr, values)
     elif str(expr.head) == "Global`Manipulate":
-        return layout_Manipulate(app, expr)
+        return layout_Manipulate(fe, expr)
 
 #
 # 
@@ -335,12 +332,12 @@ class ShellFrontEnd(DashFrontEnd):
         # TODO: then actual REPL loop
         # TODO: add s as title
 
-        session = mathics.session.MathicsSession()
+        self.session = mathics.session.MathicsSession()
 
         for s in demos:
             plot_name = f"plot{len(self.plots)}"
-            expr = session.parse(s)
-            self.plots[plot_name] = layout_expr(self.app, expr)
+            expr = self.session.parse(s)
+            self.plots[plot_name] = layout_expr(self, expr)
             url = f"http://127.0.0.1:{self.server.server_port}/{plot_name}"
             browser.show(url)
 
