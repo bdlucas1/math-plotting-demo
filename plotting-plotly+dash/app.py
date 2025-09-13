@@ -298,6 +298,9 @@ class DashFrontEnd:
         threading.Thread(target = self.server.serve_forever).start()
         print("using port", self.server.server_port)
 
+        # everybody needs a Mathics session
+        self.session = mathics.session.MathicsSession()
+
 
 # read expressions from terminal, display results in a browser winddow
 class ShellFrontEnd(DashFrontEnd):
@@ -332,8 +335,6 @@ class ShellFrontEnd(DashFrontEnd):
         # TODO: print s on stdout
         # TODO: then actual REPL loop
         # TODO: add s as title
-
-        self.session = mathics.session.MathicsSession()
 
         for s in demos:
             plot_name = f"plot{len(self.plots)}"
@@ -405,7 +406,12 @@ class BrowserFrontEnd(DashFrontEnd):
             #patch = dash.Patch()
             #patch.append(self.pair(n+1))
             #return (patch, layout)
-            layout = interpreter.compute(input_value)
+            # TODO: this is funky
+            input_value = input_value.strip()
+            if input_value in "abc":
+                input_value = demos["abc".index(input_value)]
+            expr = self.session.parse(input_value)
+            layout = layout_expr(self, expr)
             return layout
 
         # return input+output pair
