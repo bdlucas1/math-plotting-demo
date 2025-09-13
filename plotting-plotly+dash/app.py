@@ -163,6 +163,7 @@ def layout_Plot3D(app, expr, values = {}):
 
     # TODO: real title - .format gave infinite recursion, so ...?
     # TODO: make title using html, not plotly
+    # https://github.com/Mathics3/mathics-django/blob/master/mathics_django/web/format.py#L40-L135
     #title = fun_expr.format(mathics.session.Evaluation(), "foobar")
     title = str(fun_expr).replace("Global`", "").replace("System`", "")
 
