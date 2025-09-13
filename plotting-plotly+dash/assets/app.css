@@ -6,38 +6,35 @@
     box-sizing: border-box;
 }
 
-.shell-front-end {
+.plot {
 
-    .plot {
-
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-
-        .graph {
-            flex: 1;
-            overflow: auto;
-            padding-left: 2rem;
-            padding-right: 2rem;
-            padding-bottom: 1rem;
-            aspect-ratio: 1 / 1;
-        }
-
-        .sliders {
+    width: 100vw;
+    
+    padding-top: 2rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    padding-bottom: 1rem;
+    
+    .title {
+    }
+    
+    .graph {
+        aspect-ratio: 1 / 1;
+    }
+}
+    
+.sliders {
         
-            flex: 0;
-            width: 100%;
-            padding: 1rem;
-
-            display: grid;
-            grid-template-columns: max-content 1fr;
-            align-items: center;
-
-            label {
-                white-space: nowrap;
-                font-size: 10pt;
-            }
-        }
+    width: 100%;
+    padding: 1rem;
+    
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    align-items: center;
+    
+    label {
+        white-space: nowrap;
+        font-size: 12pt;
     }
 }
 

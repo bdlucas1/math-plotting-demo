@@ -38,7 +38,7 @@ class Browser():
         if args.browser == "webview":
             offset = 50 * self.n
             self.n += 1
-            webview.create_window(url, url, x=100+offset, y=100+offset, width=600, height=600)
+            webview.create_window(url, url, x=100+offset, y=100+offset, width=600, height=800)
         elif args.browser == "webbrowser":
             webbrowser.open_new(url)
 
@@ -164,29 +164,28 @@ def layout_Plot3D(app, expr, values = {}):
     # TODO: real title - .format gave infinite recursion, so ...?
     # TODO: make title using html, not plotly
     # https://github.com/Mathics3/mathics-django/blob/master/mathics_django/web/format.py#L40-L135
-    #title = fun_expr.format(mathics.session.Evaluation(), "foobar")
+    #title = fun_expr.format(mathics.session.Evaluation(), "System`OutputForm")
     title = str(fun_expr).replace("Global`", "").replace("System`", "")
 
     # plot it
     figure = go.Figure(
         data = [go.Surface(x=xs, y=ys, z=zs, colorscale="Viridis", colorbar=dict(thickness=10))],
         layout = go.Layout(
-            title = dict(
-                text = title,
-                y = 0.9
-            ),
-            margin = dict(l=0, r=0, t=60, b=0),
+            margin = dict(l=0, r=0, t=0, b=0),
             scene = dict(
-                xaxis_title="x",
-                yaxis_title="y",
-                zaxis_title="z",
+                xaxis_title=xlims.name,
+                yaxis_title=ylims.name,
+                #zaxis_title="z",
                 aspectmode="cube"
             )
         )
     )
-    layout = dash.dcc.Graph(figure=figure, className="plot")
     if zlims:
         figure.update_layout(scene = dict(zaxis = dict(range=zlims)))
+    layout = dash.html.Div ([
+        dash.html.Div(title, className="title"),
+        dash.dcc.Graph(figure=figure, className="graph")
+    ], className="plot")
 
     print(f"Plot3D_layout {(time.time()-start)*1000:.1f} ms")
 
@@ -237,7 +236,7 @@ def layout_Manipulate(app, expr):
     layout = dash.html.Div([
         dash.html.Div(init_target_layout, id=target_id),
         dash.html.Div(slider_layouts, className="sliders")
-    ], className="plot")
+    ], className="manipulate")
         
     # define callbacks for the sliders
     @app.callback(
@@ -268,6 +267,7 @@ def layout_expr(app, expr, values = {}):
 
 demos = [
     "Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3,200}, {y,-3,3,200}]",
+    #]; [
     """
         Manipulate[
             Plot3D[Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp, {x,-3,3,200}, {y,-3,3,200}, {-1,1}],
