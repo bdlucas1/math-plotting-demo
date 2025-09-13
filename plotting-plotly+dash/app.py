@@ -162,7 +162,8 @@ def layout_Plot3D(fe, expr, values = {}):
     zs = fun(**({xlims.name: xs, ylims.name: ys} | values))
 
     # https://github.com/Mathics3/mathics-django/blob/master/mathics_django/web/format.py#L40-L135
-    title = fe.session.evaluation.format_output(fun_expr, "text")
+    fancy = False # the fancy latex formatting isn't that great
+    title = fe.session.evaluation.format_output(fun_expr, "latex" if fancy else "text")
 
     # plot it
     figure = go.Figure(
@@ -180,7 +181,7 @@ def layout_Plot3D(fe, expr, values = {}):
     if zlims:
         figure.update_layout(scene = dict(zaxis = dict(range=zlims)))
     layout = dash.html.Div ([
-        dash.html.Div(title, className="title"),
+        dash.dcc.Markdown(f"${title}$", mathjax=True) if fancy else dash.html.Div(title, className="title"),
         dash.dcc.Graph(figure=figure, className="graph")
     ], className="plot")
 
