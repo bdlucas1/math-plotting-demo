@@ -324,11 +324,9 @@ def layout_expr(fe, expr, values = {}):
 
 def eval_Plot3Dv1(fe, expr):
     result = Expression(Symbol("My`Plot3D"), *expr.elements)    
-    print("xxx eval_Plot3Dv1 result:")
-    prt(result)
     return result
 
-def eval_Plot3Dv2(fe, expr):
+def eval_plot3d(fe, expr, grid_to_expr):
 
     # Plot3D arg exprs
     fun_expr = expr.elements[0]
@@ -367,6 +365,11 @@ def eval_Plot3Dv2(fe, expr):
     # compute zs from xs and ys using compiled function
     zs = fun(**({xlims.name: xs, ylims.name: ys} | values))
 
+    return grid_to_expr(xs, ys, zs)
+
+
+def grid_to_expr_v2(xs, ys, zs):
+
     # a=[1:,1:]   b=[1:,:-1]
     # c=[:-1:,1:] d=[:-1,:-1]
     xyzs = np.stack([xs, ys, zs], axis=-1) # shape = (nx,ny,3)
@@ -390,8 +393,14 @@ def eval_Plot3Dv2(fe, expr):
     return result
 
 
-#NEXT: Plot3Dv2 that generates efficient G3D, using either GraphicsComples or MeshRegion
-# TODO: investigate mathematics MeshRegion, DiscretizeRegion, DiscretizeGraphics, MeshPrimitives, GraphicsComplex
+def eval_Plot3Dv2(fe, expr):
+    return eval_plot3d(fe, expr, grid_to_expr_v2)
+
+def grid_to_expr_v3(xs, ys, zs):
+    pass
+
+def eval_Plot3Dv3(fe, expr):
+    return eval_plot3d(fe, expr, grid_to_expr_v3)
 
 
 def eval_expr(fe, expr):
@@ -399,6 +408,7 @@ def eval_expr(fe, expr):
     funs = {
         "My`Plot3Dv1": eval_Plot3Dv1,
         "My`Plot3Dv2": eval_Plot3Dv2,
+        "My`Plot3Dv3": eval_Plot3Dv3,
     }
     if str(expr.head) in funs:
         result = funs[str(expr.head)](fe, expr)
@@ -412,8 +422,9 @@ def eval_expr(fe, expr):
 #
 
 dp3d   = "Plot3D[Sin[x^2+y^2], {x,-3,3}, {y,-3,3}, PlotPoints -> {50,50}]"
+dp3dv3 = "My`Plot3Dv3[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}]"
 dp3dv2 = "My`Plot3Dv2[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}]"
-dp3dv1 = "My`Plot3Dv1[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3,200}, {y,-3,3,200}]"  # 3+21=24ms
+dp3dv1 = "My`Plot3Dv1[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3,200}, {y,-3,3,200}]"
 dmp3ds = """
         Manipulate[
             My`Plot3D[Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp, {x,-3,3,200}, {y,-3,3,200}, {-1,1}],
@@ -431,11 +442,12 @@ dmp3dh = """
 
 demos = [
     #                                                                                   eval layout  total (ms)
-    dp3d,   # Plot3D Sin 50x50           current                                      10026    181   10207
+    #dp3d,   # Plot3D Sin 50x50           current                                      10026    181   10207
+    dp3dv3, # Plot3Dv2 Sin/Sqrt 200x200  G3D, GraphicsComplex                           ...
     dp3dv2, # Plot3Dv2 Sin/Sqrt 200x200  G3D, individual polys, no GraphicsComplex      433    622    1055
     dp3dv1, # Plot3Dv1 Sin/Sqrt 200x200  send Plot3D unmodified to layout                 0     26      26
-    dmp3ds, # Man Plot3Dv1 Sin/Sqrt
-    #dmp3dh, # Man Plot3Dv1 HypGeo
+    dmp3ds, # Man Plot3Dv1 Sin/Sqrt 200x200
+    dmp3dh, # Man Plot3Dv1 HypGeo 200x200
 ]
 
 # common to ShellFrontEnd and BrowserFrontEnd
