@@ -16,6 +16,7 @@ import mathics.session
 from mathics.core.expression import Expression
 from mathics.core.list import ListExpression
 from mathics.core.symbols import Symbol
+from mathics.core.atoms import Integer, Real
 import dash
 import werkzeug
 import plotly.graph_objects as go
@@ -251,35 +252,75 @@ def layout_Manipulate(fe, expr):
 
 def layout_Graphics3D(fe, expr):
 
-    graphics = expr.elements[0].elements
-    rules = expr.elements[1:]
-
-    # TODO: text output thing
     xyzs = []
     ijks = []
-    for g in graphics:
+
+    def handle_g(g):
+        #print("handling", g)
         if str(g.head) == "System`Polygon":
             #print("xxx 0", type(g.elements[0].elements[0])); exit()
             poly = [p.value for p in g.elements[0].elements]
             #print("xxx poly", poly); exit()
             i = len(xyzs)
-            xyzs += poly
+            xyzs.extend(poly)
             ijks.append([i,i+1,i+2])
         elif str(g.head) == "System`Line":
             line = [p.value for p in g.elements[0].elements]
+        elif str(g.head) == "Global`GraphicsComplex": # TODO: should be system
+            # TODO: is this correct?
+            print("xxx g.elements[0])", type(g.elements[0]), g.elements[0].head)
+            t0 = time.time()
+            xyzs.extend(g.elements[0].value)
+            print("xxx xyzs", time.time()-t0)
+            def handle_c(c):
+                if str(c.head) == "System`Polygon":
+                    polys = c.elements[0]
+                    print("xxx polys", type(polys), polys.head)                    
+                    if isinstance(polys, NumpyArrayListExpr):
+                        t = t0
+                        for poly in polys.value:
+                            ijks.append(poly[0:3]-1)
+                        print("xxx ijks", time.time()-t0)
+                    else:
+                        for poly in polys.elements:
+                            for j, k in zip(poly.elements[1:-1], poly.elements[2:]):
+                                # ugh - indices in Polygon are 1-based
+                                ijks.append([poly.elements[0].value-1, j.value-1, k.value-1])
+                else:
+                    raise Exception(f"Unknown head {c.head} in GraphicsComplex")
+            for c in g.elements[1:]:
+                handle_c(c)
+
+        elif str(g.head) == "System`Rule":
+            # TODO
+            pass
+        elif str(g.head) == "System`List":
+            for gg in g.elements:
+                handle_g(gg)
         else:
+            #prt(g)
             raise Exception(f"Unknown head {g.head}")
 
-    #print(xyzs); exit()
-    xs = [xyz[0] for xyz in xyzs]
-    ys = [xyz[1] for xyz in xyzs]
-    zs = [xyz[2] for xyz in xyzs]
-    _is = [ijk[0] for ijk in ijks]
-    js = [ijk[1] for ijk in ijks]
-    ks = [ijk[2] for ijk in ijks]
+    for g in expr.elements:
+        handle_g(g)
 
+
+    t0 = time.time()
+    xs = [xyz[0] for xyz in xyzs]
+    ys = np.array([xyz[1] for xyz in xyzs])
+    zs = np.array([xyz[2] for xyz in xyzs])
+    _is = np.array([ijk[0] for ijk in ijks])
+    js = np.array([ijk[1] for ijk in ijks])
+    ks = np.array([ijk[2] for ijk in ijks])
+    print("xxx transpose", time.time()-t0)
+
+    t0 = time.time()
     mesh = go.Mesh3d(x=xs, y=ys, z=zs, i=_is, j=js, k=ks, color="blue")
+    print("xxx mesh", time.time()-t0)
+    
+    t0 = time.time()
     figure = go.Figure(data=[mesh])
+    print("xxx figure", time.time()-t0)
 
     """
             colorbar=dict(title=dict(text='z')),
@@ -348,6 +389,7 @@ def eval_plot3d(fe, expr, grid_to_expr):
     fun = my_compile(fun_expr, fun_args)
 
     # parse xlims, construct namedtuple
+    # TODO: namedtuple probably not needed any more
     A = collections.namedtuple("A", ["name", "lo", "hi", "count"])
     def to_python_axis_spec(expr, pts):
         return A(str(expr.elements[0]).split("`")[-1], *[e.to_python() for e in expr.elements[1:]], pts)
@@ -367,21 +409,26 @@ def eval_plot3d(fe, expr, grid_to_expr):
 
     return grid_to_expr(xs, ys, zs)
 
+list_expr = lambda *a: ListExpression(*a, literal_values = a)
 
-def grid_to_expr_v2(xs, ys, zs):
+# List of Polygon each with its own list of x,y,z coordinates
+def grid_to_expr_poly_list(xs, ys, zs):
 
     # a=[1:,1:]   b=[1:,:-1]
     # c=[:-1:,1:] d=[:-1,:-1]
-    xyzs = np.stack([xs, ys, zs], axis=-1) # shape = (nx,ny,3)
+    xyzs = np.stack([xs, ys, zs], axis=-1)                                # shape = (nx,ny,3)
     tris1 = np.stack([xyzs[1:,1:], xyzs[1:,:-1], xyzs[:-1,:-1]], axis=-1) # abd, shape = (nx-1,ny-1,3,3)
     tris2 = np.stack([xyzs[1:,1:], xyzs[:-1,:-1], xyzs[:-1,1:]], axis=-1) # adc, shape = (nx-1,ny-1,3,3)
     tris = np.stack([tris1,tris2])                                        # shape = (2,nx-1,ny-1,3,3)
     tris = tris.reshape((-1,3,3)).transpose(0,2,1)                        # shape = (2*(nx-1)*(ny-1),3,3)
 
+    # TODO: check this
+    # ugh - indices in Polygon are 1-based
+    tris += 1
+
     # this is the slow part
     # corresponding traversal at other end is similarly slow
     start = time.time()
-    list_expr = lambda *a: ListExpression(*a, literal_values = a)
     result = Expression(Symbol("System`Graphics3D"), 
         Expression(Symbol("System`List"), *(
             Expression(Symbol("System`Polygon"), list_expr(list_expr(*p), list_expr(*q), list_expr(*r)))
@@ -393,14 +440,60 @@ def grid_to_expr_v2(xs, ys, zs):
     return result
 
 
-def eval_Plot3Dv2(fe, expr):
-    return eval_plot3d(fe, expr, grid_to_expr_v2)
+def numpy_array_list_expr(v, cvt):
+    if isinstance(v, np.ndarray):
+        return ListExpression(*(numpy_array_list_expr(vv, cvt) for vv in v), literal_values = v)
+    else:
+        # numpy scalar as mathics type
+        return cvt(v.item())
 
-def grid_to_expr_v3(xs, ys, zs):
-    pass
+# quacks like a List Expression, but only lazily generates elements
+# those in the know can look at .value, which is an np array, for an efficient shortcut
+class NumpyArrayListExpr:
+
+    def __init__(self, value, cvt):
+        self.head = Symbol("System`List") # TODO use import
+        self.value = value
+        self.cvt = cvt
+        self._elements = None
+
+    @property
+    def elements(self):
+        if not self._elements:
+            # TODO: this instantiates whole nested list structure on first reference
+            # should we likewise lazily evaluate each element of the list in the case of >1-d arrays?
+            self._elements = numpy_array_list_expr(self.value, self.cvt).elements
+        return self._elements
+
+# GraphicsComplex with list of points, and list of polys, each poly a list of indices in the list of points
+def grid_to_expr_complex(xs, ys, zs, np_expr):
+    
+    start = time.time()
+
+    n = math.prod(xs.shape)
+    inxs = np.arange(n).reshape(xs.shape)                                                       # shape = (nx,ny)
+    quads = np.stack([inxs[:-1,:-1], inxs[:-1,1:], inxs[1:,1:], inxs[1:,:-1]]).T.reshape(-1, 4) # shape = ((nx-1)*(nx-1), 4)
+    xyzs = np.stack([xs, ys, zs]).transpose(1,2,0).reshape(-1,3)                                # shape = (nx*ny, 3)
+
+    # ugh - indices in Polygon are 1-based
+    quads += 1
+
+    quads_expr = np_expr(quads, Integer)
+    xyzs_expr = np_expr(xyzs, Real)
+    poly_expr = Expression(Symbol("System`Polygon"), quads_expr)
+    gc_expr = Expression(Symbol("Global`GraphicsComplex"), xyzs_expr, poly_expr)
+    result = Expression(Symbol("System`Graphics3D"), gc_expr)
+        
+    return result
+
+def eval_Plot3Dv2(fe, expr):
+    return eval_plot3d(fe, expr, grid_to_expr_poly_list)
 
 def eval_Plot3Dv3(fe, expr):
-    return eval_plot3d(fe, expr, grid_to_expr_v3)
+    return eval_plot3d(fe, expr, lambda xs, ys, zs: grid_to_expr_complex(xs, ys, zs, numpy_array_list_expr))
+
+def eval_Plot3Dv4(fe, expr):
+    return eval_plot3d(fe, expr, lambda xs, ys, zs: grid_to_expr_complex(xs, ys, zs, NumpyArrayListExpr))
 
 
 def eval_expr(fe, expr):
@@ -409,6 +502,7 @@ def eval_expr(fe, expr):
         "My`Plot3Dv1": eval_Plot3Dv1,
         "My`Plot3Dv2": eval_Plot3Dv2,
         "My`Plot3Dv3": eval_Plot3Dv3,
+        "My`Plot3Dv4": eval_Plot3Dv4,
     }
     if str(expr.head) in funs:
         result = funs[str(expr.head)](fe, expr)
@@ -416,39 +510,6 @@ def eval_expr(fe, expr):
         result = expr.evaluate(fe.session.evaluation)
     print(f"eval {str(expr.head)}: {(time.time()-start)*1000:.1f} ms")
     return result
-
-#
-# 
-#
-
-dp3d   = "Plot3D[Sin[x^2+y^2], {x,-3,3}, {y,-3,3}, PlotPoints -> {50,50}]"
-dp3dv3 = "My`Plot3Dv3[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}]"
-dp3dv2 = "My`Plot3Dv2[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}]"
-dp3dv1 = "My`Plot3Dv1[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3,200}, {y,-3,3,200}]"
-dmp3ds = """
-        Manipulate[
-            My`Plot3D[Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp, {x,-3,3,200}, {y,-3,3,200}, {-1,1}],
-            {freq, 0.1, 1.0, 2.0, 0.2}, (* freq slider spec *)
-            {amp, 0.0, 1.2, 2.0, 0.2}  (* amp slider spec *)
-        ]
-        """
-dmp3dh = """
-        Manipulate[
-            My`Plot3D[Abs[My`Hypergeometric1F1[a, b, (x + I y)^2]], {x, -2, 2, 200}, {y, -2, 2, 200}, {0, 14}],
-            {a, 0.5, 1, 1.5, 0.1}, (* a slider spec *)
-            {b, 1.5, 2, 2.5, 0.1}  (* b slider spec *)
-        ]
-        """
-
-demos = [
-    #                                                                                   eval layout  total (ms)
-    #dp3d,   # Plot3D Sin 50x50           current                                      10026    181   10207
-    dp3dv3, # Plot3Dv2 Sin/Sqrt 200x200  G3D, GraphicsComplex                           ...
-    dp3dv2, # Plot3Dv2 Sin/Sqrt 200x200  G3D, individual polys, no GraphicsComplex      433    622    1055
-    dp3dv1, # Plot3Dv1 Sin/Sqrt 200x200  send Plot3D unmodified to layout                 0     26      26
-    dmp3ds, # Man Plot3Dv1 Sin/Sqrt 200x200
-    dmp3dh, # Man Plot3Dv1 HypGeo 200x200
-]
 
 # common to ShellFrontEnd and BrowserFrontEnd
 class DashFrontEnd:
@@ -469,6 +530,8 @@ class DashFrontEnd:
         # everybody needs a Mathics session
         self.session = mathics.session.MathicsSession()
 
+
+import demos
 
 # read expressions from terminal, display results in a browser winddow
 class ShellFrontEnd(DashFrontEnd):
@@ -504,7 +567,7 @@ class ShellFrontEnd(DashFrontEnd):
         # TODO: then actual REPL loop
         # TODO: add s as title
 
-        for s in demos:
+        for s in demos.demos:
 
             expr = self.session.parse(s)
 
