@@ -13,10 +13,12 @@ import webview
 import numpy as np
 import scipy
 import mathics.session
+from mathics.core.expression import Expression
+from mathics.core.list import ListExpression
+from mathics.core.symbols import Symbol
 import dash
 import werkzeug
 import plotly.graph_objects as go
-
 
 parser = argparse.ArgumentParser(description="Graphics demo")
 parser.add_argument("--debug", action="store_true")
@@ -34,7 +36,7 @@ class Browser():
 
     def show(self, url):
         # display a browser window that fetches the current plot
-        print("showing", url)
+        #print("showing", url)
         if args.browser == "webview":
             offset = 50 * self.n
             self.n += 1
@@ -60,13 +62,13 @@ class Browser():
 #
 
 # pretty print expr
-def pp(expr, indent=1):
+def prt(expr, indent=1):
     if not hasattr(expr, "elements"):
         print("  " * indent + str(expr))
     else:
         print("  " * indent + str(expr.head))
         for elt in expr.elements:
-            pp(elt, indent + 1)
+            prt(elt, indent + 1)
 
 def to_python_expr(expr, lib = "np"):
 
@@ -75,7 +77,8 @@ def to_python_expr(expr, lib = "np"):
         "System`Cos": f"{lib}.cos",
         "System`Sqrt": f"{lib}.sqrt",
         "System`Abs": f"{lib}.abs",
-        "System`Hypergeometric1F1": "scipy.special.hyp1f1",
+        # TOOD: eval turns System`... into HypergeometricPFQ; need polyfill for that
+        "My`Hypergeometric1F1": "scipy.special.hyp1f1",
     }
 
     listfuns = {
@@ -90,25 +93,27 @@ def to_python_expr(expr, lib = "np"):
 
     if not hasattr(expr, "head"):
         if str(expr).startswith("Global`"):
-            return str(expr).split("`")[-1]
-        elif str(expr) == "System`I":
-            return "1j"
+            result = str(expr).split("`")[-1]
+        elif str(expr) == "System`I" or str(expr) == "I":
+            result = "1j"
         else:
-            return str(expr)
+            result = str(expr)
     elif str(expr.head) in funs:
         fun = funs[str(expr.head)]
         args = (to_python_expr(e,lib) for e in expr.elements)
-        return f"{fun}({",".join(args)})"
+        result = f"{fun}({",".join(args)})"
     elif str(expr.head) in listfuns:
         fun = listfuns[str(expr.head)]
         args = (to_python_expr(e,lib) for e in expr.elements)
-        return f"{fun}([{",".join(args)}])"
+        result = f"{fun}([{",".join(args)}])"
     elif str(expr.head) in binops:
         arg1 = to_python_expr(expr.elements[0],lib)
         arg2 = to_python_expr(expr.elements[1],lib)
-        return f"({arg1}{binops[str(expr.head)]}{arg2})"
+        result = f"({arg1}{binops[str(expr.head)]}{arg2})"
     else:
         raise Exception(f"Unknown head {expr.head}")
+    #print("compile", expr, "->", result)
+    return result
 
 def my_compile(expr, arg_names, lib = "np"):
     python_expr = to_python_expr(expr, lib)
@@ -130,8 +135,6 @@ def uid(s):
 # 
 
 def layout_Plot3D(fe, expr, values = {}):
-
-    start = time.time()
 
     # Plot3D arg exprs
     fun_expr = expr.elements[0]
@@ -184,8 +187,6 @@ def layout_Plot3D(fe, expr, values = {}):
         dash.dcc.Markdown(f"${title}$", mathjax=True) if fancy else dash.html.Div(title, className="title"),
         dash.dcc.Graph(figure=figure, className="graph")
     ], className="plot")
-
-    print(f"Plot3D_layout {(time.time()-start)*1000:.1f} ms")
 
     return layout
 
@@ -248,38 +249,193 @@ def layout_Manipulate(fe, expr):
     return layout
 
 
+def layout_Graphics3D(fe, expr):
+
+    graphics = expr.elements[0].elements
+    rules = expr.elements[1:]
+
+    # TODO: text output thing
+    xyzs = []
+    ijks = []
+    for g in graphics:
+        if str(g.head) == "System`Polygon":
+            #print("xxx 0", type(g.elements[0].elements[0])); exit()
+            poly = [p.value for p in g.elements[0].elements]
+            #print("xxx poly", poly); exit()
+            i = len(xyzs)
+            xyzs += poly
+            ijks.append([i,i+1,i+2])
+        elif str(g.head) == "System`Line":
+            line = [p.value for p in g.elements[0].elements]
+        else:
+            raise Exception(f"Unknown head {g.head}")
+
+    #print(xyzs); exit()
+    xs = [xyz[0] for xyz in xyzs]
+    ys = [xyz[1] for xyz in xyzs]
+    zs = [xyz[2] for xyz in xyzs]
+    _is = [ijk[0] for ijk in ijks]
+    js = [ijk[1] for ijk in ijks]
+    ks = [ijk[2] for ijk in ijks]
+
+    mesh = go.Mesh3d(x=xs, y=ys, z=zs, i=_is, j=js, k=ks, color="blue")
+    figure = go.Figure(data=[mesh])
+
+    """
+            colorbar=dict(title=dict(text='z')),
+            colorscale=[[0, 'gold'],
+                        [0.5, 'mediumturquoise'],
+                        [1, 'magenta']],
+            # Intensity of each vertex, which will be interpolated and color-coded
+            intensity=[0, 0.33, 0.66, 1],
+            showscale=True
+    """
+
+    layout = dash.html.Div ([
+        #dash.dcc.Markdown(f"${title}$", mathjax=True) if fancy else dash.html.Div(title, className="title"),
+        dash.dcc.Graph(figure=figure, className="graph")
+    ], className="plot")
+
+    return layout
 
 #
 # Computer a layaout 
 #
 
 def layout_expr(fe, expr, values = {}):
-    if str(expr.head) == "System`Plot3D":
-        return layout_Plot3D(fe, expr, values)
+    start = time.time()
+    if str(expr.head) == "My`Plot3D":
+        result = layout_Plot3D(fe, expr, values)
     elif str(expr.head) == "Global`Manipulate":
-        return layout_Manipulate(fe, expr)
+        result = layout_Manipulate(fe, expr)
+    elif str(expr.head) == "System`Graphics3D":
+        result = layout_Graphics3D(fe, expr)
+    else:
+        raise Exception(f"Unknown head {expr.head} in layout_expr")
+    print(f"layout {str(expr.head)}: {(time.time()-start)*1000:.1f} ms")
+    return result
+
+#
+#
+#
+
+# https://github.com/Mathics3/mathics-core/blob/master/mathics/eval/drawing/plot.py
+# https://github.com/Mathics3/mathics-core/blob/master/mathics/eval/drawing/plot3d.py
+
+def eval_Plot3Dv1(fe, expr):
+    result = Expression(Symbol("My`Plot3D"), *expr.elements)    
+    print("xxx eval_Plot3Dv1 result:")
+    prt(result)
+    return result
+
+def eval_Plot3Dv2(fe, expr):
+
+    # Plot3D arg exprs
+    fun_expr = expr.elements[0]
+    xlims_expr = expr.elements[1]
+    ylims_expr = expr.elements[2]
+        
+    for e in expr.elements[3:]:
+        if hasattr(e, "head") and str(e.head) == "System`Rule":
+            if str(e.elements[0]) == "System`PlotPoints":
+                pp = e.elements[1].value
+                if isinstance(pp, (tuple,list)):
+                    x_points, y_points = pp
+                else:
+                    x_points = y_points = pp
+
+    # compile fun
+    values = {} # TODO: how to pass in values as expected by Manipulate
+    fun_args = [str(xlims_expr.elements[0]), str(ylims_expr.elements[0])] + list(values.keys())
+    fun = my_compile(fun_expr, fun_args)
+
+    # parse xlims, construct namedtuple
+    A = collections.namedtuple("A", ["name", "lo", "hi", "count"])
+    def to_python_axis_spec(expr, pts):
+        return A(str(expr.elements[0]).split("`")[-1], *[e.to_python() for e in expr.elements[1:]], pts)
+    xlims = to_python_axis_spec(xlims_expr, x_points)
+    ylims = to_python_axis_spec(ylims_expr, y_points)
+
+    # parse zlims
+    #zlims = [zlims_expr.elements[0].value, zlims_expr.elements[1].value] if zlims_expr else None
+
+    # compute xs and ys
+    xs = np.linspace(xlims.lo, xlims.hi, xlims.count)
+    ys = np.linspace(ylims.lo, ylims.hi, ylims.count)
+    xs, ys = np.meshgrid(xs, ys)
+
+    # compute zs from xs and ys using compiled function
+    zs = fun(**({xlims.name: xs, ylims.name: ys} | values))
+
+    # a=[1:,1:]   b=[1:,:-1]
+    # c=[:-1:,1:] d=[:-1,:-1]
+    xyzs = np.stack([xs, ys, zs], axis=-1) # shape = (nx,ny,3)
+    tris1 = np.stack([xyzs[1:,1:], xyzs[1:,:-1], xyzs[:-1,:-1]], axis=-1) # abd, shape = (nx-1,ny-1,3,3)
+    tris2 = np.stack([xyzs[1:,1:], xyzs[:-1,:-1], xyzs[:-1,1:]], axis=-1) # adc, shape = (nx-1,ny-1,3,3)
+    tris = np.stack([tris1,tris2])                                        # shape = (2,nx-1,ny-1,3,3)
+    tris = tris.reshape((-1,3,3)).transpose(0,2,1)                        # shape = (2*(nx-1)*(ny-1),3,3)
+
+    # this is the slow part
+    # corresponding traversal at other end is similarly slow
+    start = time.time()
+    list_expr = lambda *a: ListExpression(*a, literal_values = a)
+    result = Expression(Symbol("System`Graphics3D"), 
+        Expression(Symbol("System`List"), *(
+            Expression(Symbol("System`Polygon"), list_expr(list_expr(*p), list_expr(*q), list_expr(*r)))
+            for p, q, r in tris
+        ))
+    )
+    print(f"construct G3D list of polys: {(time.time()-start)*1000:.1f} ms")
+
+    return result
+
+
+#NEXT: Plot3Dv2 that generates efficient G3D, using either GraphicsComples or MeshRegion
+# TODO: investigate mathematics MeshRegion, DiscretizeRegion, DiscretizeGraphics, MeshPrimitives, GraphicsComplex
+
+
+def eval_expr(fe, expr):
+    start = time.time()
+    funs = {
+        "My`Plot3Dv1": eval_Plot3Dv1,
+        "My`Plot3Dv2": eval_Plot3Dv2,
+    }
+    if str(expr.head) in funs:
+        result = funs[str(expr.head)](fe, expr)
+    else:
+        result = expr.evaluate(fe.session.evaluation)
+    print(f"eval {str(expr.head)}: {(time.time()-start)*1000:.1f} ms")
+    return result
 
 #
 # 
 #
 
-demos = [
-    "Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3,200}, {y,-3,3,200}]",
-    #]; [
-    """
+dp3d   = "Plot3D[Sin[x^2+y^2], {x,-3,3}, {y,-3,3}, PlotPoints -> {50,50}]"
+dp3dv2 = "My`Plot3Dv2[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}]"
+dp3dv1 = "My`Plot3Dv1[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3,200}, {y,-3,3,200}]"  # 3+21=24ms
+dmp3ds = """
         Manipulate[
-            Plot3D[Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp, {x,-3,3,200}, {y,-3,3,200}, {-1,1}],
+            My`Plot3D[Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp, {x,-3,3,200}, {y,-3,3,200}, {-1,1}],
             {freq, 0.1, 1.0, 2.0, 0.2}, (* freq slider spec *)
             {amp, 0.0, 1.2, 2.0, 0.2}  (* amp slider spec *)
         ]
-    """,
-    """
+        """
+dmp3dh = """
         Manipulate[
-            Plot3D[Abs[Hypergeometric1F1[a, b, (x + I y)^2]], {x, -2, 2, 200}, {y, -2, 2, 200}, {0, 14}],
+            My`Plot3D[Abs[My`Hypergeometric1F1[a, b, (x + I y)^2]], {x, -2, 2, 200}, {y, -2, 2, 200}, {0, 14}],
             {a, 0.5, 1, 1.5, 0.1}, (* a slider spec *)
             {b, 1.5, 2, 2.5, 0.1}  (* b slider spec *)
         ]
-    """,
+        """
+
+demos = [
+    #                                                                                   eval layout  total (ms)
+    dp3d,   # Plot3D Sin 50x50           current                                      10026    181   10207
+    dp3dv2, # Plot3Dv2 Sin/Sqrt 200x200  G3D, individual polys, no GraphicsComplex      433    622    1055
+    dp3dv1, # Plot3Dv1 Sin/Sqrt 200x200  send Plot3D unmodified to layout                 0     26      26
+    dmp3ds, # Man Plot3Dv1 Sin/Sqrt
+    #dmp3dh, # Man Plot3Dv1 HypGeo
 ]
 
 # common to ShellFrontEnd and BrowserFrontEnd
@@ -337,9 +493,16 @@ class ShellFrontEnd(DashFrontEnd):
         # TODO: add s as title
 
         for s in demos:
-            plot_name = f"plot{len(self.plots)}"
+
             expr = self.session.parse(s)
-            self.plots[plot_name] = layout_expr(self, expr)
+
+            start = time.time()
+            expr = eval_expr(self, expr)
+            layout = layout_expr(self, expr)
+            print(f"eval + layout {str(expr.head)}: {(time.time()-start)*1000:.1f} ms")
+
+            plot_name = f"plot{len(self.plots)}"
+            self.plots[plot_name] = layout
             url = f"http://127.0.0.1:{self.server.server_port}/{plot_name}"
             browser.show(url)
 
