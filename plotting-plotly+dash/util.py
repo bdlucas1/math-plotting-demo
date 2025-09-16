@@ -11,6 +11,7 @@ def prt(expr, indent=1):
 
 
 timers = []
+timer_level = -1 # all
 
 def start_timer(name):
     timers.append((name, time.time()))
@@ -18,4 +19,5 @@ def start_timer(name):
 def stop_timer():
     name, start = timers.pop()
     ms = (time.time() - start) * 1000
-    print(f"{"  "*len(timers)}{name}: {ms:.1f} ms")
+    if timer_level < 0 or len(timers) < timer_level:
+        print(f"{"  "*len(timers)}{name}: {ms:.1f} ms")

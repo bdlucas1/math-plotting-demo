@@ -24,7 +24,7 @@ def uid(s):
 # given a Plot3D expression, compute a layout
 # 
 
-def layout_Plot3D(fe, expr, values = {}):
+def layout_Plot3D(fe, expr):
 
     # Plot3D arg exprs
     fun_expr = expr.elements[0]
@@ -126,28 +126,30 @@ def layout_Manipulate(fe, expr):
     target_id = uid("target")
     init_values = {s.name: s.init for s in sliders}
 
-    #in_progress_stuff = False
-    in_progress_stuff = True
-    if in_progress_stuff:
-        def eval_and_layout(values):
-            for name, value in values.items():
-                rule = f"{name}={value}"
-                rule_expr = fe.session.parse(rule)
-                eval_expr(fe, rule_expr)
-            result = eval_expr(fe, target_expr)
-            #util.prt(result); exit()
-            layout = layout_expr(fe, result, {})
-            return layout
-        init_target_layout = eval_and_layout(init_values)
-    else:
-        init_target_layout = layout_expr(fe, target_expr, init_values)
+    # compute a layout for the target_expr given a set of values
+    def eval_and_layout(values):
+        for name, value in values.items():
+            # TODO: this leaves fe.session polluted - need separate scope?
+            # TODO: better way to set a value?
+            rule = f"{name}={value}"
+            rule_expr = fe.session.parse(rule)
+            eval_expr(fe, rule_expr, quiet=True)
+        result = eval_expr(fe, target_expr)
+        layout = layout_expr(fe, result)
+        return layout
 
+    # compute initial layout including target_expr and slider
+    init_target_layout = eval_and_layout(init_values)
     slider_layouts = list(itertools.chain(*[slider_layout(s) for s in sliders]))
     layout = dash.html.Div([
         dash.html.Div(init_target_layout, id=target_id),
         dash.html.Div(slider_layouts, className="sliders")
     ], className="manipulate")
         
+    # set timer display for slider updates after initial display
+    util.timer_level = 1 # to see top-level timings as sliders move
+    #util.timer_level = 0 # no timings as timers move
+
     # define callbacks for the sliders
     @fe.app.callback(
         dash.Output(target_id, "children"),
@@ -155,7 +157,10 @@ def layout_Manipulate(fe, expr):
         prevent_initial_call=True
     )
     def update(*args):
-        return eval_and_layout({s.name: a for s, a in zip(sliders, args)})
+        util.start_timer("slider update")
+        result = eval_and_layout({s.name: a for s, a in zip(sliders, args)})
+        util.stop_timer()
+        return result
 
     return layout
 
@@ -282,10 +287,10 @@ def layout_Graphics3D(fe, expr):
 # Computer a layaout 
 #
 
-def layout_expr(fe, expr, values = {}):
+def layout_expr(fe, expr):
     util.start_timer(f"layout {str(expr.head)}")
     if str(expr.head) == "My`Plot3D":
-        result = layout_Plot3D(fe, expr, values)
+        result = layout_Plot3D(fe, expr)
     elif str(expr.head) == "Global`Manipulate":
         result = layout_Manipulate(fe, expr)
     elif str(expr.head) == "System`Graphics3D":
@@ -301,10 +306,6 @@ def layout_expr(fe, expr, values = {}):
 
 # https://github.com/Mathics3/mathics-core/blob/master/mathics/eval/drawing/plot.py
 # https://github.com/Mathics3/mathics-core/blob/master/mathics/eval/drawing/plot3d.py
-
-def eval_Plot3Dv1(fe, expr):
-    result = Expression(Symbol("My`Plot3D"), *expr.elements)    
-    return result
 
 def eval_plot3d(fe, expr, grid_to_expr):
 
@@ -439,10 +440,9 @@ def eval_Plot3Dv4(fe, expr):
     return eval_plot3d(fe, expr, lambda xs, ys, zs: grid_to_expr_complex(xs, ys, zs, NumpyArrayListExpr))
 
 
-def eval_expr(fe, expr):
-    util.start_timer(f"eval {expr.head}")
+def eval_expr(fe, expr, quiet=False):
+    if not quiet: util.start_timer(f"eval {expr.head}")
     funs = {
-        "My`Plot3Dv1": eval_Plot3Dv1,
         "My`Plot3Dv2": eval_Plot3Dv2,
         "My`Plot3Dv3": eval_Plot3Dv3,
         "My`Plot3Dv4": eval_Plot3Dv4,
@@ -451,7 +451,7 @@ def eval_expr(fe, expr):
         result = funs[str(expr.head)](fe, expr)
     else:
         result = expr.evaluate(fe.session.evaluation)
-    util.stop_timer()
+    if not quiet: util.stop_timer()
     return result
 
 

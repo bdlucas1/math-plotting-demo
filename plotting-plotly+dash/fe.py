@@ -16,7 +16,6 @@ import util
 #
 
 dp3d   = "Plot3D[Sin[x^2+y^2], {x,-3,3}, {y,-3,3}, PlotPoints -> {50,50}]"
-dp3dv1 = "My`Plot3Dv1[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3,200}, {y,-3,3,200}]"
 dp3dv2 = "My`Plot3Dv2[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}]"
 dp3dv3 = "My`Plot3Dv3[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}]"
 dp3dv4 = "My`Plot3Dv4[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}]"
@@ -34,9 +33,9 @@ dmp3dv4s = """
         {amp, 0.0, 1.0, 2.0, 0.2}  (* amp slider spec *)
      ]
 """
-dmp3dh = """
+dmp3dv4h = """
     Manipulate[
-        My`Plot3D[Abs[My`Hypergeometric1F1[a, b, (x + I y)^2]], {x, -2, 2, 200}, {y, -2, 2, 200}, {0, 14}],
+        My`Plot3Dv4[Abs[My`Hypergeometric1F1[a, b, (x + I y)^2]], {x, -2, 2}, {y, -2, 2}, {1, 14, PlotPoints -> {200,200}}}],
         {a, 0.5, 1, 1.5, 0.1}, (* a slider spec *)
         {b, 1.5, 2, 2.5, 0.1}  (* b slider spec *)
     ]
@@ -64,9 +63,8 @@ demos = [
     dp3dv4, # Plot3Dv2 Sin/Sqrt 200x200  G3D, GraphicsComplex, NumpyArrayListExpr         1      15      16
     #testgc1,
     #testgc2,
-    #dmp3ds, # Man Plot3Dv1 Sin/Sqrt 200x200
-    dmp3dv4s,
-    #dmp3dh, # Man Plot3Dv1 HypGeo 200x200
+    dmp3dv4s, # Man Plot3Dv4 Sin/Sqrt 200x200
+    #dmp3dv4h, # Man Plot3Dv4 HypGeo 200x200
 ]
 
 #
