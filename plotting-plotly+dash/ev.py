@@ -147,9 +147,7 @@ def layout_Graphics3D(fe, expr):
     def handle_g(g):
         #print("handling", g)
         if str(g.head) == "System`Polygon":
-            #print("xxx 0", type(g.elements[0].elements[0])); exit()
             poly = [p.value for p in g.elements[0].elements]
-            #print("xxx poly", poly); exit()
             i = len(xyzs)
             xyzs.extend(poly)
             ijks.append([i,i+1,i+2])
@@ -157,14 +155,12 @@ def layout_Graphics3D(fe, expr):
             line = [p.value for p in g.elements[0].elements]
         elif str(g.head) == "Global`GraphicsComplex": # TODO: should be system
             # TODO: is this correct?
-            print("xxx g.elements[0])", type(g.elements[0]), g.elements[0].head)
             util.start_timer("xyzs")
             xyzs.extend(g.elements[0].value)
             util.stop_timer()
             def handle_c(c):
                 if str(c.head) == "System`Polygon":
                     polys = c.elements[0]
-                    print("xxx polys", type(polys), polys.head)                    
                     if isinstance(polys, NumpyArrayListExpr):
                         util.start_timer("ijks")
                         for poly in polys.value:
