@@ -37,15 +37,15 @@ testgc2 = """
 
 
 demos = [
-    #                                                                                   eval layout  total (ms)
-    #dp3d,   # Plot3D Sin 50x50           current, generates G3D slowly                10026    181   10207
-    #dp3dv1, # Plot3Dv1 Sin/Sqrt 200x200  send Plot3D unmodified to layout                 0     26      26
-    #dp3dv2, # Plot3Dv2 Sin/Sqrt 200x200  G3D, individual polys, no GraphicsComplex      433    622    1055
-    #dp3dv3, # Plot3Dv2 Sin/Sqrt 200x200  G3D, GraphicsComplex, numpy_array_list_expr    252    247    495
+    #                                                                                  eval  layout   total (ms)
+    dp3d,   # Plot3D Sin 50x50           current, generates G3D slowly                10026     181   10207
+    dp3dv1, # Plot3Dv1 Sin/Sqrt 200x200  send Plot3D unmodified to layout                 0      26      26
+    dp3dv2, # Plot3Dv2 Sin/Sqrt 200x200  G3D, individual polys, no GraphicsComplex      433     622    1055
+    dp3dv3, # Plot3Dv2 Sin/Sqrt 200x200  G3D, GraphicsComplex, numpy_array_list_expr    252     247     495
     dp3dv4, # Plot3Dv2 Sin/Sqrt 200x200  G3D, GraphicsComplex, NumpyArrayListExpr                           
-    #testgc1,
-    #testgc2,
-    #dmp3ds, # Man Plot3Dv1 Sin/Sqrt 200x200
-    #dmp3dh, # Man Plot3Dv1 HypGeo 200x200
+    testgc1,
+    testgc2,
+    dmp3ds, # Man Plot3Dv1 Sin/Sqrt 200x200
+    dmp3dh, # Man Plot3Dv1 HypGeo 200x200
 ]
 
