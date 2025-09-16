@@ -26,6 +26,13 @@ dmp3ds = """
         {amp, 0.0, 1.2, 2.0, 0.2}  (* amp slider spec *)
      ]
 """
+dmp3dv4s = """
+    Manipulate[
+        My`Plot3Dv4[Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp, {x,-3,3,200}, {y,-3,3,200}, {-1,1}],
+        {freq, 0.1, 1.0, 2.0, 0.2}, (* freq slider spec *)
+        {amp, 0.0, 1.2, 2.0, 0.2}  (* amp slider spec *)
+     ]
+"""
 dmp3dh = """
     Manipulate[
         My`Plot3D[Abs[My`Hypergeometric1F1[a, b, (x + I y)^2]], {x, -2, 2, 200}, {y, -2, 2, 200}, {0, 14}],
@@ -57,6 +64,7 @@ demos = [
     #testgc1,
     #testgc2,
     dmp3ds, # Man Plot3Dv1 Sin/Sqrt 200x200
+    #dmp3dv4s,
     #dmp3dh, # Man Plot3Dv1 HypGeo 200x200
 ]
 

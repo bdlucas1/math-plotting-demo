@@ -125,7 +125,21 @@ def layout_Manipulate(fe, expr):
     # compute the layout for the plot
     target_id = uid("target")
     init_values = {s.name: s.init for s in sliders}
-    init_target_layout = layout_expr(fe, target_expr, init_values)
+
+    in_progress_stuff = False
+    #in_progress_stuff = True
+    if in_progress_stuff:
+        # NEXT: get this to work
+        def eval_and_layout(values):
+            for name, value in values.items():
+                fe.session.evaluation.parse_evaluate(f"{name}->{value}")
+            result = eval_expr(fe, target_expr)
+            layout = layout_expr(fe, result, {})
+        init_target_layout = eval_and_layout(init_values)
+    else:
+        init_target_layout = layout_expr(fe, target_expr, init_values)
+
+    
     slider_layouts = list(itertools.chain(*[slider_layout(s) for s in sliders]))
     layout = dash.html.Div([
         dash.html.Div(init_target_layout, id=target_id),
@@ -297,6 +311,7 @@ def eval_plot3d(fe, expr, grid_to_expr):
     xlims_expr = expr.elements[1]
     ylims_expr = expr.elements[2]
         
+    x_points = y_points = 10 # default
     for e in expr.elements[3:]:
         if hasattr(e, "head") and str(e.head) == "System`Rule":
             if str(e.elements[0]) == "System`PlotPoints":
