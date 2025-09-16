@@ -155,14 +155,13 @@ def layout_Graphics3D(fe, expr):
             poly = [p.value for p in g.elements[0].elements]
             i = len(xyzs)
             xyzs.extend(poly)
-            ijks.append([i,i+1,i+2])
+            ijks.append([i+1,i+2,i+3]) # ugh - 1-based to match GraphicsComplex Polygon
 
         elif str(g.head) == "System`Line":
             line = [p.value for p in g.elements[0].elements]
 
         elif str(g.head) == "Global`GraphicsComplex": # TODO: should be system
 
-            # TODO: is this correct?
             util.start_timer("xyzs")
             xyzs.extend(g.elements[0].value)
             util.stop_timer()
@@ -174,16 +173,20 @@ def layout_Graphics3D(fe, expr):
                     polys = c.elements[0]
                     if isinstance(polys, NumpyArrayListExpr):
                         util.start_timer("ijks from NumpyArrayListExpr")
-                        # TODO: this handles quads; generaize
-                        ijks.extend(polys.value[:,0:3]-1)
-                        ijks.extend(polys.value[:,[0,2,3]]-1)
+                        # use advanced indexing to break the polygons down into triangles
+                        ngon = polys.value.shape[1]
+                        for i in range(1, ngon-1):
+                            inx = [0, i, i+1]
+                            tris = polys.value[:, inx]
+                            ijks.extend(tris)
                         util.stop_timer()
 
                     else:
+                        util.start_timer("ijks from mathics List of polys")
                         for poly in polys.elements:
                             for j, k in zip(poly.elements[1:-1], poly.elements[2:]):
-                                # ugh - indices in Polygon are 1-based
-                                ijks.append([poly.elements[0].value-1, j.value-1, k.value-1])
+                                ijks.append([poly.elements[0].value, j.value, k.value])
+                        util.stop_timer()
 
                 else:
                     raise Exception(f"Unknown head {c.head} in GraphicsComplex")
@@ -208,15 +211,36 @@ def layout_Graphics3D(fe, expr):
 
     util.start_timer("ijk arrays")
     xyzs = np.array(xyzs)
-    ijks = np.array(ijks)
+    ijks = np.array(ijks) - 1 # ugh - indices in Polygon are 1-based
     util.stop_timer()
 
     util.start_timer("mesh")
-    mesh = go.Mesh3d(x=xyzs[:,0], y=xyzs[:,1], z=xyzs[:,2], i=ijks[:,0], j=ijks[:,1], k=ijks[:,2], color="blue")
+    mesh = go.Mesh3d(
+        x=xyzs[:,0], y=xyzs[:,1], z=xyzs[:,2],
+        i=ijks[:,0], j=ijks[:,1], k=ijks[:,2],
+        showscale=True, colorscale="Viridis", colorbar=dict(thickness=10), intensity=xyzs[:,2],
+    )
     util.stop_timer()
     
     util.start_timer("figure")
-    figure = go.Figure(data=[mesh])
+    #figure = go.Figure(data=[mesh])
+    figure = go.Figure(
+        data = [mesh],
+        layout = go.Layout(
+            margin = dict(l=0, r=0, t=0, b=0),
+            scene = dict(
+                xaxis_title="x", # TODO: xlims.name - from a rule?
+                yaxis_title="y", # TODO: ylims.name - from a rule?
+                #zaxis_title="z",
+                aspectmode="cube"
+            )
+        )
+    )
+    """
+    TODO zlims
+    if zlims:
+        figure.update_layout(scene = dict(zaxis = dict(range=zlims)))
+    """
     util.stop_timer()
 
     """
