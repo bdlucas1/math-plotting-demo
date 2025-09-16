@@ -34,7 +34,7 @@ def layout_Plot3D(fe, expr, values = {}):
         
     # compile fun
     fun_args = [str(xlims_expr.elements[0]), str(ylims_expr.elements[0])] + list(values.keys())
-    fun = compile.my_compile(fun_expr, fun_args)
+    fun = compile.my_compile(fe.session.evaluation, fun_expr, fun_args)
 
     # parse xlims, construct namedtuple
     A = collections.namedtuple("A", ["name", "lo", "hi", "count"])
@@ -126,20 +126,22 @@ def layout_Manipulate(fe, expr):
     target_id = uid("target")
     init_values = {s.name: s.init for s in sliders}
 
-    in_progress_stuff = False
-    #in_progress_stuff = True
+    #in_progress_stuff = False
+    in_progress_stuff = True
     if in_progress_stuff:
-        # NEXT: get this to work
         def eval_and_layout(values):
             for name, value in values.items():
-                fe.session.evaluation.parse_evaluate(f"{name}->{value}")
+                rule = f"{name}={value}"
+                rule_expr = fe.session.parse(rule)
+                eval_expr(fe, rule_expr)
             result = eval_expr(fe, target_expr)
+            #util.prt(result); exit()
             layout = layout_expr(fe, result, {})
+            return layout
         init_target_layout = eval_and_layout(init_values)
     else:
         init_target_layout = layout_expr(fe, target_expr, init_values)
 
-    
     slider_layouts = list(itertools.chain(*[slider_layout(s) for s in sliders]))
     layout = dash.html.Div([
         dash.html.Div(init_target_layout, id=target_id),
@@ -153,7 +155,7 @@ def layout_Manipulate(fe, expr):
         prevent_initial_call=True
     )
     def update(*args):
-        return layout_expr(fe, target_expr, {s.name: a for s, a in zip(sliders, args)})
+        return eval_and_layout({s.name: a for s, a in zip(sliders, args)})
 
     return layout
 
@@ -324,7 +326,7 @@ def eval_plot3d(fe, expr, grid_to_expr):
     # compile fun
     values = {} # TODO: how to pass in values as expected by Manipulate
     fun_args = [str(xlims_expr.elements[0]), str(ylims_expr.elements[0])] + list(values.keys())
-    fun = compile.my_compile(fun_expr, fun_args)
+    fun = compile.my_compile(fe.session.evaluation, fun_expr, fun_args)
 
     # parse xlims, construct namedtuple
     # TODO: namedtuple probably not needed any more

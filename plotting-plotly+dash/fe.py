@@ -4,6 +4,7 @@ import threading
 
 from mathics.session import MathicsSession
 import dash
+import webbrowser
 import webview
 import werkzeug
 
@@ -28,9 +29,9 @@ dmp3ds = """
 """
 dmp3dv4s = """
     Manipulate[
-        My`Plot3Dv4[Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp, {x,-3,3,200}, {y,-3,3,200}, {-1,1}],
+        My`Plot3Dv4[Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp, {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}],
         {freq, 0.1, 1.0, 2.0, 0.2}, (* freq slider spec *)
-        {amp, 0.0, 1.2, 2.0, 0.2}  (* amp slider spec *)
+        {amp, 0.0, 1.0, 2.0, 0.2}  (* amp slider spec *)
      ]
 """
 dmp3dh = """
@@ -60,11 +61,11 @@ demos = [
     #dp3dv1, # Plot3Dv1 Sin/Sqrt 200x200  send Plot3D unmodified to layout                 0      26      26
     #dp3dv2, # Plot3Dv2 Sin/Sqrt 200x200  G3D, individual polys, no GraphicsComplex      439      71     510
     #dp3dv3, # Plot3Dv2 Sin/Sqrt 200x200  G3D, GraphicsComplex, numpy_array_list_expr    303     104     407
-    #dp3dv4, # Plot3Dv2 Sin/Sqrt 200x200  G3D, GraphicsComplex, NumpyArrayListExpr         1      15      16
+    dp3dv4, # Plot3Dv2 Sin/Sqrt 200x200  G3D, GraphicsComplex, NumpyArrayListExpr         1      15      16
     #testgc1,
     #testgc2,
-    dmp3ds, # Man Plot3Dv1 Sin/Sqrt 200x200
-    #dmp3dv4s,
+    #dmp3ds, # Man Plot3Dv1 Sin/Sqrt 200x200
+    dmp3dv4s,
     #dmp3dh, # Man Plot3Dv1 HypGeo 200x200
 ]
 
