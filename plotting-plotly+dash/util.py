@@ -18,4 +18,4 @@ def start_timer(name):
 def stop_timer():
     name, start = timers.pop()
     ms = (time.time() - start) * 1000
-    print(f"{name}: {ms:.1f} ms")
+    print(f"{"  "*len(timers)}{name}: {ms:.1f} ms")

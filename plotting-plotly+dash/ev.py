@@ -59,6 +59,7 @@ def layout_Plot3D(fe, expr, values = {}):
     title = fe.session.evaluation.format_output(fun_expr, "latex" if fancy else "text")
 
     # plot it
+    util.start_timer("figure")
     figure = go.Figure(
         data = [go.Surface(x=xs, y=ys, z=zs, colorscale="Viridis", colorbar=dict(thickness=10))],
         layout = go.Layout(
@@ -73,10 +74,14 @@ def layout_Plot3D(fe, expr, values = {}):
     )
     if zlims:
         figure.update_layout(scene = dict(zaxis = dict(range=zlims)))
+    util.stop_timer()
+
+    util.start_timer("layout")
     layout = dash.html.Div ([
         dash.dcc.Markdown(f"${title}$", mathjax=True) if fancy else dash.html.Div(title, className="title"),
         dash.dcc.Graph(figure=figure, className="graph")
     ], className="plot")
+    util.stop_timer()
 
     return layout
 
@@ -217,10 +222,12 @@ def layout_Graphics3D(fe, expr):
             showscale=True
     """
 
+    util.start_timer("layout")
     layout = dash.html.Div ([
         #dash.dcc.Markdown(f"${title}$", mathjax=True) if fancy else dash.html.Div(title, className="title"),
         dash.dcc.Graph(figure=figure, className="graph")
     ], className="plot")
+    util.stop_timer()
 
     return layout
 
