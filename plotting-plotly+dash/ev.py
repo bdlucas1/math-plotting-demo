@@ -150,62 +150,69 @@ def layout_Graphics3D(fe, expr):
     ijks = []
 
     def handle_g(g):
-        #print("handling", g)
+
         if str(g.head) == "System`Polygon":
             poly = [p.value for p in g.elements[0].elements]
             i = len(xyzs)
             xyzs.extend(poly)
             ijks.append([i,i+1,i+2])
+
         elif str(g.head) == "System`Line":
             line = [p.value for p in g.elements[0].elements]
+
         elif str(g.head) == "Global`GraphicsComplex": # TODO: should be system
+
             # TODO: is this correct?
             util.start_timer("xyzs")
             xyzs.extend(g.elements[0].value)
             util.stop_timer()
+
             def handle_c(c):
+
                 if str(c.head) == "System`Polygon":
+
                     polys = c.elements[0]
                     if isinstance(polys, NumpyArrayListExpr):
-                        util.start_timer("ijks")
-                        for poly in polys.value:
-                            ijks.append(poly[0:3]-1)
+                        util.start_timer("ijks from NumpyArrayListExpr")
+                        # TODO: this handles quads; generaize
+                        ijks.extend(polys.value[:,0:3]-1)
+                        ijks.extend(polys.value[:,[0,2,3]]-1)
                         util.stop_timer()
+
                     else:
                         for poly in polys.elements:
                             for j, k in zip(poly.elements[1:-1], poly.elements[2:]):
                                 # ugh - indices in Polygon are 1-based
                                 ijks.append([poly.elements[0].value-1, j.value-1, k.value-1])
+
                 else:
                     raise Exception(f"Unknown head {c.head} in GraphicsComplex")
+
             for c in g.elements[1:]:
                 handle_c(c)
 
         elif str(g.head) == "System`Rule":
             # TODO
             pass
+
         elif str(g.head) == "System`List":
             for gg in g.elements:
                 handle_g(gg)
+
         else:
-            #prt(g)
             raise Exception(f"Unknown head {g.head}")
 
     for g in expr.elements:
         handle_g(g)
 
 
-    util.start_timer("transpose")
-    xs = [xyz[0] for xyz in xyzs]
-    ys = np.array([xyz[1] for xyz in xyzs])
-    zs = np.array([xyz[2] for xyz in xyzs])
-    _is = np.array([ijk[0] for ijk in ijks])
-    js = np.array([ijk[1] for ijk in ijks])
-    ks = np.array([ijk[2] for ijk in ijks])
+    util.start_timer("ijk arrays")
+    xyzs = np.array(xyzs)
+    ijks = np.array(ijks)
     util.stop_timer()
 
     util.start_timer("mesh")
-    mesh = go.Mesh3d(x=xs, y=ys, z=zs, i=_is, j=js, k=ks, color="blue")
+    mesh = go.Mesh3d(x=xyzs[:,0], y=xyzs[:,1], z=xyzs[:,2], i=ijks[:,0], j=ijks[:,1], k=ijks[:,2], color="blue")
     util.stop_timer()
     
     util.start_timer("figure")

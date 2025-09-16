@@ -1,7 +1,6 @@
 import argparse
 import re
 import threading
-import time
 
 from mathics.session import MathicsSession
 import dash
@@ -9,6 +8,7 @@ import webview
 import werkzeug
 
 import ev
+import util
 
 #
 # 
@@ -53,7 +53,7 @@ demos = [
     dp3dv1, # Plot3Dv1 Sin/Sqrt 200x200  send Plot3D unmodified to layout                 0      26      26
     #dp3dv2, # Plot3Dv2 Sin/Sqrt 200x200  G3D, individual polys, no GraphicsComplex      433     622    1055
     #dp3dv3, # Plot3Dv2 Sin/Sqrt 200x200  G3D, GraphicsComplex, numpy_array_list_expr    252     247     495
-    dp3dv4, # Plot3Dv2 Sin/Sqrt 200x200  G3D, GraphicsComplex, NumpyArrayListExpr                           
+    dp3dv4, # Plot3Dv2 Sin/Sqrt 200x200  G3D, GraphicsComplex, NumpyArrayListExpr         1      15      16
     #testgc1,
     #testgc2,
     #dmp3ds, # Man Plot3Dv1 Sin/Sqrt 200x200
@@ -164,10 +164,10 @@ class ShellFrontEnd(DashFrontEnd):
 
             expr = self.session.parse(s)
 
-            start = time.time()
+            util.start_timer(f"total {expr.head}")
             expr = ev.eval_expr(self, expr)
             layout = ev.layout_expr(self, expr)
-            print(f"eval + layout {str(expr.head)}: {(time.time()-start)*1000:.1f} ms")
+            util.stop_timer()
 
             plot_name = f"plot{len(self.plots)}"
             self.plots[plot_name] = layout
