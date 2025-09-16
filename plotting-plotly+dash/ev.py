@@ -1,128 +1,17 @@
-import math
-import time
-import threading
 import collections 
 import itertools
-import webbrowser
-import inspect
-import atexit
-import argparse
-
-# pip install numpy dash plotly pywebview
-import webview
+import math
 import numpy as np
-import scipy
-import mathics.session
+
+from mathics.core.atoms import Integer, Real
 from mathics.core.expression import Expression
 from mathics.core.list import ListExpression
 from mathics.core.symbols import Symbol
-from mathics.core.atoms import Integer, Real
 import dash
-import werkzeug
 import plotly.graph_objects as go
 
-parser = argparse.ArgumentParser(description="Graphics demo")
-parser.add_argument("--debug", action="store_true")
-parser.add_argument("--fe", choices=["shell", "browser"], default="shell")
-parser.add_argument("--browser", choices=["webview", "webbrowser"], default="webview")
-args = parser.parse_args()
-
-# load a url into a browser, using either:
-# webview - pop up new standalone window using pywebview
-# webbrowser - instruct system browser to open a new window
-class Browser():
-
-    def __init__(self):
-        self.n = 0
-
-    def show(self, url):
-        # display a browser window that fetches the current plot
-        #print("showing", url)
-        if args.browser == "webview":
-            offset = 50 * self.n
-            self.n += 1
-            webview.create_window(url, url, x=100+offset, y=100+offset, width=600, height=800)
-        elif args.browser == "webbrowser":
-            webbrowser.open_new(url)
-
-    def start(self):
-        if args.browser == "webview":
-            # webview needs to run on main thread :( and blocks, so we start other things on their own thread
-            # webview needs a window before we can call start() :(, so we make a hidden one
-            # real windows will be provided later
-            webview.create_window("hidden", hidden=True)
-            webview.start()
-        elif args.browser == "webbrowser":
-            time.sleep(1e6)
-
-    #atexit.register(start)
-
-
-#
-# util
-#
-
-# pretty print expr
-def prt(expr, indent=1):
-    if not hasattr(expr, "elements"):
-        print("  " * indent + str(expr))
-    else:
-        print("  " * indent + str(expr.head))
-        for elt in expr.elements:
-            prt(elt, indent + 1)
-
-def to_python_expr(expr, lib = "np"):
-
-    funs = {
-        "System`Sin": f"{lib}.sin",
-        "System`Cos": f"{lib}.cos",
-        "System`Sqrt": f"{lib}.sqrt",
-        "System`Abs": f"{lib}.abs",
-        # TOOD: eval turns System`... into HypergeometricPFQ; need polyfill for that
-        "My`Hypergeometric1F1": "scipy.special.hyp1f1",
-    }
-
-    listfuns = {
-        "System`Plus": "sum", # TODO: np.sum?
-        "System`Times": "math.prod" # TODO: np.prod?
-
-    }
-
-    binops = {
-        "System`Power": "**",
-    }
-
-    if not hasattr(expr, "head"):
-        if str(expr).startswith("Global`"):
-            result = str(expr).split("`")[-1]
-        elif str(expr) == "System`I" or str(expr) == "I":
-            result = "1j"
-        else:
-            result = str(expr)
-    elif str(expr.head) in funs:
-        fun = funs[str(expr.head)]
-        args = (to_python_expr(e,lib) for e in expr.elements)
-        result = f"{fun}({",".join(args)})"
-    elif str(expr.head) in listfuns:
-        fun = listfuns[str(expr.head)]
-        args = (to_python_expr(e,lib) for e in expr.elements)
-        result = f"{fun}([{",".join(args)}])"
-    elif str(expr.head) in binops:
-        arg1 = to_python_expr(expr.elements[0],lib)
-        arg2 = to_python_expr(expr.elements[1],lib)
-        result = f"({arg1}{binops[str(expr.head)]}{arg2})"
-    else:
-        raise Exception(f"Unknown head {expr.head}")
-    #print("compile", expr, "->", result)
-    return result
-
-def my_compile(expr, arg_names, lib = "np"):
-    python_expr = to_python_expr(expr, lib)
-    python_arg_names = [n.split("`")[-1] for n in arg_names]
-    arg_list = ','.join(python_arg_names)
-    python_def = f"lambda {arg_list}: {python_expr}"
-    f = eval(python_def)
-    return f
+import compile
+import util
 
 # compute a unique id for use in html
 ids = collections.defaultdict(lambda: 0)
@@ -145,7 +34,7 @@ def layout_Plot3D(fe, expr, values = {}):
         
     # compile fun
     fun_args = [str(xlims_expr.elements[0]), str(ylims_expr.elements[0])] + list(values.keys())
-    fun = my_compile(fun_expr, fun_args)
+    fun = compile.my_compile(fun_expr, fun_args)
 
     # parse xlims, construct namedtuple
     A = collections.namedtuple("A", ["name", "lo", "hi", "count"])
@@ -269,18 +158,18 @@ def layout_Graphics3D(fe, expr):
         elif str(g.head) == "Global`GraphicsComplex": # TODO: should be system
             # TODO: is this correct?
             print("xxx g.elements[0])", type(g.elements[0]), g.elements[0].head)
-            t0 = time.time()
+            util.start_timer("xyzs")
             xyzs.extend(g.elements[0].value)
-            print("xxx xyzs", time.time()-t0)
+            util.stop_timer()
             def handle_c(c):
                 if str(c.head) == "System`Polygon":
                     polys = c.elements[0]
                     print("xxx polys", type(polys), polys.head)                    
                     if isinstance(polys, NumpyArrayListExpr):
-                        t = t0
+                        util.start_timer("ijks")
                         for poly in polys.value:
                             ijks.append(poly[0:3]-1)
-                        print("xxx ijks", time.time()-t0)
+                        util.stop_timer()
                     else:
                         for poly in polys.elements:
                             for j, k in zip(poly.elements[1:-1], poly.elements[2:]):
@@ -305,22 +194,22 @@ def layout_Graphics3D(fe, expr):
         handle_g(g)
 
 
-    t0 = time.time()
+    util.start_timer("transpose")
     xs = [xyz[0] for xyz in xyzs]
     ys = np.array([xyz[1] for xyz in xyzs])
     zs = np.array([xyz[2] for xyz in xyzs])
     _is = np.array([ijk[0] for ijk in ijks])
     js = np.array([ijk[1] for ijk in ijks])
     ks = np.array([ijk[2] for ijk in ijks])
-    print("xxx transpose", time.time()-t0)
+    util.stop_timer()
 
-    t0 = time.time()
+    util.start_timer("mesh")
     mesh = go.Mesh3d(x=xs, y=ys, z=zs, i=_is, j=js, k=ks, color="blue")
-    print("xxx mesh", time.time()-t0)
+    util.stop_timer()
     
-    t0 = time.time()
+    util.start_timer("figure")
     figure = go.Figure(data=[mesh])
-    print("xxx figure", time.time()-t0)
+    util.stop_timer()
 
     """
             colorbar=dict(title=dict(text='z')),
@@ -344,7 +233,7 @@ def layout_Graphics3D(fe, expr):
 #
 
 def layout_expr(fe, expr, values = {}):
-    start = time.time()
+    util.start_timer(f"layout {str(expr.head)}")
     if str(expr.head) == "My`Plot3D":
         result = layout_Plot3D(fe, expr, values)
     elif str(expr.head) == "Global`Manipulate":
@@ -353,7 +242,7 @@ def layout_expr(fe, expr, values = {}):
         result = layout_Graphics3D(fe, expr)
     else:
         raise Exception(f"Unknown head {expr.head} in layout_expr")
-    print(f"layout {str(expr.head)}: {(time.time()-start)*1000:.1f} ms")
+    util.stop_timer()
     return result
 
 #
@@ -386,7 +275,7 @@ def eval_plot3d(fe, expr, grid_to_expr):
     # compile fun
     values = {} # TODO: how to pass in values as expected by Manipulate
     fun_args = [str(xlims_expr.elements[0]), str(ylims_expr.elements[0])] + list(values.keys())
-    fun = my_compile(fun_expr, fun_args)
+    fun = compile.my_compile(fun_expr, fun_args)
 
     # parse xlims, construct namedtuple
     # TODO: namedtuple probably not needed any more
@@ -428,14 +317,14 @@ def grid_to_expr_poly_list(xs, ys, zs):
 
     # this is the slow part
     # corresponding traversal at other end is similarly slow
-    start = time.time()
+    util.start_timer("construct G3D list of polys")
     result = Expression(Symbol("System`Graphics3D"), 
         Expression(Symbol("System`List"), *(
             Expression(Symbol("System`Polygon"), list_expr(list_expr(*p), list_expr(*q), list_expr(*r)))
             for p, q, r in tris
         ))
     )
-    print(f"construct G3D list of polys: {(time.time()-start)*1000:.1f} ms")
+    util.stop_timer()
 
     return result
 
@@ -473,8 +362,6 @@ class NumpyArrayListExpr:
 # GraphicsComplex with list of points, and list of polys, each poly a list of indices in the list of points
 def grid_to_expr_complex(xs, ys, zs, np_expr):
     
-    start = time.time()
-
     n = math.prod(xs.shape)
     inxs = np.arange(n).reshape(xs.shape)                                                       # shape = (nx,ny)
     quads = np.stack([inxs[:-1,:-1], inxs[:-1,1:], inxs[1:,1:], inxs[1:,:-1]]).T.reshape(-1, 4) # shape = ((nx-1)*(nx-1), 4)
@@ -502,7 +389,7 @@ def eval_Plot3Dv4(fe, expr):
 
 
 def eval_expr(fe, expr):
-    start = time.time()
+    util.start_timer(f"eval {expr.head}")
     funs = {
         "My`Plot3Dv1": eval_Plot3Dv1,
         "My`Plot3Dv2": eval_Plot3Dv2,
@@ -513,169 +400,7 @@ def eval_expr(fe, expr):
         result = funs[str(expr.head)](fe, expr)
     else:
         result = expr.evaluate(fe.session.evaluation)
-    print(f"eval {str(expr.head)}: {(time.time()-start)*1000:.1f} ms")
+    util.stop_timer()
     return result
 
-# common to ShellFrontEnd and BrowserFrontEnd
-class DashFrontEnd:
-
-    def __init__(self):
-
-        # create app, set options
-        self.app = dash.Dash(__name__, suppress_callback_exceptions=True)
-        self.app.enable_dev_tools(debug = args.debug, dev_tools_silence_routes_logging = not args.debug)
-
-        # start server on its own thread, allowing something else to run on main thread
-        # pass it self.app.server which is a Flask WSGI compliant app so could be hooked to any WSGI compliant server
-        # make_server picks a free port because we passed 0 as port number
-        self.server = werkzeug.serving.make_server("127.0.0.1", 0, self.app.server)
-        threading.Thread(target = self.server.serve_forever).start()
-        print("using port", self.server.server_port)
-
-        # everybody needs a Mathics session
-        self.session = mathics.session.MathicsSession()
-
-
-import demos
-
-# read expressions from terminal, display results in a browser winddow
-class ShellFrontEnd(DashFrontEnd):
-
-    def __init__(self):
-
-        # initialize app and start server
-        super().__init__()
-
-        # map from plot names to plot layouts, one per plot
-        self.plots = {}
-
-        # initial layout is empty save for a Location component
-        # which causes the desired plot to be displayed as detailed below
-        self.app.layout = dash.html.Div([dash.dcc.Location(id="url")], id="page-content", className="shell-front-end")
-
-        # to display plot x browser is instructed to fetch url with path /plotx 
-        # when browser fetches /plotx, it is served the initial (empty) layout defined above
-        # then the dcc.Location component in that layout triggers this callback,
-        # which receives the path /plotx of the loaded url
-        # and updates the page-content div of the initial (empty) layout with the actual layout for /plotx
-        @self.app.callback(
-            dash.Output("page-content", "children"), # we update the page-content layout with the layout for plot x
-            dash.Input("url", "pathname")            # we receive the url path /plotx
-        )
-        def layout_for_path(path):
-            # returning this value updates page-content div with layout for plotx
-            return self.plots[path[1:]]
-
-        # this is a standin for the read-eval-print loop of the shell
-        # here we just evaluate the "expressions" "a" and "b" and display the resulting layout
-        # TODO: print s on stdout
-        # TODO: then actual REPL loop
-        # TODO: add s as title
-
-        for s in demos.demos:
-
-            expr = self.session.parse(s)
-
-            start = time.time()
-            expr = eval_expr(self, expr)
-            layout = layout_expr(self, expr)
-            print(f"eval + layout {str(expr.head)}: {(time.time()-start)*1000:.1f} ms")
-
-            plot_name = f"plot{len(self.plots)}"
-            self.plots[plot_name] = layout
-            url = f"http://127.0.0.1:{self.server.server_port}/{plot_name}"
-            browser.show(url)
-
-# accept expressions from an input field, display expressions in an output box
-class BrowserFrontEnd(DashFrontEnd):
-
-    # creates a layout for an input field and an output div
-    def pair(self, n=0):
-
-        in_id = f"in-{n}"
-        trigger_id = in_id + "-trigger"
-        out_id = f"out-{n}"
-        pair_id = f"pair-{n}"
-
-        # create an input field, a div to hold output, and a hidden button
-        # to signal that the user has pressed shift-enter
-        instructions = "Type one of a, b, c, ... followed by shift-enter"
-        layout = dash.html.Div([
-            dash.dcc.Textarea(id=in_id, value="", placeholder=instructions, spellCheck=False, className="input"),
-            dash.html.Button("trigger", trigger_id, hidden=True),
-            dash.html.Div([], id=out_id, className="output")
-        ], id=pair_id, className="pair")
-
-        # TODO: this only works for the first one
-        # TextArea triggers callbacks on every keystroke, but we only want to know
-        # when user has pressed shift-enter, so we add a client-side event listener to the input field
-        # that listens for shift-enter and triggers a click event on the hidden button
-        # also autosize textarea to exactly contain text
-        self.app.clientside_callback(
-            """
-            (id) => {
-                ta = document.getElementById(id)
-                ta.addEventListener("keydown", (event) => {
-                    if (event.key === "Enter" && event.shiftKey) {
-                        event.preventDefault()
-                        document.getElementById(id+"-trigger").click();
-                    }
-                })
-                ta.addEventListener("input", (event) => {
-                    ta.style.height = "auto"
-                    ta.style.height = (ta.scrollHeight + 5) + "px"
-                })
-                return window.dash_clientside.no_update;
-            }
-            """,
-            dash.Output(in_id, "id"),
-            dash.Input(in_id, 'id')
-        )
-
-        # callback is triggered by "click" on the hidden button signalling the user has pressed shift-enter
-        # it receives the value of the in_id textarea, asks the interpreter to evaluate it and compute a layout,
-        # then updates the out_id div with the layout
-        # commented out code would add another input+output pair, but the callback for shift-enter
-        # only works for the first one, so don't add additional ones for now
-        @self.app.callback(
-            #dash.Output(self.top_id, "children"),
-            dash.Output(out_id, "children"),
-            dash.Input(trigger_id, "n_clicks"),
-            dash.State(in_id, "value"),
-            prevent_initial_call = True
-        )
-        def update_output_div(_, input_value):
-            print("evaluating", input_value)
-            #patch = dash.Patch()
-            #patch.append(self.pair(n+1))
-            #return (patch, layout)
-            # TODO: this is funky
-            input_value = input_value.strip()
-            if input_value in "abc":
-                input_value = demos["abc".index(input_value)]
-            expr = self.session.parse(input_value)
-            layout = layout_expr(self, expr)
-            return layout
-
-        # return input+output pair
-        return layout
-
-    def __init__(self):
-
-        # initialize app and start server
-        super().__init__()
-
-        # initial layout is an input+output pair
-        self.top_id = "browser-front-end"
-        self.app.layout = dash.html.Div([self.pair()], id=self.top_id)
-
-        # point a browser at our page
-        url = f"http://127.0.0.1:{self.server.server_port}"
-        browser.show(url)
-
-
-browser = Browser()
-front_end = ShellFrontEnd if args.fe=="shell" else BrowserFrontEnd
-threading.Thread(target = front_end).start()
-browser.start()
 
