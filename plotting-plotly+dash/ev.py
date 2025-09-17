@@ -13,6 +13,10 @@ import ex
 import compile
 import util
 
+#
+#
+#
+
 # https://github.com/Mathics3/mathics-core/blob/master/mathics/eval/drawing/plot.py
 # https://github.com/Mathics3/mathics-core/blob/master/mathics/eval/drawing/plot3d.py
 
@@ -86,23 +90,22 @@ def grid_to_graphics_complex(xs, ys, zs, np_expr):
         
     return result
 
-def eval_Plot3Dv4(fe, expr):
+def eval_Plot3D(fe, expr):
     xs, ys, zs = eval_plot3d_xyzs(fe, expr)
     result = grid_to_graphics_complex(xs, ys, zs, ex.NumpyArrayListExpr)
     return result
     #return eval_plot3d(fe, expr, lambda xs, ys, zs: grid_to_expr_complex(xs, ys, zs, ex.NumpyArrayListExpr))
 
-from ev_slow1 import eval_Plot3Dv2
-from ev_slow2 import eval_Plot3Dv3
-
+# previous slower implementations retained only for timing purposes
+# uncomment for timing by overriding eval_Plot3D 
+#from ev_slow1 import eval_Plot3D
+#from ev_slow2 import eval_Plot3D
 
 # TODO: this is temporary until I figure out how to hook eval_Plot3D into expr.evaluate
 def eval_expr(fe, expr, quiet=False):
     if not quiet: util.start_timer(f"eval {expr.head}")
     funs = {
-        "My`Plot3Dv2": eval_Plot3Dv2,
-        "My`Plot3Dv3": eval_Plot3Dv3,
-        "My`Plot3Dv4": eval_Plot3Dv4,
+        "My`Plot3D": eval_Plot3D,
     }
     if str(expr.head) in funs:
         result = funs[str(expr.head)](fe, expr)

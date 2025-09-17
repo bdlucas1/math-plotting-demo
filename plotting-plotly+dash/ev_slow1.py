@@ -35,7 +35,7 @@ def grid_to_graphics_poly_list(xs, ys, zs):
 
     return result
 
-def eval_Plot3Dv2(fe, expr):
+def eval_Plot3D(fe, expr):
     xs, ys, zs = ev.eval_plot3d_xyzs(fe, expr)
     result = grid_to_graphics_poly_list(xs, ys, zs)
     return result
