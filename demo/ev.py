@@ -28,7 +28,7 @@ def eval_plot3d_xyzs(fe, expr):
     fun_expr = expr.elements[0]
     xlims_expr = expr.elements[1]
     ylims_expr = expr.elements[2]
-        
+    
     x_points = y_points = 10 # default
     for e in expr.elements[3:]:
         if hasattr(e, "head") and str(e.head) == "System`Rule":
@@ -87,19 +87,18 @@ def grid_to_graphics_complex(xs, ys, zs, np_expr):
     poly_expr = Expression(Symbol("System`Polygon"), quads_expr)
     gc_expr = Expression(Symbol("Global`GraphicsComplex"), xyzs_expr, poly_expr)
     result = Expression(Symbol("System`Graphics3D"), gc_expr)
-        
+    
     return result
 
 def eval_Plot3D(fe, expr):
     xs, ys, zs = eval_plot3d_xyzs(fe, expr)
     result = grid_to_graphics_complex(xs, ys, zs, ex.NumpyArrayListExpr)
     return result
-    #return eval_plot3d(fe, expr, lambda xs, ys, zs: grid_to_expr_complex(xs, ys, zs, ex.NumpyArrayListExpr))
 
 # previous slower implementations retained only for timing purposes
 # uncomment for timing by overriding eval_Plot3D 
 #from ev_slow1 import eval_Plot3D
-#from ev_slow2 import eval_Plot3D
+from ev_slow2 import eval_Plot3D
 
 # TODO: this is temporary until I figure out how to hook eval_Plot3D into expr.evaluate
 def eval_expr(fe, expr, quiet=False):
@@ -112,6 +111,7 @@ def eval_expr(fe, expr, quiet=False):
     else:
         result = expr.evaluate(fe.session.evaluation)
     if not quiet: util.stop_timer()
+    #util.prt(result)
     return result
 
 

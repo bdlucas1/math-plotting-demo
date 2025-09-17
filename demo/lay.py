@@ -82,7 +82,7 @@ def layout_Manipulate(fe, expr):
         
     # set timer display for slider updates after initial display
     util.timer_level = 1 # to see top-level timings as sliders move
-    #util.timer_level = 0 # no timings as timers move
+    #util.timer_level = 0 # no timings as sliders move
 
     # define callbacks for the sliders
     @fe.app.callback(
