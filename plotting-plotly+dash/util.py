@@ -1,6 +1,9 @@
 import time
 
+#
 # pretty print expr
+#
+
 def prt(expr, indent=1):
     if not hasattr(expr, "elements"):
         print("  " * indent + str(expr))
@@ -9,6 +12,12 @@ def prt(expr, indent=1):
         for elt in expr.elements:
             prt(elt, indent + 1)
 
+
+#
+# start_timer and stop_timer must be paired
+# use timer_level to control max  nesting level:
+#     -1 all, 0 none, 1 only top level, etc.
+#
 
 timers = []
 timer_level = -1 # all

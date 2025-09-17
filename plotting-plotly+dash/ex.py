@@ -3,6 +3,10 @@ import numpy as np
 from mathics.core.list import ListExpression
 from mathics.core.symbols import Symbol
 
+#
+# expression helpers
+#
+
 list_expr = lambda *a: ListExpression(*a, literal_values = a)
 
 # instantiate an actual nested List structure from a numpy array

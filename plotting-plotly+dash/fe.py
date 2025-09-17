@@ -9,6 +9,7 @@ import webview
 import werkzeug
 
 import ev
+import lay
 import util
 
 #
@@ -173,7 +174,7 @@ class ShellFrontEnd(DashFrontEnd):
 
             util.start_timer(f"total {expr.head}")
             expr = ev.eval_expr(self, expr)
-            layout = ev.layout_expr(self, expr)
+            layout = lay.layout_expr(self, expr)
             util.stop_timer()
 
             plot_name = f"plot{len(self.plots)}"
