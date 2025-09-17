@@ -97,8 +97,9 @@ def eval_Plot3D(fe, expr):
 
 # previous slower implementations retained only for timing purposes
 # uncomment for timing by overriding eval_Plot3D 
-#from ev_slow1 import eval_Plot3D
-from ev_slow2 import eval_Plot3D
+# CAREFUL!
+###from ev_slow1 import eval_Plot3D
+###from ev_slow2 import eval_Plot3D
 
 # TODO: this is temporary until I figure out how to hook eval_Plot3D into expr.evaluate
 def eval_expr(fe, expr, quiet=False):
