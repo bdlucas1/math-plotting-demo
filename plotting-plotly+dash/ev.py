@@ -5,11 +5,11 @@ import numpy as np
 
 from mathics.core.atoms import Integer, Real
 from mathics.core.expression import Expression
-from mathics.core.list import ListExpression
 from mathics.core.symbols import Symbol
 import dash
 import plotly.graph_objects as go
 
+import ex
 import compile
 import util
 
@@ -192,7 +192,7 @@ def layout_Graphics3D(fe, expr):
                 if str(c.head) == "System`Polygon":
 
                     polys = c.elements[0]
-                    if isinstance(polys, NumpyArrayListExpr):
+                    if isinstance(polys, ex.NumpyArrayListExpr):
                         util.start_timer("ijks from NumpyArrayListExpr")
                         # use advanced indexing to break the polygons down into triangles
                         ngon = polys.value.shape[1]
@@ -307,7 +307,7 @@ def layout_expr(fe, expr):
 # https://github.com/Mathics3/mathics-core/blob/master/mathics/eval/drawing/plot.py
 # https://github.com/Mathics3/mathics-core/blob/master/mathics/eval/drawing/plot3d.py
 
-def eval_plot3d(fe, expr, grid_to_expr):
+def eval_plot3d_xyzs(fe, expr):
 
     # Plot3D arg exprs
     fun_expr = expr.elements[0]
@@ -348,71 +348,19 @@ def eval_plot3d(fe, expr, grid_to_expr):
     # compute zs from xs and ys using compiled function
     zs = fun(**({xlims.name: xs, ylims.name: ys} | values))
 
+    return xs, ys, zs
+
+
+"""
+def eval_plot3d(fe, expr, grid_to_expr):
+    xs, ys, zs = eval_plot3d_xyzs(fe, expr)
     return grid_to_expr(xs, ys, zs)
-
-list_expr = lambda *a: ListExpression(*a, literal_values = a)
-
-# List of Polygon each with its own list of x,y,z coordinates
-def grid_to_expr_poly_list(xs, ys, zs):
-
-    # a=[1:,1:]   b=[1:,:-1]
-    # c=[:-1:,1:] d=[:-1,:-1]
-    xyzs = np.stack([xs, ys, zs], axis=-1)                                # shape = (nx,ny,3)
-    tris1 = np.stack([xyzs[1:,1:], xyzs[1:,:-1], xyzs[:-1,:-1]], axis=-1) # abd, shape = (nx-1,ny-1,3,3)
-    tris2 = np.stack([xyzs[1:,1:], xyzs[:-1,:-1], xyzs[:-1,1:]], axis=-1) # adc, shape = (nx-1,ny-1,3,3)
-    tris = np.stack([tris1,tris2])                                        # shape = (2,nx-1,ny-1,3,3)
-    tris = tris.reshape((-1,3,3)).transpose(0,2,1)                        # shape = (2*(nx-1)*(ny-1),3,3)
-
-    # TODO: check this
-    # ugh - indices in Polygon are 1-based
-    tris += 1
-
-    # this is the slow part
-    # corresponding traversal at other end is similarly slow
-    util.start_timer("construct G3D list of polys")
-    result = Expression(Symbol("System`Graphics3D"), 
-        Expression(Symbol("System`List"), *(
-            Expression(Symbol("System`Polygon"), list_expr(list_expr(*p), list_expr(*q), list_expr(*r)))
-            for p, q, r in tris
-        ))
-    )
-    util.stop_timer()
-
-    return result
+"""
 
 
-# instantiate an actual nested List structure from a numpy array
-# this is slow
-def numpy_array_list_expr(v, mathics_type):
-    if isinstance(v, np.ndarray):
-        return ListExpression(*(numpy_array_list_expr(vv, mathics_type) for vv in v), literal_values = v)
-    else:
-        # numpy scalar as mathics type
-        return mathics_type(v.item())
-
-# quacks like a List Expression, but only lazily generates elements if you really insist
-# those in the know can look at .value, which is an np array, for an efficient shortcut
-# that avoids ever constructing the List per se
-class NumpyArrayListExpr:
-
-    def __init__(self, value, mathics_type):
-        self.head = Symbol("System`List") # TODO use import
-        self.value = value
-        self.mathics_type = mathics_type
-        self._elements = None
-
-    @property
-    def elements(self):
-        if not self._elements:
-            # if call really really needs .elements we'll compute them here
-            # but it's more efficient to just look at .value
-            # TODO: this instantiates whole nested list structure on first reference
-            # should we likewise lazily evaluate each element of the list in the case of >1-d arrays?
-            self._elements = numpy_array_list_expr(self.value, self.mathics_type).elements
-        return self._elements
 
 # GraphicsComplex with list of points, and list of polys, each poly a list of indices in the list of points
-def grid_to_expr_complex(xs, ys, zs, np_expr):
+def grid_to_graphics_complex(xs, ys, zs, np_expr):
     
     n = math.prod(xs.shape)
     inxs = np.arange(n).reshape(xs.shape)                                                       # shape = (nx,ny)
@@ -430,16 +378,17 @@ def grid_to_expr_complex(xs, ys, zs, np_expr):
         
     return result
 
-def eval_Plot3Dv2(fe, expr):
-    return eval_plot3d(fe, expr, grid_to_expr_poly_list)
-
-def eval_Plot3Dv3(fe, expr):
-    return eval_plot3d(fe, expr, lambda xs, ys, zs: grid_to_expr_complex(xs, ys, zs, numpy_array_list_expr))
-
 def eval_Plot3Dv4(fe, expr):
-    return eval_plot3d(fe, expr, lambda xs, ys, zs: grid_to_expr_complex(xs, ys, zs, NumpyArrayListExpr))
+    xs, ys, zs = eval_plot3d_xyzs(fe, expr)
+    result = grid_to_graphics_complex(xs, ys, zs, ex.NumpyArrayListExpr)
+    return result
+    #return eval_plot3d(fe, expr, lambda xs, ys, zs: grid_to_expr_complex(xs, ys, zs, ex.NumpyArrayListExpr))
+
+from ev_slow1 import eval_Plot3Dv2
+from ev_slow2 import eval_Plot3Dv3
 
 
+# TODO: this is temporary until I figure out how to hook eval_Plot3D into expr.evaluate
 def eval_expr(fe, expr, quiet=False):
     if not quiet: util.start_timer(f"eval {expr.head}")
     funs = {

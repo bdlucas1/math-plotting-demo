@@ -56,7 +56,7 @@ testgc2 = """
 
 demos = [
     #                                                                                  eval  layout   total (ms)
-    dp3d,   # Plot3D Sin 50x50           current, generates G3D slowly                10026     181   10207
+    #dp3d,   # Plot3D Sin 50x50           current, generates G3D slowly                10026     181   10207
     #dp3dv1, # Plot3Dv1 Sin/Sqrt 200x200  send Plot3D unmodified to layout                 0      26      26
     dp3dv2, # Plot3Dv2 Sin/Sqrt 200x200  G3D, individual polys, no GraphicsComplex      439      71     510
     dp3dv3, # Plot3Dv2 Sin/Sqrt 200x200  G3D, GraphicsComplex, numpy_array_list_expr    303     104     407
