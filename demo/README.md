@@ -58,7 +58,7 @@ Timings (in ms):
 
 Intepretation:
 
-* ev_slow1.py: vectorized computation of the expr to be plotted is a
+* ev_slow1.py: vectorized evaluation of the expr to be plotted is a
   massive win.
 
 * ev_slow2.py: switching to the more efficient representation using
