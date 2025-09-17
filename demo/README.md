@@ -58,15 +58,15 @@ Timings:
 
 Intepretation:
 
-    * ev_slow1.py: vectorized computation of the expr to be plotted is
-      a massive win
+* ev_slow1.py: vectorized computation of the expr to be plotted is a
+  massive win.
 
-    * ev_slow2.py: switching to the more efficient representation
-      using GraphicsComplex is a minor win.
+* ev_slow2.py: switching to the more efficient representation using
+  GraphicsComplex is a minor win.
 
-    * ev.py: but more importantly GraphicsComplex is amenable to
-      representation as a pair of numpy arrays, with the full
-      Expression structure only lazily instantiated if requested.
-      This implementation in is by orders of magnitude the fastest,
-      and the only one capable of useful performance for Manipulate.
+* ev.py: but more importantly GraphicsComplex is amenable to
+  representation as a pair of numpy arrays, with the full Expression
+  structure only lazily instantiated if requested.  This
+  implementation in is by orders of magnitude the fastest, and the
+  only one capable of useful performance for Manipulate.
 
