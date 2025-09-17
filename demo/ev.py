@@ -44,8 +44,7 @@ def eval_plot3d_xyzs(fe, expr):
             """
 
     # compile fun
-    values = {} # TODO: how to pass in values as expected by Manipulate
-    fun_args = [str(xlims_expr.elements[0]), str(ylims_expr.elements[0])] + list(values.keys())
+    fun_args = [str(xlims_expr.elements[0]), str(ylims_expr.elements[0])]
     fun = compile.my_compile(fe.session.evaluation, fun_expr, fun_args)
 
     # parse xlims, construct namedtuple
@@ -65,7 +64,7 @@ def eval_plot3d_xyzs(fe, expr):
     xs, ys = np.meshgrid(xs, ys)
 
     # compute zs from xs and ys using compiled function
-    zs = fun(**({xlims.name: xs, ylims.name: ys} | values))
+    zs = fun(**{xlims.name: xs, ylims.name: ys})
 
     # sometimes expr gets compiled into something that returns a complex even though the imaginary part is 0
     zs = np.abs(zs)
