@@ -1,4 +1,4 @@
-Timings for various Plot3D implemenations on the following test case:
+Timings for various Plot3D implementations to compute and display the following:
 
     Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}]
 
@@ -45,10 +45,10 @@ Implementations tested:
                 ...
     
 * ev.py: like the preceding, except the two Lists of Lists are stored
-  as numpy 2-d arrays available in expr.value, and expr.elements is
-  only instantiated on demand.
+  as two numpy 2-d arrays available in expr.value for the List, and
+  expr.elements for those Lists is only instantiated on demand.
 
-Timings:
+Timings (in ms):
 
                    eval  layout    total
     current       24020      76    24096
