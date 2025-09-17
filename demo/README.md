@@ -9,15 +9,15 @@ Implementations tested:
   it is far more expensive.) Generate a Graphics3D Expression
   containing a simple list of Polygons, specifically triangles.
 
-    System`Graphics3D
-      System`List
-        System`Polygon
+        System`Graphics3D
           System`List
-            System`List -0.5 -0.5 0.9111336256668093
-            System`List -2.0 -0.5 0.9604976327546424
-            System`List -2.0 -2.0 0.9802371777165348
-        System`Polygon
-          ...
+            System`Polygon
+              System`List
+                System`List -0.5 -0.5 0.9111336256668093
+                System`List -2.0 -0.5 0.9604976327546424
+                System`List -2.0 -2.0 0.9802371777165348
+            System`Polygon
+              ...
 
 * ev_slow1.py: the mathics expression to be plotted is "compiled" to a
   Python expression which evalutes the function using np vectorized
@@ -32,18 +32,18 @@ Implementations tested:
   points, and a list of lists of indexes into the list of points
   representing polygons.
  
-    System`Graphics3D
-      Global`GraphicsComplex
-        System`List
-          System`List -3.0 -3.0 -0.01976282228346516
-          System`List -1.5 -3.0 -0.039502367245357606
-          ...
-        System`Polygon
-          System`List
-            System`List 1 2 7 6
-            System`List 6 7 12 11
-            ...
-
+        System`Graphics3D
+          Global`GraphicsComplex
+            System`List
+              System`List -3.0 -3.0 -0.01976282228346516
+              System`List -1.5 -3.0 -0.039502367245357606
+              ...
+            System`Polygon
+              System`List
+                System`List 1 2 7 6
+                System`List 6 7 12 11
+                ...
+    
 * ev.py: like the preceding, except the two Lists of Lists are stored
   as numpy 2-d arrays available in expr.value, and expr.elements is
   only instantiated on demand.
