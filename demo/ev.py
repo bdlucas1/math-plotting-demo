@@ -38,6 +38,10 @@ def eval_plot3d_xyzs(fe, expr):
                     x_points, y_points = pp
                 else:
                     x_points = y_points = pp
+            """
+            elif str(e.elements[0]) == "System`PlotRange":
+                xrange, yrange, zrange = 
+            """
 
     # compile fun
     values = {} # TODO: how to pass in values as expected by Manipulate
@@ -62,6 +66,9 @@ def eval_plot3d_xyzs(fe, expr):
 
     # compute zs from xs and ys using compiled function
     zs = fun(**({xlims.name: xs, ylims.name: ys} | values))
+
+    # sometimes expr gets compiled into something that returns a complex even though the imaginary part is 0
+    zs = np.abs(zs)
 
     return xs, ys, zs
 

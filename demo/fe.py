@@ -22,15 +22,21 @@ demo_myp3d = "My`Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, Plot
 
 demo_man_s = """
     Manipulate[
-        My`Plot3D[Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp, {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}],
+        My`Plot3D[
+            Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp,
+            {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}, PlotRange -> {Automatic, Automatic, {0,10}}
+        ],
         {freq, 0.1, 1.0, 2.0, 0.2}, (* freq slider spec *)
         {amp, 0.0, 1.0, 2.0, 0.2}  (* amp slider spec *)
      ]
 """
 
+# TODO: System`Hypergeometric1F1 gets rewritten to varous functions involving gamma, bessel, etc.
+# need to build those out in compile.py to handle
+# for now just use My`Hypergeomtric which compile knows about but mathics evaluate doesn't
 demo_man_h = """
     Manipulate[
-        My`Plot3D[Abs[My`Hypergeometric1F1[a, b, (x + I y)^2]], {x, -2, 2}, {y, -2, 2}, {1, 14, PlotPoints -> {200,200}}}],
+        My`Plot3D[Abs[My`Hypergeometric1F1[a, b, (x + I y)^2]], {x, -2, 2}, {y, -2, 2}, PlotPoints -> {200,200}],
         {a, 0.5, 1, 1.5, 0.1}, (* a slider spec *)
         {b, 1.5, 2, 2.5, 0.1}  (* b slider spec *)
     ]
@@ -55,7 +61,7 @@ demos = [
     #demo_p3d, #demo_p3d, # current slow implementation
     demo_myp3d, #demo_myp3d, demo_myp3d, # multiple times for timing - take the fastest
     demo_man_s, # demo_man_s,
-    #demo_man_h, # TODO: fix this
+    demo_man_h, # TODO: fix this
     #test_gc1,
     #test_gc2
 ]

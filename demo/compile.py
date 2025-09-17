@@ -2,6 +2,21 @@ import math
 import numpy as np
 import scipy
 
+def hyppfq(p, q, x):
+    if len(p) == 1 and len(q) == 1:
+        return scipy.special.hyp1f1(p[0], q[0], x)
+    else:
+        raise Exception(f"can't handle hyppfq({p}, {q}, x)")
+
+def gamma(*args):
+    if len(args) == 1:
+        return scipy.special.gamma(args[0])
+    elif len(args) == 2:
+        a, x = args
+        return scipy.special.gammainc(a, np.abs(x)) # TODO: is np.abs correct?
+    else:
+        raise Exception(f"gamma with {len(gamma)} args")
+
 def to_python_expr(expr, lib = "np"):
 
     funs = {
@@ -11,12 +26,14 @@ def to_python_expr(expr, lib = "np"):
         "System`Abs": f"{lib}.abs",
         # TOOD: eval turns System`... into HypergeometricPFQ; need polyfill for that
         "My`Hypergeometric1F1": "scipy.special.hyp1f1",
+        "System`HypergeometricPFQ": "hyppfq",
+        "System`Gamma": "gamma",
     }
 
     listfuns = {
+        "System`List": "list",
         "System`Plus": "sum", # TODO: np.sum?
-        "System`Times": "math.prod" # TODO: np.prod?
-
+        "System`Times": "math.prod", # TODO: np.prod?
     }
 
     binops = {
@@ -28,6 +45,8 @@ def to_python_expr(expr, lib = "np"):
             result = str(expr).split("`")[-1]
         elif str(expr) == "System`I" or str(expr) == "I":
             result = "1j"
+        elif str(expr) == "System`E":
+            result = f"{lib}.e"
         else:
             result = str(expr)
     elif str(expr.head) in funs:
@@ -43,7 +62,7 @@ def to_python_expr(expr, lib = "np"):
         arg2 = to_python_expr(expr.elements[1],lib)
         result = f"({arg1}{binops[str(expr.head)]}{arg2})"
     else:
-        raise Exception(f"Unknown head {expr.head}")
+        raise Exception(f"Unknown head {expr.head} in {expr}")
     #print("compile", expr, "->", result)
     return result
 
