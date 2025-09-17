@@ -52,10 +52,21 @@ Timings:
 
                    eval  layout    total
     current       24020      76    24096
-    ev_slow1.py     441      77      518   
+    ev_slow1.py     441      77      518
     ev_slow2.py     236      34      270
     ev.py             3      16       19
 
-The implementation in ev.py is by orders of magnitude the fastest, and
-the only one capable of useful performance for Manipulate.
+Intepretation:
+
+    * ev_slow1.py: vectorized computation of the expr to be plotted is
+      a massive win
+
+    * ev_slow2.py: switching to the more efficient representation
+      using GraphicsComplex is a minor win.
+
+    * ev.py: but more importantly GraphicsComplex is amenable to
+      representation as a pair of numpy arrays, with the full
+      Expression structure only lazily instantiated if requested.
+      This implementation in is by orders of magnitude the fastest,
+      and the only one capable of useful performance for Manipulate.
 
