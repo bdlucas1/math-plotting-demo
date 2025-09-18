@@ -2,6 +2,8 @@ import collections
 import itertools
 import numpy as np
 
+import mathics.core.atoms as mca
+
 import dash
 import plotly.graph_objects as go
 
@@ -35,14 +37,17 @@ def layout_Manipulate(fe, expr):
     target_expr = expr.elements[0]
     slider_exprs = expr.elements[1:]
 
-    # TODO: clean this up
+    # parse slider specs
     S = collections.namedtuple("S", ["name", "lo", "init", "hi", "step", "id"])
-    def val(e):
-        if str(e).startswith("Global`"):
-            return str(e).split("`")[-1]
-        else:
-            return e.value
-    sliders = [S(*[val(e) for e in s.elements], uid("slider")) for s in slider_exprs]
+    def slider(e):
+        spec = e.to_python()
+        v, lo, hi = spec[0:3]
+        step = spec[3] if len(spec) > 3 else (hi-lo)/10 # TODO: better default step
+        v, init = v if isinstance(v, (list,tuple)) else (v, lo)
+        v = str(v).split("`")[-1] # strip off namespace pfx
+        spec = S(v, lo, init, hi, step, uid("slider"))
+        return spec
+    sliders = [slider(e) for e in slider_exprs]
 
     # compute a slider layout from a slider spec (S namedtuple)
     def slider_layout(s):
@@ -62,15 +67,12 @@ def layout_Manipulate(fe, expr):
 
     # compute a layout for the target_expr given a set of values
     def eval_and_layout(values):
-        for name, value in values.items():
-            # TODO: this leaves fe.session polluted - need separate scope?
-            # TODO: better way to set a value?
-            # TODO: use expr.replace_vars?
-            rule = f"{name}={value}"
-            rule_expr = fe.session.parse(rule)
-            ev.eval_expr(fe, rule_expr, quiet=True)
-        result = ev.eval_expr(fe, target_expr)
-        layout = layout_expr(fe, result)
+        # TODO: always Global?
+        # TODO: always Real?
+        # TODO: best order for replace_vars and eval?
+        expr = target_expr.replace_vars({"Global`"+n: mca.Real(v) for n, v in values.items()})
+        expr = ev.eval_expr(fe, expr)
+        layout = layout_expr(fe, expr)
         return layout
 
     # compute initial layout including target_expr and slider
@@ -86,6 +88,7 @@ def layout_Manipulate(fe, expr):
     #util.timer_level = 0 # no timings as sliders move
 
     # define callbacks for the sliders
+    print("xxx adding sliders", sliders)
     @fe.app.callback(
         dash.Output(target_id, "children"),
         *(dash.Input(s.id, "value") for s in sliders),

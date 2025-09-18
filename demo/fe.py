@@ -26,8 +26,8 @@ demo_man_s = """
             Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp,
             {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}, PlotRange -> {Automatic, Automatic, {0,0.5}}
         ],
-        {freq, 0.1, 1.0, 2.0, 0.2}, (* freq slider spec *)
-        {amp, 0.0, 1.0, 2.0, 0.2}  (* amp slider spec *)
+        {{freq,1.0}, 0.1, 2.0, 0.2}, (* freq slider spec *)
+        {{amp,1.0}, 0.0, 2.0, 0.2}  (* amp slider spec *)
      ]
 """
 
@@ -40,8 +40,8 @@ demo_man_h = """
             Abs[My`Hypergeometric1F1[a, b, (x + I y)^2]],
             {x, -2, 2}, {y, -2, 2}, PlotPoints -> {200,200}, PlotRange -> {Automatic, Automatic, {0,14}},
         ],
-        {a, 0.5, 1, 1.5, 0.1}, (* a slider spec *)
-        {b, 1.5, 2, 2.5, 0.1}  (* b slider spec *)
+        {{a,1}, 0.5, 1.5, 0.1}, (* a slider spec *)
+        {{b,2}, 1.5, 2.5, 0.1}  (* b slider spec *)
     ]
 """
 
