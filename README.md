@@ -12,5 +12,5 @@ the expression and displays the resulting graphics. There's only one
 field for now; you can change it and press shift-enter again to see a different
 plot.
 
-    python plotting-plotly+dash/app.py --fe browser 
+    python demo/fe.py --fe browser 
 
