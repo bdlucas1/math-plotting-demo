@@ -36,7 +36,10 @@ demo_man_s = """
 # for now just use My`Hypergeomtric which compile knows about but mathics evaluate doesn't
 demo_man_h = """
     Manipulate[
-        My`Plot3D[Abs[My`Hypergeometric1F1[a, b, (x + I y)^2]], {x, -2, 2}, {y, -2, 2}, PlotPoints -> {200,200}],
+        My`Plot3D[
+            Abs[My`Hypergeometric1F1[a, b, (x + I y)^2]],
+            {x, -2, 2}, {y, -2, 2}, PlotPoints -> {200,200}, PlotRange -> {Automatic, Automatic, {0,14}},
+        ],
         {a, 0.5, 1, 1.5, 0.1}, (* a slider spec *)
         {b, 1.5, 2, 2.5, 0.1}  (* b slider spec *)
     ]
@@ -248,7 +251,8 @@ class BrowserFrontEnd(DashFrontEnd):
             if input_value in "abc":
                 input_value = demos["abc".index(input_value)]
             expr = self.session.parse(input_value)
-            layout = layout_expr(self, expr)
+            expr = ev.eval_expr(self, expr)
+            layout = lay.layout_expr(self, expr)
             return layout
 
         # return input+output pair

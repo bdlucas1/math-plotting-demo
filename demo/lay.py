@@ -228,6 +228,7 @@ def layout_Graphics3D(fe, expr):
 
 def layout_expr(fe, expr):
     util.start_timer(f"layout {str(expr.head)}")
+    # TODO: System `Manipulate
     if str(expr.head) == "Global`Manipulate":
         result = layout_Manipulate(fe, expr)
     elif str(expr.head) == "System`Graphics3D":
