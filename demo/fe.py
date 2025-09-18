@@ -24,7 +24,7 @@ demo_man_s = """
     Manipulate[
         My`Plot3D[
             Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp,
-            {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}, PlotRange -> {Automatic, Automatic, {0,10}}
+            {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}, PlotRange -> {Automatic, Automatic, {0,0.5}}
         ],
         {freq, 0.1, 1.0, 2.0, 0.2}, (* freq slider spec *)
         {amp, 0.0, 1.0, 2.0, 0.2}  (* amp slider spec *)

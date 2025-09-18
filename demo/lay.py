@@ -65,6 +65,7 @@ def layout_Manipulate(fe, expr):
         for name, value in values.items():
             # TODO: this leaves fe.session polluted - need separate scope?
             # TODO: better way to set a value?
+            # TODO: use expr.replace_vars?
             rule = f"{name}={value}"
             rule_expr = fe.session.parse(rule)
             ev.eval_expr(fe, rule_expr, quiet=True)
@@ -153,7 +154,6 @@ def layout_Graphics3D(fe, expr):
                 handle_c(c)
 
         elif str(g.head) == "System`Rule":
-            # TODO
             pass
 
         elif str(g.head) == "System`List":
@@ -166,8 +166,13 @@ def layout_Graphics3D(fe, expr):
     for g in expr.elements:
         handle_g(g)
 
+    # process options
+    x_range = y_range = z_range = None
+    for name, value in ex.get_rule_values(expr):
+        if name == "System`PlotRange":
+            x_range, y_range, z_range = [v if isinstance(v, (tuple,list)) else None for v in value]
 
-    util.start_timer("ijk arrays")
+    util.start_timer("construct xyz and ijk arrays")
     xyzs = np.array(xyzs)
     ijks = np.array(ijks) - 1 # ugh - indices in Polygon are 1-based
     util.stop_timer()
@@ -181,7 +186,6 @@ def layout_Graphics3D(fe, expr):
     util.stop_timer()
     
     util.start_timer("figure")
-    #figure = go.Figure(data=[mesh])
     figure = go.Figure(
         data = [mesh],
         layout = go.Layout(
@@ -194,11 +198,9 @@ def layout_Graphics3D(fe, expr):
             )
         )
     )
-    """
-    TODO zlims
-    if zlims:
-        figure.update_layout(scene = dict(zaxis = dict(range=zlims)))
-    """
+    # TODO: x_range and y_range
+    if z_range:
+        figure.update_layout(scene = dict(zaxis = dict(range=z_range)))
     util.stop_timer()
 
     """

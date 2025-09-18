@@ -28,20 +28,18 @@ def eval_plot3d_xyzs(fe, expr):
     fun_expr = expr.elements[0]
     xlims_expr = expr.elements[1]
     ylims_expr = expr.elements[2]
-    
+
+    # process rules that we understand
+    # rules that we don't consume remain in rules to be passed through to Graphics output
+    # TODO: use symbol, not string
+    # TODO: hook into existing infrastructure for plotting
     x_points = y_points = 10 # default
-    for e in expr.elements[3:]:
-        if hasattr(e, "head") and str(e.head) == "System`Rule":
-            if str(e.elements[0]) == "System`PlotPoints":
-                pp = e.elements[1].value
-                if isinstance(pp, (tuple,list)):
-                    x_points, y_points = pp
-                else:
-                    x_points = y_points = pp
-            """
-            elif str(e.elements[0]) == "System`PlotRange":
-                xrange, yrange, zrange = 
-            """
+    for name, value in ex.get_rule_values(expr):
+        if name == "System`PlotPoints":
+            if isinstance(value, (tuple,list)):
+                x_points, y_points = value
+            else:
+                x_points = y_points = value
 
     # compile fun
     fun_args = [str(xlims_expr.elements[0]), str(ylims_expr.elements[0])]
@@ -98,8 +96,12 @@ def grid_to_graphics_complex(xs, ys, zs, np_expr):
 
 def eval_Plot3D(fe, expr):
     xs, ys, zs = eval_plot3d_xyzs(fe, expr)
-    result = grid_to_graphics_complex(xs, ys, zs, ex.NumpyArrayListExpr)
-    return result
+    graphics = grid_to_graphics_complex(xs, ys, zs, ex.NumpyArrayListExpr)
+    # append rules to the graphics
+    # TODO: only pass through the ones we don't consume ourselfs?
+    # TODO: is modifying elements like this legit?
+    graphics.elements = graphics.elements + tuple(ex.get_rules(expr))
+    return graphics
 
 # previous slower implementations retained only for timing purposes
 # uncomment for timing by overriding eval_Plot3D 

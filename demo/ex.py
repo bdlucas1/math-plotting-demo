@@ -7,7 +7,19 @@ from mathics.core.symbols import Symbol
 # expression helpers
 #
 
+value = lambda expr, default=None: getattr(expr, "value", default)
+
 list_expr = lambda *a: ListExpression(*a, literal_values = a)
+
+def get_rules(expr):
+    for e in expr.elements:
+        if hasattr(e, "head") and str(e.head) == "System`Rule":
+            yield e
+
+# TODO: symbol instead of str
+def get_rule_values(expr):
+    for rule in get_rules(expr):
+        yield str(rule.elements[0]), rule.elements[1].to_python()
 
 # instantiate an actual nested List structure from a numpy array
 # this is slow
