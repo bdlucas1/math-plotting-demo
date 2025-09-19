@@ -12,13 +12,12 @@ list_expr = lambda *a: mat.ListExpression(*a, literal_values = a)
 
 def get_rules(expr):
     for e in expr.elements:
-        if hasattr(e, "head") and str(e.head) == "System`Rule":
+        if hasattr(e, "head") and e.head == mat.SymbolRule:
             yield e
 
-# TODO: symbol instead of str
 def get_rule_values(expr):
     for rule in get_rules(expr):
-        yield str(rule.elements[0]), rule.elements[1].to_python()
+        yield rule.elements[0], rule.elements[1].to_python()
 
 # instantiate an actual nested List structure from a numpy array
 # this is slow

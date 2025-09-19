@@ -32,8 +32,8 @@ def eval_plot3d_xyzs(fe, expr):
     # TODO: use symbol, not string
     # TODO: hook into existing infrastructure for plotting
     x_points = y_points = 10 # default
-    for name, value in ex.get_rule_values(expr):
-        if name == "System`PlotPoints":
+    for sym, value in ex.get_rule_values(expr):
+        if sym == mat.SymbolPlotPoints:
             if isinstance(value, (tuple,list)):
                 x_points, y_points = value
             else:

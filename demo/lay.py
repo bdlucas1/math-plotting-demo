@@ -112,16 +112,16 @@ def layout_Graphics3D(fe, expr):
 
     def handle_g(g):
 
-        if str(g.head) == "System`Polygon":
+        if g.head == mat.SymbolPolygon:
             poly = [p.value for p in g.elements[0].elements]
             i = len(xyzs)
             xyzs.extend(poly)
             ijks.append([i+1,i+2,i+3]) # ugh - 1-based to match GraphicsComplex Polygon
 
-        elif str(g.head) == "System`Line":
+        elif g.head == mat.SymbolLine:
             line = [p.value for p in g.elements[0].elements]
 
-        elif str(g.head) == "Global`GraphicsComplex": # TODO: should be system
+        elif g.head == mat.SymbolGraphicsComplex:
 
             util.start_timer("xyzs")
             xyzs.extend(g.elements[0].value)
@@ -129,7 +129,7 @@ def layout_Graphics3D(fe, expr):
 
             def handle_c(c):
 
-                if str(c.head) == "System`Polygon":
+                if c.head == mat.SymbolPolygon:
 
                     polys = c.elements[0]
                     if isinstance(polys, ex.NumpyArrayListExpr):
@@ -155,10 +155,10 @@ def layout_Graphics3D(fe, expr):
             for c in g.elements[1:]:
                 handle_c(c)
 
-        elif str(g.head) == "System`Rule":
+        elif g.head == mat.SymbolRule:
             pass
 
-        elif str(g.head) == "System`List":
+        elif g.head == mat.SymbolList:
             for gg in g.elements:
                 handle_g(gg)
 
@@ -170,8 +170,8 @@ def layout_Graphics3D(fe, expr):
 
     # process options
     x_range = y_range = z_range = None
-    for name, value in ex.get_rule_values(expr):
-        if name == "System`PlotRange":
+    for sym, value in ex.get_rule_values(expr):
+        if sym == mat.SymbolPlotRange:
             x_range, y_range, z_range = [v if isinstance(v, (tuple,list)) else None for v in value]
 
     util.start_timer("construct xyz and ijk arrays")
@@ -229,11 +229,10 @@ def layout_Graphics3D(fe, expr):
 #
 
 def layout_expr(fe, expr):
-    util.start_timer(f"layout {str(expr.head)}")
-    # TODO: System `Manipulate
-    if str(expr.head) == "Global`Manipulate":
+    util.start_timer(f"layout {expr.head}")
+    if expr.head == mat.SymbolManipulate:
         result = layout_Manipulate(fe, expr)
-    elif str(expr.head) == "System`Graphics3D":
+    elif expr.head == mat.SymbolGraphics3D:
         result = layout_Graphics3D(fe, expr)
     else:
         raise Exception(f"Unknown head {expr.head} in layout_expr")
