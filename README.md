@@ -2,15 +2,21 @@ Installation
 
     pip install numpy dash plotly pywebview
 
-Run demo with "shell" front end - does not actually take input but rather pops up two windows with graphics
+Run demo with "shell" front end - does not actually take input but
+rather pops up two windows with graphics
 
     python demo/fe.py --fe shell 
+
+After running the demos and displaying the results, the demo front end
+goes into a REPL loop so you can enter expressions. Try for example
+
+    My`Plot3D[Sin[x] * Cos[y], {x,0,10}, {y,0,10}, PlotPoints->{200,200}]
 
 Run demo with "browser" front end. Displays a window that accepts an
 "expression" string, which must be either "a" or "b", and "evaluates"
 the expression and displays the resulting graphics. There's only one
-field for now; you can change it and press shift-enter again to see a different
-plot.
+field for now; you can change it and press shift-enter again to see a
+different plot.
 
     python demo/fe.py --fe browser 
 

@@ -63,7 +63,8 @@ def eval_plot3d_xyzs(fe, expr):
     zs = fun(**{xlims.name: xs, ylims.name: ys})
 
     # sometimes expr gets compiled into something that returns a complex even though the imaginary part is 0
-    zs = np.abs(zs)
+    # TODO: check that imag is all 0?
+    zs = np.real(zs)
 
     return xs, ys, zs
 

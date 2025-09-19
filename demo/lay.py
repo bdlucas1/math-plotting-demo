@@ -172,6 +172,8 @@ def layout_Graphics3D(fe, expr):
     x_range = y_range = z_range = None
     for sym, value in ex.get_rule_values(expr):
         if sym == mat.SymbolPlotRange:
+            if not isinstance(value, (list,tuple)):
+                value = [value, value, value]
             x_range, y_range, z_range = [v if isinstance(v, (tuple,list)) else None for v in value]
 
     util.start_timer("construct xyz and ijk arrays")

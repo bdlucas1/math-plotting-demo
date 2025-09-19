@@ -1,6 +1,7 @@
 import argparse
 import re
 import threading
+import traceback
 
 import dash
 import webbrowser
@@ -16,7 +17,8 @@ import util
 # 
 #
 
-plot_sin_old   = "Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}, MaxRecursion -> -1]"
+plot_sin_old_200   = "Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}, MaxRecursion -> -1]"
+plot_sin_old_20   = "Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {20,20}, MaxRecursion -> -1]"
 
 plot_sin = "My`Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}]"
 
@@ -24,7 +26,7 @@ plot_manipulate_sin = """
     Manipulate[
         My`Plot3D[
             Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp,
-            {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}, PlotRange -> {Automatic, Automatic, {0,0.5}}
+            {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}, PlotRange -> {Automatic, Automatic, {-0.25,0.5}}
         ],
         {{freq,1.0}, 0.1, 2.0, 0.2}, (* freq slider spec *)
         {{amp,1.0}, 0.0, 2.0, 0.2}  (* amp slider spec *)
@@ -69,6 +71,7 @@ run = dict(
     ],
 
     tests = [
+        plot_sin_old_20,
         plot_sin,
         plot_manipulate_sin,
         plot_manipulate_hypergeometric,
@@ -78,11 +81,16 @@ run = dict(
 
     # run multiple times, take fastest
     timing = [
-        #plot_sin_old, plot_sin_old,
+        #plot_sin_old_200, plot_sin_old_200,
         plot_sin, plot_sin, plot_sin, 
         #plot_manipulate_sin, plot_manipulate_sin, plot_manipulate_sin,
         #plot_manipulate_hypergeometric, plot_manipulate_hypergeometric, plot_manipulate_hypergeometric,
     ],
+
+    dev = [
+        #"My`Plot3D[Sin[x], {x,0,10}, {y,0,10}, PlotPoints->{200,200}]",
+        "Plot3D[Sin[x], {x,0,10}, {y,0,10}, PlotPoints->{20,20}]",
+    ]
 )
 
 
@@ -94,7 +102,7 @@ parser = argparse.ArgumentParser(description="Graphics demo")
 parser.add_argument("--debug", action="store_true")
 parser.add_argument("--fe", choices=["shell", "browser"], default="shell")
 parser.add_argument("--browser", choices=["webview", "webbrowser"], default="webview")
-parser.add_argument("--run", choices=["demos","tests","timing"], default="demos")
+parser.add_argument("--run", choices=["demos","tests","timing","dev"], default="demos")
 args = parser.parse_args()
 
 # load a url into a browser, using either:
@@ -182,26 +190,53 @@ class ShellFrontEnd(DashFrontEnd):
         # TODO: then actual REPL loop
         # TODO: add s as title
 
-        if args.run:
-            for s in run[args.run]:
 
+        def handle_input(s):
 
-                p = re.sub("[ \n]+", " ", s)
-                if len(p) > 80:
-                    p = p[0:80] + "..."
-                print("===", p)
+            try:
+
+                util.timer_level = -1 # print all timings
+                util.start_timer(f"total parse+eval+layout")
 
                 expr = self.session.parse(s)
+                if expr:
+                    expr = ev.eval_expr(self, expr)
+                    layout = lay.layout_expr(self, expr)
 
-                util.start_timer(f"total {expr.head}")
-                expr = ev.eval_expr(self, expr)
-                layout = lay.layout_expr(self, expr)
+            except Exception as e:
+
+                if args.run == "dev":
+                    traceback.print_exc()
+                else:
+                    print(e)
+
+            finally:
+                    
                 util.stop_timer()
 
-                plot_name = f"plot{len(self.plots)}"
-                self.plots[plot_name] = layout
-                url = f"http://127.0.0.1:{self.server.server_port}/{plot_name}"
-                browser.show(url)
+
+            plot_name = f"plot{len(self.plots)}"
+            self.plots[plot_name] = layout
+            url = f"http://127.0.0.1:{self.server.server_port}/{plot_name}"
+            browser.show(url)
+
+
+
+
+        # demos, tests, etc.
+        if args.run:
+            for s in run[args.run]:
+                print("input> ", s)
+                handle_input(s)
+                print("")
+
+        # REPL loop
+        while True:
+            print("input> ", end="")
+            s = input()
+            handle_input(s)
+            print("")
+
 
 # accept expressions from an input field, display expressions in an output box
 class BrowserFrontEnd(DashFrontEnd):
@@ -269,7 +304,7 @@ class BrowserFrontEnd(DashFrontEnd):
             # TODO: this is funky
             input_value = input_value.strip()
             if input_value in "abc":
-                input_value = demos["abc".index(input_value)]
+                input_value = run["demos"]["abc".index(input_value)]
             expr = self.session.parse(input_value)
             expr = ev.eval_expr(self, expr)
             layout = lay.layout_expr(self, expr)
