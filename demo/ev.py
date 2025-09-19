@@ -114,7 +114,7 @@ def eval_Plot3D(fe, expr):
 def eval_expr(fe, expr, quiet=False):
     with util.Timer(f"eval {expr.head}"):
         funs = {
-            "My`Plot3D": eval_Plot3D,
+            "Demo`Plot3D": eval_Plot3D,
         }
         if str(expr.head) in funs:
             result = funs[str(expr.head)](fe, expr)

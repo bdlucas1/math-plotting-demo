@@ -20,11 +20,11 @@ import util
 plot_sin_old_200   = "Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}, MaxRecursion -> -1]"
 plot_sin_old_20   = "Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {20,20}, MaxRecursion -> -1]"
 
-plot_sin = "My`Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}]"
+plot_sin = "Demo`Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}]"
 
 plot_manipulate_sin = """
     Manipulate[
-        My`Plot3D[
+        Demo`Plot3D[
             Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp,
             {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}, PlotRange -> {Automatic, Automatic, {-0.25,0.5}}
         ],
@@ -35,11 +35,11 @@ plot_manipulate_sin = """
 
 # TODO: System`Hypergeometric1F1 gets rewritten to varous functions involving gamma, bessel, etc.
 # need to build those out in compile.py to handle
-# for now just use My`Hypergeomtric which compile knows about but mathics evaluate doesn't
+# for now just use Demo`Hypergeomtric which compile knows about but mathics evaluate doesn't
 plot_manipulate_hypergeometric = """
     Manipulate[
-        My`Plot3D[
-            My`Hypergeometric1F1[a, b, (x + I y)^2],
+        Demo`Plot3D[
+            Demo`Hypergeometric1F1[a, b, (x + I y)^2],
             {x, -2, 2}, {y, -2, 2}, PlotPoints -> {200,200}, PlotRange -> {Automatic, Automatic, {-5,14}},
         ],
         {{a,1}, 0.5, 1.5, 0.1}, (* a slider spec *)
@@ -88,7 +88,7 @@ run = dict(
     ],
 
     dev = [
-        #"My`Plot3D[Sin[x], {x,0,10}, {y,0,10}, PlotPoints->{200,200}]",
+        #"Demo`Plot3D[Sin[x], {x,0,10}, {y,0,10}, PlotPoints->{200,200}]",
         "Plot3D[Sin[x], {x,0,10}, {y,0,10}, PlotPoints->{20,20}]",
     ]
 )
@@ -102,7 +102,7 @@ parser = argparse.ArgumentParser(description="Graphics demo")
 parser.add_argument("--debug", action="store_true")
 parser.add_argument("--fe", choices=["shell", "browser"], default="shell")
 parser.add_argument("--browser", choices=["webview", "webbrowser"], default="webview")
-parser.add_argument("--run", choices=["demos","tests","timing","dev"], default="demos")
+parser.add_argument("--run", choices=["demos","tests","timing","dev"], default=None)
 args = parser.parse_args()
 
 # load a url into a browser, using either:

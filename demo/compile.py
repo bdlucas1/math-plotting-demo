@@ -28,7 +28,7 @@ def to_python_expr(expr, lib = "np"):
         mat.SymbolAbs: f"{lib}.abs",
 
         # just do Hypergemetric, no simplification
-        mat.Symbol("My`Hypergeometric1F1"): "scipy.special.hyp1f1",
+        mat.Symbol("Demo`Hypergeometric1F1"): "scipy.special.hyp1f1",
 
         # following are subtitutions made in evaluating System`Hypergeometric1F1
         mat.SymbolHypergeometricPFQ: "hyppfq", # TODO is this defined in some import?
