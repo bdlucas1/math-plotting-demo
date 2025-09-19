@@ -300,11 +300,14 @@ class BrowserFrontEnd(DashFrontEnd):
                         event.preventDefault()
                         document.getElementById(id+"-trigger").click();
                     }
+            
                 })
-                ta.addEventListener("input", (event) => {
+                function setHeight() {
                     ta.style.height = "auto"
                     ta.style.height = (ta.scrollHeight + 5) + "px"
-                })
+                }
+                ta.addEventListener("input", setHeight)
+                setHeight()
                 return window.dash_clientside.no_update;
             }
             """,
