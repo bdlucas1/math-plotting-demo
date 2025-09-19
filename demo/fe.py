@@ -241,24 +241,52 @@ class ShellFrontEnd(DashFrontEnd):
 # accept expressions from an input field, display expressions in an output box
 class BrowserFrontEnd(DashFrontEnd):
 
-    # creates a layout for an input field and an output div
-    def pair(self, n=0):
+    def process_input(self, s):
 
-        in_id = f"in-{n}"
+        util.Timer.level = -1 # print all timings until told otherwise (e.g. by Manipulate)
+        result = None
+
+        with util.Timer(f"total parse+eval+layout"):
+            try:
+                expr = self.session.parse(s)
+                if expr:
+                    expr = ev.eval_expr(self, expr)
+                    result = lay.layout_expr(self, expr)
+            except Exception as e:
+                if args.run == "dev":
+                    traceback.print_exc()
+                else:
+                    print(e)
+
+        # text output
+        if not result:
+            if getattr(expr, "head", None) in set([mat.SymbolGraphics, mat.SymbolGraphics3D]):
+                result = str(expr.head)
+            else:
+                # TODO: how to get this to output Sin instead of System`Sin etc.
+                result = str(expr)
+
+        return result
+
+    # creates a layout for an input field and an output div
+    # optionally pre-populates the output div
+    def pair(self, input="", output=None):
+
+        self.pair_number += 1
+        in_id = f"in-{self.pair_number}"
         trigger_id = in_id + "-trigger"
-        out_id = f"out-{n}"
-        pair_id = f"pair-{n}"
+        out_id = f"out-{self.pair_number}"
+        pair_id = f"pair-{self.pair_number}"
 
         # create an input field, a div to hold output, and a hidden button
         # to signal that the user has pressed shift-enter
         instructions = "Type one of a, b, c, ... followed by shift-enter"
         layout = dash.html.Div([
-            dash.dcc.Textarea(id=in_id, value="", placeholder=instructions, spellCheck=False, className="input"),
+            dash.dcc.Textarea(id=in_id, value=input, placeholder=instructions, spellCheck=False, className="input"),
             dash.html.Button("trigger", trigger_id, hidden=True),
-            dash.html.Div([], id=out_id, className="output")
+            dash.html.Div(output, id=out_id, className="output")
         ], id=pair_id, className="pair")
 
-        # TODO: this only works for the first one
         # TextArea triggers callbacks on every keystroke, but we only want to know
         # when user has pressed shift-enter, so we add a client-side event listener to the input field
         # that listens for shift-enter and triggers a click event on the hidden button
@@ -298,19 +326,8 @@ class BrowserFrontEnd(DashFrontEnd):
         )
         def update_output_div(_, input_value):
             print("evaluating", input_value)
-            #patch = dash.Patch()
-            #patch.append(self.pair(n+1))
-            #return (patch, layout)
-            # TODO: this is funky
-            input_value = input_value.strip()
-            if input_value in "abc":
-                input_value = run["demos"]["abc".index(input_value)]
-            expr = self.session.parse(input_value)
-            expr = ev.eval_expr(self, expr)
-            layout = lay.layout_expr(self, expr)
-            return layout
+            return self.process_input(input_value)
 
-        # return input+output pair
         return layout
 
     def __init__(self):
@@ -319,8 +336,12 @@ class BrowserFrontEnd(DashFrontEnd):
         super().__init__()
 
         # initial layout is an input+output pair
+        self.pair_number = 0
         self.top_id = "browser-front-end"
-        self.app.layout = dash.html.Div([self.pair()], id=self.top_id)
+        self.app.layout = dash.html.Div([
+            *(self.pair(input, self.process_input(input)) for input in run[args.run]),
+            self.pair()
+        ], id=self.top_id)
 
         # point a browser at our page
         url = f"http://127.0.0.1:{self.server.server_port}"
