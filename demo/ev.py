@@ -3,15 +3,12 @@ import itertools
 import math
 import numpy as np
 
-import mathics.core.atoms as matom
-import mathics.core.expression as mexpr
-import mathics.core.symbols as msym
-
 import dash
 import plotly.graph_objects as go
 
 import ex
 import compile
+import mat
 import util
 
 #
@@ -87,11 +84,11 @@ def grid_to_graphics_complex(xs, ys, zs, np_expr):
     # ugh - indices in Polygon are 1-based
     quads += 1
 
-    quads_expr = np_expr(quads, matom.Integer)
-    xyzs_expr = np_expr(xyzs, matom.Real)
-    poly_expr = mexpr.Expression(msym.Symbol("System`Polygon"), quads_expr)
-    gc_expr = mexpr.Expression(msym.Symbol("Global`GraphicsComplex"), xyzs_expr, poly_expr)
-    result = mexpr.Expression(msym.Symbol("System`Graphics3D"), gc_expr)
+    quads_expr = np_expr(quads, mat.Integer)
+    xyzs_expr = np_expr(xyzs, mat.Real)
+    poly_expr = mat.Expression(mat.SymbolPolygon, quads_expr)
+    gc_expr = mat.Expression(mat.SymbolGraphicsComplex, xyzs_expr, poly_expr)
+    result = mat.Expression(mat.SymbolGraphics3D, gc_expr)
     
     return result
 
