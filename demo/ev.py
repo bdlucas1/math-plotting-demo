@@ -3,9 +3,10 @@ import itertools
 import math
 import numpy as np
 
-from mathics.core.atoms import Integer, Real
-from mathics.core.expression import Expression
-from mathics.core.symbols import Symbol
+import mathics.core.atoms as mca
+import mathics.core.expression as mce
+import mathics.core.symbols as mcs
+
 import dash
 import plotly.graph_objects as go
 
@@ -86,11 +87,11 @@ def grid_to_graphics_complex(xs, ys, zs, np_expr):
     # ugh - indices in Polygon are 1-based
     quads += 1
 
-    quads_expr = np_expr(quads, Integer)
-    xyzs_expr = np_expr(xyzs, Real)
-    poly_expr = Expression(Symbol("System`Polygon"), quads_expr)
-    gc_expr = Expression(Symbol("Global`GraphicsComplex"), xyzs_expr, poly_expr)
-    result = Expression(Symbol("System`Graphics3D"), gc_expr)
+    quads_expr = np_expr(quads, mca.Integer)
+    xyzs_expr = np_expr(xyzs, mca.Real)
+    poly_expr = mce.Expression(mcs.Symbol("System`Polygon"), quads_expr)
+    gc_expr = mce.Expression(mcs.Symbol("Global`GraphicsComplex"), xyzs_expr, poly_expr)
+    result = mce.Expression(mcs.Symbol("System`Graphics3D"), gc_expr)
     
     return result
 
