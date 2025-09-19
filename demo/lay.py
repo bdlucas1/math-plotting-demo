@@ -83,20 +83,18 @@ def layout_Manipulate(fe, expr):
     ], className="manipulate")
         
     # set timer display for slider updates after initial display
-    util.timer_level = 1 # to see top-level timings as sliders move
-    #util.timer_level = 0 # no timings as sliders move
+    util.Timer.level = 1 # to see top-level timings as sliders move
+    #util.Timer.level = 0 # no timings as sliders move
 
     # define callbacks for the sliders
-    print("xxx adding sliders", sliders)
     @fe.app.callback(
         dash.Output(target_id, "children"),
         *(dash.Input(s.id, "value") for s in sliders),
         prevent_initial_call=True
     )
     def update(*args):
-        util.start_timer("slider update")
-        result = eval_and_layout({s.name: a for s, a in zip(sliders, args)})
-        util.stop_timer()
+        with util.Timer("slider update"):
+            result = eval_and_layout({s.name: a for s, a in zip(sliders, args)})
         return result
 
     return layout
@@ -123,9 +121,8 @@ def layout_Graphics3D(fe, expr):
 
         elif g.head == mat.SymbolGraphicsComplex:
 
-            util.start_timer("xyzs")
-            xyzs.extend(g.elements[0].value)
-            util.stop_timer()
+            with util.Timer("xyzs"):
+                xyzs.extend(g.elements[0].value)
 
             def handle_c(c):
 
@@ -133,21 +130,19 @@ def layout_Graphics3D(fe, expr):
 
                     polys = c.elements[0]
                     if isinstance(polys, ex.NumpyArrayListExpr):
-                        util.start_timer("ijks from NumpyArrayListExpr")
-                        # use advanced indexing to break the polygons down into triangles
-                        ngon = polys.value.shape[1]
-                        for i in range(1, ngon-1):
-                            inx = [0, i, i+1]
-                            tris = polys.value[:, inx]
-                            ijks.extend(tris)
-                        util.stop_timer()
+                        with util.Timer("ijks from NumpyArrayListExpr"):
+                            # use advanced indexing to break the polygons down into triangles
+                            ngon = polys.value.shape[1]
+                            for i in range(1, ngon-1):
+                                inx = [0, i, i+1]
+                                tris = polys.value[:, inx]
+                                ijks.extend(tris)
 
                     else:
-                        util.start_timer("ijks from mathics List of polys")
-                        for poly in polys.elements:
-                            for j, k in zip(poly.elements[1:-1], poly.elements[2:]):
-                                ijks.append([poly.elements[0].value, j.value, k.value])
-                        util.stop_timer()
+                        with util.Timer("ijks from mathics List of polys"):
+                            for poly in polys.elements:
+                                for j, k in zip(poly.elements[1:-1], poly.elements[2:]):
+                                    ijks.append([poly.elements[0].value, j.value, k.value])
 
                 else:
                     raise Exception(f"Unknown head {c.head} in GraphicsComplex")
@@ -176,36 +171,33 @@ def layout_Graphics3D(fe, expr):
                 value = [value, value, value]
             x_range, y_range, z_range = [v if isinstance(v, (tuple,list)) else None for v in value]
 
-    util.start_timer("construct xyz and ijk arrays")
-    xyzs = np.array(xyzs)
-    ijks = np.array(ijks) - 1 # ugh - indices in Polygon are 1-based
-    util.stop_timer()
+    with util.Timer("construct xyz and ijk arrays"):
+        xyzs = np.array(xyzs)
+        ijks = np.array(ijks) - 1 # ugh - indices in Polygon are 1-based
 
-    util.start_timer("mesh")
-    mesh = go.Mesh3d(
-        x=xyzs[:,0], y=xyzs[:,1], z=xyzs[:,2],
-        i=ijks[:,0], j=ijks[:,1], k=ijks[:,2],
-        showscale=True, colorscale="Viridis", colorbar=dict(thickness=10), intensity=xyzs[:,2],
-    )
-    util.stop_timer()
+    with util.Timer("mesh"):
+        mesh = go.Mesh3d(
+            x=xyzs[:,0], y=xyzs[:,1], z=xyzs[:,2],
+            i=ijks[:,0], j=ijks[:,1], k=ijks[:,2],
+            showscale=True, colorscale="Viridis", colorbar=dict(thickness=10), intensity=xyzs[:,2],
+        )
     
-    util.start_timer("figure")
-    figure = go.Figure(
-        data = [mesh],
-        layout = go.Layout(
-            margin = dict(l=0, r=0, t=0, b=0),
-            scene = dict(
-                xaxis_title="x", # TODO: xlims.name - from a rule?
-                yaxis_title="y", # TODO: ylims.name - from a rule?
-                #zaxis_title="z",
-                aspectmode="cube"
+    with util.Timer("figure"):
+        figure = go.Figure(
+            data = [mesh],
+            layout = go.Layout(
+                margin = dict(l=0, r=0, t=0, b=0),
+                scene = dict(
+                    xaxis_title="x", # TODO: xlims.name - from a rule?
+                    yaxis_title="y", # TODO: ylims.name - from a rule?
+                    #zaxis_title="z",
+                    aspectmode="cube"
+                )
             )
         )
-    )
-    # TODO: x_range and y_range
-    if z_range:
-        figure.update_layout(scene = dict(zaxis = dict(range=z_range)))
-    util.stop_timer()
+        # TODO: x_range and y_range
+        if z_range:
+            figure.update_layout(scene = dict(zaxis = dict(range=z_range)))
 
     """
             colorbar=dict(title=dict(text='z')),
@@ -217,12 +209,11 @@ def layout_Graphics3D(fe, expr):
             showscale=True
     """
 
-    util.start_timer("layout")
-    layout = dash.html.Div ([
-        #dash.dcc.Markdown(f"${title}$", mathjax=True) if fancy else dash.html.Div(title, className="title"),
-        dash.dcc.Graph(figure=figure, className="graph")
-    ], className="plot")
-    util.stop_timer()
+    with util.Timer("layout"):
+        layout = dash.html.Div ([
+            #dash.dcc.Markdown(f"${title}$", mathjax=True) if fancy else dash.html.Div(title, className="title"),
+            dash.dcc.Graph(figure=figure, className="graph")
+        ], className="plot")
 
     return layout
 
@@ -231,13 +222,12 @@ def layout_Graphics3D(fe, expr):
 #
 
 def layout_expr(fe, expr):
-    util.start_timer(f"layout {expr.head}")
-    if expr.head == mat.SymbolManipulate:
-        result = layout_Manipulate(fe, expr)
-    elif expr.head == mat.SymbolGraphics3D:
-        result = layout_Graphics3D(fe, expr)
-    else:
-        raise Exception(f"Unknown head {expr.head} in layout_expr")
-    util.stop_timer()
+    with util.Timer(f"layout {expr.head}"):
+        if expr.head == mat.SymbolManipulate:
+            result = layout_Manipulate(fe, expr)
+        elif expr.head == mat.SymbolGraphics3D:
+            result = layout_Graphics3D(fe, expr)
+        else:
+            raise Exception(f"Unknown head {expr.head} in layout_expr")
     return result
 

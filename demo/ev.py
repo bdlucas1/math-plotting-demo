@@ -64,6 +64,8 @@ def eval_plot3d_xyzs(fe, expr):
 
     # sometimes expr gets compiled into something that returns a complex even though the imaginary part is 0
     # TODO: check that imag is all 0?
+    # TODO: needed this for Hypergeometric - look into that
+    #assert np.all(np.isreal(zs)), "array contains complex values"
     zs = np.real(zs)
 
     return xs, ys, zs
@@ -110,15 +112,14 @@ def eval_Plot3D(fe, expr):
 
 # TODO: this is temporary until I figure out how to hook eval_Plot3D into expr.evaluate
 def eval_expr(fe, expr, quiet=False):
-    if not quiet: util.start_timer(f"eval {expr.head}")
-    funs = {
-        "My`Plot3D": eval_Plot3D,
-    }
-    if str(expr.head) in funs:
-        result = funs[str(expr.head)](fe, expr)
-    else:
-        result = expr.evaluate(fe.session.evaluation)
-    if not quiet: util.stop_timer()
+    with util.Timer(f"eval {expr.head}"):
+        funs = {
+            "My`Plot3D": eval_Plot3D,
+        }
+        if str(expr.head) in funs:
+            result = funs[str(expr.head)](fe, expr)
+        else:
+            result = expr.evaluate(fe.session.evaluation)
     #util.prt(result)
     return result
 

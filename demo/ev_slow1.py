@@ -24,14 +24,13 @@ def grid_to_graphics_poly_list(xs, ys, zs):
 
     # this is the slow part
     # corresponding traversal at other end is similarly slow
-    util.start_timer("construct G3D list of polys")
-    result = Expression(mcss.Graphics3D, 
-        Expression(mcss.List), *(
-            Expression(mcss.Polygon, ex.list_expr(ex.list_expr(*p), ex.list_expr(*q), ex.list_expr(*r)))
-            for p, q, r in tris
-        ))
-    )
-    util.stop_timer()
+    with util.Timer("construct G3D list of polys")
+        result = Expression(mcss.Graphics3D, 
+            Expression(mcss.List), *(
+                Expression(mcss.Polygon, ex.list_expr(ex.list_expr(*p), ex.list_expr(*q), ex.list_expr(*r)))
+                for p, q, r in tris
+            ))
+        )
 
     return result
 

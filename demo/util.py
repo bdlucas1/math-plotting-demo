@@ -14,19 +14,30 @@ def prt(expr, indent=1):
 
 
 #
-# start_timer and stop_timer must be paired
-# use timer_level to control max  nesting level:
+# to time a block of code use with Timer(name): code
+# use Timer.level to control max  nesting level:
 #     -1 all, 0 none, 1 only top level, etc.
-#
 
-timers = []
-timer_level = -1 # all
+class Timer:
 
-def start_timer(name):
-    timers.append((name, time.time()))
+    level = -1 # all
+    timers = []
 
-def stop_timer():
-    name, start = timers.pop()
-    ms = (time.time() - start) * 1000
-    if timer_level < 0 or len(timers) < timer_level:
-        print(f"{"  "*len(timers)}{name}: {ms:.1f} ms")
+    def start(name):
+        Timer.timers.append((name, time.time()))
+
+    def stop():
+        name, start = Timer.timers.pop()
+        ms = (time.time() - start) * 1000
+        if Timer.level < 0 or len(Timer.timers) < Timer.level:
+            print(f"{"  "*len(Timer.timers)}{name}: {ms:.1f} ms")
+
+    def __init__(self, name, quiet = False):
+        self.name = name
+        self.quiet = quiet
+    def __enter__(self):
+        if not self.quiet:
+            Timer.start(self.name)
+    def __exit__(self, *args):
+        if not self.quiet:
+            Timer.stop()

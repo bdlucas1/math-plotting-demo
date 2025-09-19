@@ -39,8 +39,8 @@ plot_manipulate_sin = """
 plot_manipulate_hypergeometric = """
     Manipulate[
         My`Plot3D[
-            Abs[My`Hypergeometric1F1[a, b, (x + I y)^2]],
-            {x, -2, 2}, {y, -2, 2}, PlotPoints -> {200,200}, PlotRange -> {Automatic, Automatic, {0,14}},
+            My`Hypergeometric1F1[a, b, (x + I y)^2],
+            {x, -2, 2}, {y, -2, 2}, PlotPoints -> {200,200}, PlotRange -> {Automatic, Automatic, {-5,14}},
         ],
         {{a,1}, 0.5, 1.5, 0.1}, (* a slider spec *)
         {{b,2}, 1.5, 2.5, 0.1}  (* b slider spec *)
@@ -193,35 +193,35 @@ class ShellFrontEnd(DashFrontEnd):
 
         def handle_input(s):
 
-            try:
+            util.Timer.level = -1 # print all timings until told otherwise (e.g. by Manipulate)
+            layout = None
 
-                util.timer_level = -1 # print all timings
-                util.start_timer(f"total parse+eval+layout")
+            with util.Timer(f"total parse+eval+layout"):
+                try:
+                    expr = self.session.parse(s)
+                    if expr:
+                        expr = ev.eval_expr(self, expr)
+                        layout = lay.layout_expr(self, expr)
+                except Exception as e:
+                    if args.run == "dev":
+                        traceback.print_exc()
+                    else:
+                        print(e)
 
-                expr = self.session.parse(s)
-                if expr:
-                    expr = ev.eval_expr(self, expr)
-                    layout = lay.layout_expr(self, expr)
+            # graphicical output, if any
+            if layout:
+                plot_name = f"plot{len(self.plots)}"
+                self.plots[plot_name] = layout
+                url = f"http://127.0.0.1:{self.server.server_port}/{plot_name}"
+                browser.show(url)
 
-            except Exception as e:
-
-                if args.run == "dev":
-                    traceback.print_exc()
-                else:
-                    print(e)
-
-            finally:
-                    
-                util.stop_timer()
-
-
-            plot_name = f"plot{len(self.plots)}"
-            self.plots[plot_name] = layout
-            url = f"http://127.0.0.1:{self.server.server_port}/{plot_name}"
-            browser.show(url)
-
-
-
+            # text output
+            if getattr(expr, "head") in set([mat.SymbolGraphics, mat.SymbolGraphics3D]):
+                text_output = str(expr.head)
+            else:
+                # TODO: how to get this to output Sin instead of System`Sin etc.
+                text_output = str(expr)
+            print(f"\noutput> {text_output}")
 
         # demos, tests, etc.
         if args.run:

@@ -18,6 +18,7 @@ SymbolPlotRange = Symbol("System`PlotRange")
 
 SymbolManipulate = Symbol("Global`Manipulate") # TODO: move to System
 SymbolGraphics3D = Symbol("System`Graphics3D")
+SymbolGraphics = Symbol("System`Graphics")
 SymbolGraphicsComplex = Symbol("Global`GraphicsComplex") # TODO: move to System
 SymbolLine = Symbol("System`Line")
 SymbolPolygon = Symbol("System`Polygon")

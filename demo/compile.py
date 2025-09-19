@@ -26,10 +26,15 @@ def to_python_expr(expr, lib = "np"):
         mat.SymbolCos: f"{lib}.cos",
         mat.SymbolSqrt: f"{lib}.sqrt",
         mat.SymbolAbs: f"{lib}.abs",
-        # TOOD: eval turns System`... into HypergeometricPFQ; need polyfill for that
+
+        # just do Hypergemetric, no simplification
         mat.Symbol("My`Hypergeometric1F1"): "scipy.special.hyp1f1",
+
+        # following are subtitutions made in evaluating System`Hypergeometric1F1
         mat.SymbolHypergeometricPFQ: "hyppfq", # TODO is this defined in some import?
         mat.SymbolGamma: "gamma",
+        # System`exp_polar
+        # System`BesselI
     }
 
     listfuns = {
@@ -58,6 +63,7 @@ def to_python_expr(expr, lib = "np"):
         else:
             result = str(expr)
     elif expr.head in funs:
+        #print("xxx fun", expr.head)
         fun = funs[expr.head]
         args = (to_python_expr(e,lib) for e in expr.elements)
         result = f"{fun}({",".join(args)})"
