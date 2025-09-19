@@ -2,7 +2,7 @@ import argparse
 import re
 import threading
 
-import mathics.session as ms
+import mathics.session as mses
 
 import dash
 import webbrowser
@@ -127,7 +127,7 @@ class DashFrontEnd:
         print("using port", self.server.server_port)
 
         # everybody needs a Mathics session
-        self.session = ms.MathicsSession()
+        self.session = mses.MathicsSession()
 
 
 

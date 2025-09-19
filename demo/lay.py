@@ -2,7 +2,7 @@ import collections
 import itertools
 import numpy as np
 
-import mathics.core.atoms as mca
+import mathics.core.atoms as matom
 
 import dash
 import plotly.graph_objects as go
@@ -70,7 +70,7 @@ def layout_Manipulate(fe, expr):
         # TODO: always Global?
         # TODO: always Real?
         # TODO: best order for replace_vars and eval?
-        expr = target_expr.replace_vars({"Global`"+n: mca.Real(v) for n, v in values.items()})
+        expr = target_expr.replace_vars({"Global`"+n: matom.Real(v) for n, v in values.items()})
         expr = ev.eval_expr(fe, expr)
         layout = layout_expr(fe, expr)
         return layout
