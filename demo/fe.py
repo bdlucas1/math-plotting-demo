@@ -16,11 +16,11 @@ import util
 # 
 #
 
-demo_p3d   = "Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}, MaxRecursion -> -1]"
+plot_sin_old   = "Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}, MaxRecursion -> -1]"
 
-demo_myp3d = "My`Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}]"
+plot_sin = "My`Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}]"
 
-demo_man_s = """
+plot_manipulate_sin = """
     Manipulate[
         My`Plot3D[
             Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp,
@@ -28,13 +28,13 @@ demo_man_s = """
         ],
         {{freq,1.0}, 0.1, 2.0, 0.2}, (* freq slider spec *)
         {{amp,1.0}, 0.0, 2.0, 0.2}  (* amp slider spec *)
-     ]
+]
 """
 
 # TODO: System`Hypergeometric1F1 gets rewritten to varous functions involving gamma, bessel, etc.
 # need to build those out in compile.py to handle
 # for now just use My`Hypergeomtric which compile knows about but mathics evaluate doesn't
-demo_man_h = """
+plot_manipulate_hypergeometric = """
     Manipulate[
         My`Plot3D[
             Abs[My`Hypergeometric1F1[a, b, (x + I y)^2]],
@@ -42,7 +42,7 @@ demo_man_h = """
         ],
         {{a,1}, 0.5, 1.5, 0.1}, (* a slider spec *)
         {{b,2}, 1.5, 2.5, 0.1}  (* b slider spec *)
-    ]
+]
 """
 
 test_gc1 = """
@@ -60,14 +60,31 @@ test_gc2 = """
     ]]
 """
 
-demos = [
-    #demo_p3d, #demo_p3d, # current slow implementation
-    demo_myp3d, #demo_myp3d, demo_myp3d, # multiple times for timing - take the fastest
-    demo_man_s, # demo_man_s,
-    demo_man_h, # TODO: fix this
-    #test_gc1,
-    #test_gc2
-]
+run = dict(
+
+    demos = [
+        plot_sin,
+        plot_manipulate_sin,
+        plot_manipulate_hypergeometric
+    ],
+
+    tests = [
+        plot_sin,
+        plot_manipulate_sin,
+        plot_manipulate_hypergeometric,
+        test_gc1,
+        test_gc2
+    ],
+
+    # run multiple times, take fastest
+    timing = [
+        #plot_sin_old, plot_sin_old,
+        plot_sin, plot_sin, plot_sin, 
+        #plot_manipulate_sin, plot_manipulate_sin, plot_manipulate_sin,
+        #plot_manipulate_hypergeometric, plot_manipulate_hypergeometric, plot_manipulate_hypergeometric,
+    ],
+)
+
 
 #
 #
@@ -77,6 +94,7 @@ parser = argparse.ArgumentParser(description="Graphics demo")
 parser.add_argument("--debug", action="store_true")
 parser.add_argument("--fe", choices=["shell", "browser"], default="shell")
 parser.add_argument("--browser", choices=["webview", "webbrowser"], default="webview")
+parser.add_argument("--run", choices=["demos","tests","timing"], default="demos")
 args = parser.parse_args()
 
 # load a url into a browser, using either:
@@ -164,24 +182,26 @@ class ShellFrontEnd(DashFrontEnd):
         # TODO: then actual REPL loop
         # TODO: add s as title
 
-        for s in demos:
+        if args.run:
+            for s in run[args.run]:
 
-            p = re.sub("[ \n]+", " ", s)
-            if len(p) > 80:
-                p = p[0:80] + "..."
-            print("===", p)
 
-            expr = self.session.parse(s)
+                p = re.sub("[ \n]+", " ", s)
+                if len(p) > 80:
+                    p = p[0:80] + "..."
+                print("===", p)
 
-            util.start_timer(f"total {expr.head}")
-            expr = ev.eval_expr(self, expr)
-            layout = lay.layout_expr(self, expr)
-            util.stop_timer()
+                expr = self.session.parse(s)
 
-            plot_name = f"plot{len(self.plots)}"
-            self.plots[plot_name] = layout
-            url = f"http://127.0.0.1:{self.server.server_port}/{plot_name}"
-            browser.show(url)
+                util.start_timer(f"total {expr.head}")
+                expr = ev.eval_expr(self, expr)
+                layout = lay.layout_expr(self, expr)
+                util.stop_timer()
+
+                plot_name = f"plot{len(self.plots)}"
+                self.plots[plot_name] = layout
+                url = f"http://127.0.0.1:{self.server.server_port}/{plot_name}"
+                browser.show(url)
 
 # accept expressions from an input field, display expressions in an output box
 class BrowserFrontEnd(DashFrontEnd):
