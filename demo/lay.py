@@ -40,16 +40,17 @@ class Panel:
     panels = []
     registered = False
 
-    # one callback handles all dynamically created panels
+    # one callback handles all dynamically created panels and sliders
+    # sliders are matched to their corresponding plot output by matching on panel_number
     def register_callbacks(fe):
         @fe.app.callback(
-            dash.Output(dict(type="target", panel=dash.MATCH), "children"),
-            dash.Input(dict(type="slider", panel=dash.MATCH, index=dash.ALL), "value"),
+            dash.Output(dict(type="target", panel_number=dash.MATCH), "children"),
+            dash.Input(dict(type="slider", panel_number=dash.MATCH, index=dash.ALL), "value"),
             prevent_initial_call=True
         )
         def update(values):
-            panel_number = dash.ctx.outputs_list["id"]["panel"]
             with util.Timer("slider update"):
+                panel_number = dash.ctx.outputs_list["id"]["panel_number"]
                 panel = Panel.panels[panel_number]
                 result = panel.eval_and_layout({s.name: a for s, a in zip(panel.sliders, values)})
             return result
@@ -73,7 +74,7 @@ class Panel:
             step = spec[3] if len(spec) > 3 else (hi-lo)/10 # TODO: better default step
             v, init = v if isinstance(v, (list,tuple)) else (v, lo)
             v = str(v).split("`")[-1] # strip off namespace pfx
-            id = dict(type="slider", panel=self.panel_number, index=inx)
+            id = dict(type="slider", panel_number=self.panel_number, index=inx)
             spec = S(v, lo, init, hi, step, id)
             return spec
         self.sliders = [slider(e, inx) for inx, e in enumerate(slider_exprs)]
@@ -91,7 +92,7 @@ class Panel:
     def layout(self):
 
         # compute the layout for the plot
-        target_id = dict(type="target", panel=self.panel_number)
+        target_id = dict(type="target", panel_number=self.panel_number)
         init_values = {s.name: s.init for s in self.sliders}
 
         # compute a slider layout from a slider spec (S namedtuple)
