@@ -20,16 +20,21 @@ import util
 plot_sin_old_200   = "Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}, MaxRecursion -> -1]"
 plot_sin_old_20   = "Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {20,20}, MaxRecursion -> -1]"
 
-plot_sin = "Demo`Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}]"
+plot_sin = """
+Demo`Plot3D[
+   Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3},
+   PlotPoints -> {200,200}
+]
+"""
 
 plot_manipulate_sin = """
-    Manipulate[
-        Demo`Plot3D[
-            Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp,
-            {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}, PlotRange -> {Automatic, Automatic, {-0.25,0.5}}
-        ],
-        {{freq,1.0}, 0.1, 2.0, 0.2}, (* freq slider spec *)
-        {{amp,1.0}, 0.0, 2.0, 0.2}  (* amp slider spec *)
+Manipulate[
+    Demo`Plot3D[
+        Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp, {x,-3,3}, {y,-3,3},
+        PlotPoints -> {200,200}, PlotRange -> {Automatic, Automatic, {-0.25,0.5}}
+    ],
+    {{freq,1.0}, 0.1, 2.0, 0.2}, (* freq slider spec *)
+    {{amp,1.0}, 0.0, 2.0, 0.2}  (* amp slider spec *)
 ]
 """
 
@@ -37,13 +42,13 @@ plot_manipulate_sin = """
 # need to build those out in compile.py to handle
 # for now just use Demo`Hypergeomtric which compile knows about but mathics evaluate doesn't
 plot_manipulate_hypergeometric = """
-    Manipulate[
-        Demo`Plot3D[
-            Demo`Hypergeometric1F1[a, b, (x + I y)^2],
-            {x, -2, 2}, {y, -2, 2}, PlotPoints -> {200,200}, PlotRange -> {Automatic, Automatic, {-5,14}},
-        ],
-        {{a,1}, 0.5, 1.5, 0.1}, (* a slider spec *)
-        {{b,2}, 1.5, 2.5, 0.1}  (* b slider spec *)
+Manipulate[
+    Demo`Plot3D[
+        Demo`Hypergeometric1F1[a, b, (x + I y)^2], {x, -2, 2}, {y, -2, 2},
+        PlotPoints -> {200,200}, PlotRange -> {Automatic, Automatic, {-5,14}},
+    ],
+    {{a,1}, 0.5, 1.5, 0.1}, (* a slider spec *)
+    {{b,2}, 1.5, 2.5, 0.1}  (* b slider spec *)
 ]
 """
 
@@ -280,9 +285,9 @@ class BrowserFrontEnd(DashFrontEnd):
 
         # create an input field, a div to hold output, and a hidden button
         # to signal that the user has pressed shift-enter
-        instructions = "Type one of a, b, c, ... followed by shift-enter"
+        instructions = "Type expression followed by shift-enter"
         layout = dash.html.Div([
-            dash.dcc.Textarea(id=in_id, value=input, placeholder=instructions, spellCheck=False, className="input"),
+            dash.dcc.Textarea(id=in_id, value=input.strip(), placeholder=instructions, spellCheck=False, className="input"),
             dash.html.Button("trigger", trigger_id, hidden=True),
             dash.html.Div(output, id=out_id, className="output")
         ], id=pair_id, className="pair")
@@ -338,13 +343,11 @@ class BrowserFrontEnd(DashFrontEnd):
         # initialize app and start server
         super().__init__()
 
-        # initial layout is an input+output pair
+        # initial layout is --run input plus a blank pair
         self.pair_number = 0
         self.top_id = "browser-front-end"
-        self.app.layout = dash.html.Div([
-            *(self.pair(input, self.process_input(input)) for input in run[args.run]),
-            self.pair()
-        ], id=self.top_id)
+        init_pairs = [self.pair(input, self.process_input(input)) for input in run[args.run]] if args.run else []
+        self.app.layout = dash.html.Div([*init_pairs, self.pair()], id=self.top_id)
 
         # point a browser at our page
         url = f"http://127.0.0.1:{self.server.server_port}"
