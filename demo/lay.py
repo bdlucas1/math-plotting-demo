@@ -32,22 +32,25 @@ def uid(s):
 # and it would complicate the implementation
 # 
 
+#
+# plot plus sliders
+#
 class Panel:
 
     panels = []
     registered = False
 
+    # one callback handles all dynamically created panels
     def register_callbacks(fe):
         @fe.app.callback(
             dash.Output(dict(type="target", panel=dash.MATCH), "children"),
             dash.Input(dict(type="slider", panel=dash.MATCH, index=dash.ALL), "value"),
-            dash.State(dict(type="expr", panel=dash.MATCH), "data"),
             prevent_initial_call=True
         )
-        def update(values, panel_number):
+        def update(values):
+            panel_number = dash.ctx.outputs_list["id"]["panel"]
             with util.Timer("slider update"):
                 panel = Panel.panels[panel_number]
-                # TODO: eval_and_layout by position instead of name so we don't have to look at panel.sliders?
                 result = panel.eval_and_layout({s.name: a for s, a in zip(panel.sliders, values)})
             return result
 
@@ -85,29 +88,28 @@ class Panel:
         layout = layout_expr(self.fe, expr)
         return layout
 
-    # compute a slider layout from a slider spec (S namedtuple)
-    def slider_layout(self, s):
-        # TODO: handling of tick marks and step needs work; this code is just for demo purposes
-        marks = {value: f"{value:g}" for value in np.arange(s.lo, s.hi, s.step)}
-        return [
-            dash.html.Label(s.name),
-            dash.dcc.Slider(
-                id=s.id, marks=marks, updatemode="drag",
-                min=s.lo, max=s.hi, step=s.step/10, value=s.init,
-            )
-        ]
-
     def layout(self):
 
         # compute the layout for the plot
         target_id = dict(type="target", panel=self.panel_number)
         init_values = {s.name: s.init for s in self.sliders}
 
+        # compute a slider layout from a slider spec (S namedtuple)
+        def slider_layout(s):
+            # TODO: handling of tick marks and step needs work; this code is just for demo purposes
+            marks = {value: f"{value:g}" for value in np.arange(s.lo, s.hi, s.step)}
+            return [
+                dash.html.Label(s.name),
+                dash.dcc.Slider(
+                    id=s.id, marks=marks, updatemode="drag",
+                    min=s.lo, max=s.hi, step=s.step/10, value=s.init,
+                )
+            ]
+
         # compute initial layout including target_expr and slider
         init_target_layout = self.eval_and_layout(init_values)
-        slider_layouts = list(itertools.chain(*[self.slider_layout(s) for s in self.sliders]))
+        slider_layouts = list(itertools.chain(*[slider_layout(s) for s in self.sliders]))
         layout = dash.html.Div([
-            dash.dcc.Store(id=dict(type="expr", panel=self.panel_number), data=self.panel_number),
             dash.html.Div(init_target_layout, id=target_id),
             dash.html.Div(slider_layouts, className="sliders")
         ], className="manipulate")
