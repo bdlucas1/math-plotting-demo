@@ -31,22 +31,55 @@ def uid(s):
 # but timings show that would be practically meaningless for performance,
 # and it would complicate the implementation
 # 
+
+target_exprs = []
+
+def init_callbacks(fe):
+
+    @fe.app.callback(
+        dash.Output(dict(type="target", panel=dash.MATCH), "children"),
+        dash.Input(dict(type="slider", panel=dash.MATCH, index=dash.ALL), "value"),
+        dash.State(dict(type="expr", panel=dash.MATCH), "data"),
+        prevent_initial_call=True
+    )
+    def update(values, panel_number):
+        with util.Timer("slider update"):
+            expr, sliders = target_exprs[panel_number]
+            result = eval_and_layout(fe, expr, {s.name: a for s, a in zip(sliders, values)})
+        return result
+
+
+# compute a layout for an expr given a set of values
+def eval_and_layout(fe, expr, values):
+    # TODO: always Global?
+    # TODO: always Real?
+    # TODO: best order for replace_vars and eval?
+    expr = expr.replace_vars({"Global`"+n: mat.Real(v) for n, v in values.items()})
+    expr = ev.eval_expr(fe, expr)
+    layout = layout_expr(fe, expr)
+    return layout
+
+
 def layout_Manipulate(fe, expr):
 
     target_expr = expr.elements[0]
     slider_exprs = expr.elements[1:]
 
+    panel_number = len(target_exprs)
+
     # parse slider specs
     S = collections.namedtuple("S", ["name", "lo", "init", "hi", "step", "id"])
-    def slider(e):
+    def slider(e, inx):
         spec = e.to_python()
         v, lo, hi = spec[0:3]
         step = spec[3] if len(spec) > 3 else (hi-lo)/10 # TODO: better default step
         v, init = v if isinstance(v, (list,tuple)) else (v, lo)
         v = str(v).split("`")[-1] # strip off namespace pfx
-        spec = S(v, lo, init, hi, step, uid("slider"))
+        id = dict(type="slider", panel=panel_number, index=inx)
+        spec = S(v, lo, init, hi, step, id)
         return spec
-    sliders = [slider(e) for e in slider_exprs]
+    sliders = [slider(e, inx) for inx, e in enumerate(slider_exprs)]
+    target_exprs.append((target_expr, sliders))
 
     # compute a slider layout from a slider spec (S namedtuple)
     def slider_layout(s):
@@ -61,23 +94,14 @@ def layout_Manipulate(fe, expr):
         ]
 
     # compute the layout for the plot
-    target_id = uid("target")
+    target_id = dict(type="target", panel=panel_number)
     init_values = {s.name: s.init for s in sliders}
 
-    # compute a layout for the target_expr given a set of values
-    def eval_and_layout(values):
-        # TODO: always Global?
-        # TODO: always Real?
-        # TODO: best order for replace_vars and eval?
-        expr = target_expr.replace_vars({"Global`"+n: mat.Real(v) for n, v in values.items()})
-        expr = ev.eval_expr(fe, expr)
-        layout = layout_expr(fe, expr)
-        return layout
-
     # compute initial layout including target_expr and slider
-    init_target_layout = eval_and_layout(init_values)
+    init_target_layout = eval_and_layout(fe, target_expr, init_values)
     slider_layouts = list(itertools.chain(*[slider_layout(s) for s in sliders]))
     layout = dash.html.Div([
+        dash.dcc.Store(id=dict(type="expr", panel=panel_number), data=panel_number),
         dash.html.Div(init_target_layout, id=target_id),
         dash.html.Div(slider_layouts, className="sliders")
     ], className="manipulate")
@@ -86,18 +110,9 @@ def layout_Manipulate(fe, expr):
     util.Timer.level = 1 # to see top-level timings as sliders move
     #util.Timer.level = 0 # no timings as sliders move
 
-    # define callbacks for the sliders
-    @fe.app.callback(
-        dash.Output(target_id, "children"),
-        *(dash.Input(s.id, "value") for s in sliders),
-        prevent_initial_call=True
-    )
-    def update(*args):
-        with util.Timer("slider update"):
-            result = eval_and_layout({s.name: a for s, a in zip(sliders, args)})
-        return result
 
     return layout
+
 
 
 #

@@ -94,7 +94,8 @@ run = dict(
 
     dev = [
         #"Demo`Plot3D[Sin[x], {x,0,10}, {y,0,10}, PlotPoints->{200,200}]",
-        "Plot3D[Sin[x], {x,0,10}, {y,0,10}, PlotPoints->{20,20}]",
+        #"Plot3D[Sin[x], {x,0,10}, {y,0,10}, PlotPoints->{20,20}]",
+        plot_manipulate_sin
     ]
 )
 
@@ -348,6 +349,9 @@ class BrowserFrontEnd(DashFrontEnd):
         self.top_id = "browser-front-end"
         init_pairs = [self.pair(input, self.process_input(input)) for input in run[args.run]] if args.run else []
         self.app.layout = dash.html.Div([*init_pairs, self.pair()], id=self.top_id)
+
+        # register callbacks for dynamically created things like sliders
+        lay.init_callbacks(self)
 
         # point a browser at our page
         url = f"http://127.0.0.1:{self.server.server_port}"
