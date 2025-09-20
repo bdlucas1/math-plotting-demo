@@ -32,32 +32,35 @@ def uid(s):
 # and it would complicate the implementation
 # 
 
-panels = []
-
-def init_callbacks(fe):
-
-    @fe.app.callback(
-        dash.Output(dict(type="target", panel=dash.MATCH), "children"),
-        dash.Input(dict(type="slider", panel=dash.MATCH, index=dash.ALL), "value"),
-        dash.State(dict(type="expr", panel=dash.MATCH), "data"),
-        prevent_initial_call=True
-    )
-    def update(values, panel_number):
-        with util.Timer("slider update"):
-            panel = panels[panel_number]
-            # TODO: eval_and_layout by position instead of name so we don't have to look at panel.sliders?
-            result = panel.eval_and_layout({s.name: a for s, a in zip(panel.sliders, values)})
-        return result
-
 class Panel:
 
+    panels = []
+    registered = False
+
+    def register_callbacks(fe):
+        @fe.app.callback(
+            dash.Output(dict(type="target", panel=dash.MATCH), "children"),
+            dash.Input(dict(type="slider", panel=dash.MATCH, index=dash.ALL), "value"),
+            dash.State(dict(type="expr", panel=dash.MATCH), "data"),
+            prevent_initial_call=True
+        )
+        def update(values, panel_number):
+            with util.Timer("slider update"):
+                panel = Panel.panels[panel_number]
+                # TODO: eval_and_layout by position instead of name so we don't have to look at panel.sliders?
+                result = panel.eval_and_layout({s.name: a for s, a in zip(panel.sliders, values)})
+            return result
 
     def __init__(self, fe, expr, slider_exprs):
 
+        if not Panel.registered:
+            Panel.register_callbacks(fe)
+            Panel.registered = True
+
         self.fe = fe
         self.expr = expr
-        self.panel_number = len(panels)
-        panels.append(self)
+        self.panel_number = len(Panel.panels)
+        Panel.panels.append(self)
 
         # parse slider specs
         S = collections.namedtuple("S", ["name", "lo", "init", "hi", "step", "id"])
@@ -81,7 +84,6 @@ class Panel:
         expr = ev.eval_expr(self.fe, expr) # TODO: move this to __init__?
         layout = layout_expr(self.fe, expr)
         return layout
-
 
     # compute a slider layout from a slider spec (S namedtuple)
     def slider_layout(self, s):
