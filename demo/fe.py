@@ -4,6 +4,7 @@ import threading
 import traceback
 
 import dash
+import dash_extensions
 import webbrowser
 import webview
 import werkzeug
@@ -287,36 +288,23 @@ class BrowserFrontEnd(DashFrontEnd):
         layout = dash.html.Div([
             dash.dcc.Textarea(id=in_id, value=input.strip(), placeholder=instructions, spellCheck=False, className="input"),
             dash.html.Button("trigger", trigger_id, hidden=True),
-            dash.html.Div(output, id=out_id, className="output")
+            # tweak the behavior of the textarea: 1) shift-enter clicks trigger_id 2) resizes on every input
+            # TODO: this seems a little hacky, maybe, especially the way the script code is invoked
+            # by loading a script and passing in_id and trigger_id in the url
+            dash_extensions.DeferScript(src=f"/assets/tweaks/ta.js?in_id={in_id}&trigger_id={trigger_id}"),
+            dash.html.Div(output, id=out_id, className="output"),
         ], id=pair_id, className="pair")
+
+        foo = f"""
+                alert("hi " + {in_id})
+                /*
+                */
+            """
 
         # TextArea triggers callbacks on every keystroke, but we only want to know
         # when user has pressed shift-enter, so we add a client-side event listener to the input field
         # that listens for shift-enter and triggers a click event on the hidden button
         # also autosize textarea to exactly contain text
-        self.app.clientside_callback(
-            """
-            (id) => {
-                ta = document.getElementById(id)
-                ta.addEventListener("keydown", (event) => {
-                    if (event.key === "Enter" && event.shiftKey) {
-                        event.preventDefault()
-                        document.getElementById(id+"-trigger").click();
-                    }
-            
-                })
-                function setHeight() {
-                    ta.style.height = "auto"
-                    ta.style.height = (ta.scrollHeight + 5) + "px"
-                }
-                ta.addEventListener("input", setHeight)
-                setHeight()
-                return window.dash_clientside.no_update;
-            }
-            """,
-            dash.Output(in_id, "id"),
-            dash.Input(in_id, 'id')
-        )
 
         # callback is triggered by "click" on the hidden button signalling the user has pressed shift-enter
         # it receives the value of the in_id textarea, asks the interpreter to evaluate it and compute a layout,
