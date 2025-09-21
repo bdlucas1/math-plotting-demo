@@ -6,27 +6,44 @@
     box-sizing: border-box;
 }
 
-.plot {
+#browser-front-end, #shell-front-end {
 
-    width: 100vw;
+    width: 35em;
+    padding: 1.5em;
+
+    display: flex;
+    flex-direction: column;
+    gap: 2em;
+}
+
+.pair {
+
+    border-left: 1px solid #dddddd;
+    border-top: 1px solid #dddddd;
+    padding-left: 1em;
+    padding-top: 1em;
     
-    padding-top: 2rem;
-    padding-left: 2rem;
-    padding-right: 2rem;
-    padding-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0em;
     
-    .title {
+    .input {
+        font-size: 10pt;
+        font-family: monospace;
+        border: none;
+        outline: none;
+        white-space: pre;
     }
     
-    .graph {
-        aspect-ratio: 1 / 1;
+    .input::placeholder {
+        font-size: 12pt;
+        font-family: sans-serif;
     }
 }
-    
+
 .sliders {
         
-    width: 100%;
-    padding: 1rem;
+    padding-top: 2em;
     
     display: grid;
     grid-template-columns: max-content 1fr;
@@ -39,54 +56,6 @@
 }
 
 
-#browser-front-end {
 
-    width: 100%;
-    padding: 1em;
 
-    display: flex;
-    flex-direction: column;
-    gap: 1.5em;
-
-    .pair {
-
-        border-left: 1px solid #cccccc;
-        border-top: 1px solid #cccccc;
-        padding-left: 1em;
-        padding-top: 1em;
-
-        display: flex;
-        flex-direction: column;
-        gap: 0em;
-
-        .input {
-            border: none;
-            outline: none;
-            white-space: pre;
-        }
-
-        .plot {
-
-            width: 25em;
-            aspect-ratio: 1 / 1;
-
-            .sliders {
-        
-                width: 100%;
-                padding-top: 1em;
-
-                display: grid;
-                grid-template-columns: max-content 1fr;
-                align-items: center;
-
-                label {
-                    white-space: nowrap;
-                    font-size: 10pt;
-                }
-            }
-        }
-
-    }
-
-}
 

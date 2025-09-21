@@ -179,19 +179,19 @@ class ShellFrontEnd(DashFrontEnd):
 
         # initial layout is empty save for a Location component
         # which causes the desired plot to be displayed as detailed below
-        self.app.layout = dash.html.Div([dash.dcc.Location(id="url")], id="page-content", className="shell-front-end")
+        self.app.layout = dash.html.Div([dash.dcc.Location(id="url")], id="shell-front-end")
 
         # to display plot x browser is instructed to fetch url with path /plotx 
         # when browser fetches /plotx, it is served the initial (empty) layout defined above
         # then the dcc.Location component in that layout triggers this callback,
         # which receives the path /plotx of the loaded url
-        # and updates the page-content div of the initial (empty) layout with the actual layout for /plotx
+        # and updates the shell-front-end div of the initial (empty) layout with the actual layout for /plotx
         @self.app.callback(
-            dash.Output("page-content", "children"), # we update the page-content layout with the layout for plot x
+            dash.Output("shell-front-end", "children"), # we update the shell-front-end layout with the layout for plot x
             dash.Input("url", "pathname")            # we receive the url path /plotx
         )
         def layout_for_path(path):
-            # returning this value updates page-content div with layout for plotx
+            # returning this value updates shell-front-end div with layout for plotx
             return self.plots[path[1:]]
 
         def handle_input(s):
