@@ -304,7 +304,11 @@ class BrowserFrontEnd(DashFrontEnd):
         )
         def update_output_div(_, input_value):
             print("evaluating", input_value)
-            return self.process_input(input_value)
+            output_layout = self.process_input(input_value)
+            new_pair = dash.Patch()
+            new_pair.append(self.pair())
+            return output_layout
+            #return new_pair, output_layout
 
         return layout
 
