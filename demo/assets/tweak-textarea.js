@@ -1,5 +1,12 @@
 "use strict";
 
+//
+// tweak textara behavior for in_id:
+//     on shift-enter click trigger_id
+//     resize height on every input
+// arrange for this to run by using DeferScript
+//
+
 (() => {
     let params = new URL(document.currentScript.src).searchParams
     let in_id = params.get("in_id")

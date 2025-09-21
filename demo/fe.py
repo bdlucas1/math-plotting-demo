@@ -288,29 +288,15 @@ class BrowserFrontEnd(DashFrontEnd):
         layout = dash.html.Div([
             dash.dcc.Textarea(id=in_id, value=input.strip(), placeholder=instructions, spellCheck=False, className="input"),
             dash.html.Button("trigger", trigger_id, hidden=True),
-            # tweak the behavior of the textarea: 1) shift-enter clicks trigger_id 2) resizes on every input
-            # TODO: this seems a little hacky, maybe, especially the way the script code is invoked
-            # by loading a script and passing in_id and trigger_id in the url
-            dash_extensions.DeferScript(src=f"/assets/tweaks/ta.js?in_id={in_id}&trigger_id={trigger_id}"),
+            # run /assets/tweak-textarea.js to tweak the behavior of the textarea:
+            #    shift-enter clicks trigger_id
+            #    resizes height on every input
+            # TODO: this seems a little hacky, maybe, especially the way the script code is invoked and parameters passed in
+            # TODO: can we get rid of hidden button by making ta.js more sophisticated?
+            dash_extensions.DeferScript(src=f"/assets/tweak-textarea.js?in_id={in_id}&trigger_id={trigger_id}"),
             dash.html.Div(output, id=out_id, className="output"),
         ], id=pair_id, className="pair")
 
-        foo = f"""
-                alert("hi " + {in_id})
-                /*
-                */
-            """
-
-        # TextArea triggers callbacks on every keystroke, but we only want to know
-        # when user has pressed shift-enter, so we add a client-side event listener to the input field
-        # that listens for shift-enter and triggers a click event on the hidden button
-        # also autosize textarea to exactly contain text
-
-        # callback is triggered by "click" on the hidden button signalling the user has pressed shift-enter
-        # it receives the value of the in_id textarea, asks the interpreter to evaluate it and compute a layout,
-        # then updates the out_id div with the layout
-        # commented out code would add another input+output pair, but the callback for shift-enter
-        # only works for the first one, so don't add additional ones for now
         @self.app.callback(
             #dash.Output(self.top_id, "children"),
             dash.Output(out_id, "children"),
