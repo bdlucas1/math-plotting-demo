@@ -1,4 +1,8 @@
 import time
+import urllib.parse
+
+import dash_extensions
+
 
 #
 # pretty print expr
@@ -41,3 +45,18 @@ class Timer:
     def __exit__(self, *args):
         if not self.quiet:
             Timer.stop()
+
+#
+# use in a layout to arrange for js to be executed after the layout is loaded
+# see code for examples
+#
+# TODO: this is a bit hacky - can we do better?
+#
+
+def exec_js(js):
+    params = urllib.parse.urlencode(dict(js=js))
+    url = f"/assets/exec_js.js?{params}"
+    return dash_extensions.DeferScript(src=url)
+
+
+            

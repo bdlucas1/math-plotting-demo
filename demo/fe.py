@@ -4,7 +4,6 @@ import threading
 import traceback
 
 import dash
-import dash_extensions
 import webbrowser
 import webview
 import werkzeug
@@ -288,12 +287,11 @@ class BrowserFrontEnd(DashFrontEnd):
         layout = dash.html.Div([
             dash.dcc.Textarea(id=in_id, value=input.strip(), placeholder=instructions, spellCheck=False, className="input"),
             dash.html.Button("trigger", trigger_id, hidden=True),
-            # run /assets/tweak-textarea.js to tweak the behavior of the textarea:
+            # run tweak_textarea (from assets/tweaks.js) to tweak the behavior of the textarea:
             #    shift-enter clicks trigger_id
             #    resizes height on every input
-            # TODO: this seems a little hacky, maybe, especially the way the script code is invoked and parameters passed in
-            # TODO: can we get rid of hidden button by making ta.js more sophisticated?
-            dash_extensions.DeferScript(src=f"/assets/tweak-textarea.js?in_id={in_id}&trigger_id={trigger_id}"),
+            # TODO: can we get rid of hidden button by making tweak_textarea more sophisticated?
+            util.exec_js(f"tweak_textarea('{in_id}', '{trigger_id}')"),
             dash.html.Div(output, id=out_id, className="output"),
         ], id=pair_id, className="pair")
 
