@@ -32,17 +32,19 @@ def uid(s):
 # and it would complicate the implementation
 # 
 
+def register_callbacks(fe):
+    Panel.register_callback(fe)
+
 #
 # plot plus sliders
 #
 class Panel:
 
     panels = []
-    registered = False
 
     # one callback handles all dynamically created panels and sliders
     # sliders are matched to their corresponding plot output by matching on panel_number
-    def register_callbacks(fe):
+    def register_callback(fe):
         @fe.app.callback(
             dash.Output(dict(type="target", panel_number=dash.MATCH), "children"),
             dash.Input(dict(type="slider", panel_number=dash.MATCH, index=dash.ALL), "value"),
@@ -56,10 +58,6 @@ class Panel:
             return result
 
     def __init__(self, fe, expr, slider_exprs):
-
-        if not Panel.registered:
-            Panel.register_callbacks(fe)
-            Panel.registered = True
 
         self.fe = fe
         self.expr = expr

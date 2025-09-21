@@ -136,8 +136,10 @@ class Browser():
             # real windows will be provided later
             webview.create_window("hidden", hidden=True)
             webview.start()
+        """
         elif args.browser == "webbrowser":
             time.sleep(1e6)
+        """
 
     #atexit.register(start)
 
@@ -160,6 +162,8 @@ class DashFrontEnd:
         # everybody needs a Mathics session
         self.session = mat.MathicsSession()
 
+        # register pattern-matching callbacks for dymanically generated content, used by all front ends
+        lay.register_callbacks(self)
 
 
 # read expressions from terminal, display results in a browser winddow
@@ -190,13 +194,6 @@ class ShellFrontEnd(DashFrontEnd):
             # returning this value updates page-content div with layout for plotx
             return self.plots[path[1:]]
 
-        # this is a standin for the read-eval-print loop of the shell
-        # here we just evaluate the "expressions" "a" and "b" and display the resulting layout
-        # TODO: print s on stdout
-        # TODO: then actual REPL loop
-        # TODO: add s as title
-
-
         def handle_input(s):
 
             util.Timer.level = -1 # print all timings until told otherwise (e.g. by Manipulate)
@@ -209,10 +206,10 @@ class ShellFrontEnd(DashFrontEnd):
                         expr = ev.eval_expr(self, expr)
                         layout = lay.layout_expr(self, expr)
                 except Exception as e:
-                    if args.run == "dev":
+                    if args.run == "dev" or args.debug:
                         traceback.print_exc()
                     else:
-                        print(e)
+                        print("ERROR:", e)
 
             # graphicical output, if any
             if layout:
@@ -222,7 +219,7 @@ class ShellFrontEnd(DashFrontEnd):
                 browser.show(url)
 
             # text output
-            if getattr(expr, "head") in set([mat.SymbolGraphics, mat.SymbolGraphics3D]):
+            if getattr(expr, "head", None) in set([mat.SymbolGraphics, mat.SymbolGraphics3D]):
                 text_output = str(expr.head)
             else:
                 # TODO: how to get this to output Sin instead of System`Sin etc.
