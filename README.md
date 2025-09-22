@@ -18,6 +18,7 @@ then accept more input expressions. Try for example:
 
 Supported now to some degree:
 
+    Row[{item, ...}] where items can be graphics or other expr (displayed as text for now)
     Plot3D       slow current Plot3D
     Demo`Plot3D  fast demo Plot3D
     Graphics3D
@@ -29,7 +30,7 @@ Supported now to some degree:
 
 Supported soon:
 
-    Row
     Grid
     Plot
     Graphics
+    math formatting?
