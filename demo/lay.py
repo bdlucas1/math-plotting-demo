@@ -199,6 +199,8 @@ def layout_Graphics3D(fe, expr):
     # process options
     x_range = y_range = z_range = None
     axes = True
+    showscale = False
+    colorscale = "viridis"
     for sym, value in ex.get_rule_values(expr):
         if sym == mat.SymbolPlotRange:
             if not isinstance(value, (list,tuple)):
@@ -206,6 +208,24 @@ def layout_Graphics3D(fe, expr):
             x_range, y_range, z_range = [v if isinstance(v, (tuple,list)) else None for v in value]
         elif sym == mat.SymbolAxes:
             axes = value
+        elif sym == mat.SymbolPlotLegends:
+            # TODO: what if differs from ColorFunction->?
+            # TODO: what if multiple legends requested?
+            showscale = True
+            # TODO: value sometimes comes through as expr, sometimes as tuple?
+            if getattr(value, "head", None) == mat.SymbolBarLegend:
+                # TODO: for some reason value has literal quotes?
+                colorscale = str(value.elements[0])[1:-1]
+            elif isinstance(value, (tuple,list)):
+                colorscale = value[0]
+        elif sym == mat.SymbolColorFunction:
+            # TODO: for some reason value is coming through with literal quotes?
+            # TODO: what if differs from PlotLegends?
+            colorscale = value[1:-1]
+        else:
+            # TODO: Plot is passing through all options even e.g. PlotPoints
+            #print(f"option {sym} not recognized")
+            pass
 
     with util.Timer("construct xyz and ijk arrays"):
         xyzs = np.array(xyzs)
@@ -215,7 +235,7 @@ def layout_Graphics3D(fe, expr):
         mesh = go.Mesh3d(
             x=xyzs[:,0], y=xyzs[:,1], z=xyzs[:,2],
             i=ijks[:,0], j=ijks[:,1], k=ijks[:,2],
-            showscale=True, colorscale="Viridis", colorbar=dict(thickness=10), intensity=xyzs[:,2],
+            showscale=showscale, colorscale=colorscale, colorbar=dict(thickness=10), intensity=xyzs[:,2],
         )
     
     with util.Timer("figure"):
@@ -234,16 +254,6 @@ def layout_Graphics3D(fe, expr):
         # TODO: x_range and y_range
         if z_range:
             figure.update_layout(scene = dict(zaxis = dict(range=z_range)))
-
-    """
-            colorbar=dict(title=dict(text='z')),
-            colorscale=[[0, 'gold'],
-                        [0.5, 'mediumturquoise'],
-                        [1, 'magenta']],
-            # Intensity of each vertex, which will be interpolated and color-coded
-            intensity=[0, 0.33, 0.66, 1],
-            showscale=True
-    """
 
     with util.Timer("layout"):
         layout = dash.html.Div ([

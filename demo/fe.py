@@ -23,7 +23,7 @@ plot_sin_old_20   = "Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, 
 plot_sin = """
 Demo`Plot3D[
    Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3},
-   PlotPoints -> {200,200}
+   PlotPoints -> {200,200}, ColorFunction->"viridis", PlotLegends->BarLegend["viridis"]
 ]
 """
 
@@ -46,6 +46,7 @@ Manipulate[
     Demo`Plot3D[
         Demo`Hypergeometric1F1[a, b, (x + I y)^2], {x, -2, 2}, {y, -2, 2},
         PlotPoints -> {200,200}, PlotRange -> {Automatic, Automatic, {-5,14}},
+        ColorFunction->"rainbow", PlotLegends->BarLegend["rainbow"]
     ],
     {{a,1}, 0.5, 1.5, 0.1}, (* a slider spec *)
     {{b,2}, 1.5, 2.5, 0.1}  (* b slider spec *)
@@ -99,7 +100,8 @@ run = dict(
         """
         Demo`Plot3D[
             Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3},
-            PlotPoints -> {200,200}, Axes->False
+            PlotPoints -> {200,200}, Axes->False,
+            ColorFunction->"viridis", PlotLegends->BarLegend["rainbow"]
         ]
         """
     ]

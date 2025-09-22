@@ -16,6 +16,9 @@ SymbolHypergeometricPFQ = Symbol("System`HypergeometricPFQ")
 SymbolPlotPoints = Symbol("System`PlotPoints")
 SymbolPlotRange = Symbol("System`PlotRange")
 SymbolAxes = Symbol("System`Axes")
+SymbolColorFunction = Symbol("System`ColorFunction")
+SymbolPlotLegends = Symbol("Global`PlotLegends") # TODO: move to System
+SymbolBarLegend = Symbol("Global`BarLegend") # TODO: move to System
 
 SymbolManipulate = Symbol("Global`Manipulate") # TODO: move to System
 SymbolGraphics3D = Symbol("System`Graphics3D")

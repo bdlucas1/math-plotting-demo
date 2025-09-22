@@ -23,6 +23,8 @@ Supported now to some degree:
     Graphics3D
     PlotPoints -> n or {xn, yn}
     PlotRange -> {xspec, yspec, zspec}, where spec is Automatic or {lo,hi}
+    PlotLegends -> BarLegend[name] where name is a Plotly colorscale name
+    ColorFunction => name where name is a Plotly colorscale name
     Axes -> True or False
 
 Supported soon:
