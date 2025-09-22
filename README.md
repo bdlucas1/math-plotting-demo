@@ -20,9 +20,10 @@ Supported now to some degree:
 
     Plot3D       slow current Plot3D
     Demo`Plot3D  fast demo Plot3D
-    PlotPoints
-    PlotRange
     Graphics3D
+    PlotPoints -> n or {xn, yn}
+    PlotRange -> {xspec, yspec, zspec}, where spec is Automatic or {lo,hi}
+    Axes -> True or False
 
 Supported soon:
 

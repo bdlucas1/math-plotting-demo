@@ -95,7 +95,13 @@ run = dict(
     dev = [
         #"Demo`Plot3D[Sin[x], {x,0,10}, {y,0,10}, PlotPoints->{200,200}]",
         #"Plot3D[Sin[x], {x,0,10}, {y,0,10}, PlotPoints->{20,20}]",
-        plot_manipulate_sin
+        #plot_manipulate_sin
+        """
+        Demo`Plot3D[
+            Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3},
+            PlotPoints -> {200,200}, Axes->False
+        ]
+        """
     ]
 )
 

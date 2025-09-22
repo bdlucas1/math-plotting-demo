@@ -198,11 +198,14 @@ def layout_Graphics3D(fe, expr):
 
     # process options
     x_range = y_range = z_range = None
+    axes = True
     for sym, value in ex.get_rule_values(expr):
         if sym == mat.SymbolPlotRange:
             if not isinstance(value, (list,tuple)):
                 value = [value, value, value]
             x_range, y_range, z_range = [v if isinstance(v, (tuple,list)) else None for v in value]
+        elif sym == mat.SymbolAxes:
+            axes = value
 
     with util.Timer("construct xyz and ijk arrays"):
         xyzs = np.array(xyzs)
@@ -221,9 +224,9 @@ def layout_Graphics3D(fe, expr):
             layout = go.Layout(
                 margin = dict(l=0, r=0, t=0, b=0),
                 scene = dict(
-                    xaxis_title="x", # TODO: xlims.name - from a rule?
-                    yaxis_title="y", # TODO: ylims.name - from a rule?
-                    #zaxis_title="z",
+                    xaxis = dict(title="x", visible=axes), # TODO: name
+                    yaxis = dict(title="y", visible=axes), # TODO: name
+                    zaxis = dict(title="z", visible=axes), # TODO: name
                     aspectmode="cube"
                 )
             )
