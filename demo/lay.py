@@ -282,17 +282,20 @@ def layout_Row(fe, expr):
 # Compute a layout 
 #
 
+layout_funs = {
+    mat.SymbolManipulate: layout_Manipulate,
+    mat.SymbolGraphics3D: layout_Graphics3D,
+    mat.SymbolRow: layout_Row,
+}
+
+
 def layout_expr(fe, expr):
     # TODO: wrapped in div?
     if not hasattr(expr, "head"):
         return expr.value
     with util.Timer(f"layout {expr.head}"):
-        if expr.head == mat.SymbolManipulate:
-            result = layout_Manipulate(fe, expr)
-        elif expr.head == mat.SymbolGraphics3D:
-            result = layout_Graphics3D(fe, expr)
-        elif expr.head == mat.SymbolRow:
-            result = layout_Row(fe, expr)
+        if expr.head in layout_funs:
+            result = layout_funs[expr.head](fe, expr)
         else:
             raise Exception(f"Unknown head {expr.head} in layout_expr")
     return result
