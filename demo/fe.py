@@ -244,6 +244,44 @@ class ShellFrontEnd(DashFrontEnd):
 # accept expressions from an input field, display expressions in an output box
 class BrowserFrontEnd(DashFrontEnd):
 
+    def __init__(self):
+
+        # initialize app and start server
+        super().__init__()
+
+        # initial layout is --run input plus a blank pair
+        self.pair_number = 0
+        self.top_id ="browser-front-end"
+        init_pairs = [self.pair(input, self.process_input(input)) for input in run[args.run]] if args.run else []
+        self.app.layout = dash.html.Div([*init_pairs, self.pair()], id=self.top_id)
+
+        # when the trigger button is clicked, process the input field and update the output field
+        @self.app.callback(
+            dash.Output(dict(type="out", pair_number=dash.MATCH), "children"),
+            dash.Input(dict(type="trigger", pair_number=dash.MATCH), "n_clicks"),
+            dash.State(dict(type="in", pair_number=dash.MATCH), "value"),
+            prevent_initial_call = True
+        )
+        def update_pair_output(_, input_value):
+            return self.process_input(input_value)
+
+        # when any output changes, if it's the last pair, append a new fresh pair
+        @self.app.callback(
+            dash.Output(self.top_id, "children"),
+            dash.Input(dict(type="out", pair_number=dash.ALL), "children"),
+            prevent_initial_call = True
+        )
+        def append_new_pair(_):
+            if dash.ctx.triggered_id and dash.ctx.triggered_id["pair_number"] == self.pair_number:
+                patch = dash.Patch()
+                patch.append(self.pair())
+                return patch
+            raise dash.exceptions.PreventUpdate
+            
+        # point a browser at our page
+        url = f"http://127.0.0.1:{self.server.server_port}"
+        browser.show(url)
+
     def process_input(self, s):
 
         util.Timer.level = -1 # print all timings until told otherwise (e.g. by Manipulate)
@@ -276,27 +314,33 @@ class BrowserFrontEnd(DashFrontEnd):
     def pair(self, input="", output=None):
 
         self.pair_number += 1
-        in_id = f"in-{self.pair_number}"
-        trigger_id = in_id + "-trigger"
-        out_id = f"out-{self.pair_number}"
         pair_id = f"pair-{self.pair_number}"
+
+        in_pattern =      dict(type="in",      pair_number=self.pair_number)
+        trigger_pattern = dict(type="trigger", pair_number=self.pair_number)
+        out_pattern =     dict(type="out",     pair_number=self.pair_number)
+
+        in_id = f'{{"pair_number":{self.pair_number},"type":"in"}}'
+        trigger_id = f'{{"pair_number":{self.pair_number},"type":"trigger"}}'
 
         # create an input field, a div to hold output, and a hidden button
         # to signal that the user has pressed shift-enter
         instructions = "Type expression followed by shift-enter"
         layout = dash.html.Div([
-            dash.dcc.Textarea(id=in_id, value=input.strip(), placeholder=instructions, spellCheck=False, className="input"),
-            dash.html.Button("trigger", trigger_id, hidden=True),
+            dash.dcc.Textarea(id=in_pattern, value=input.strip(), placeholder=instructions, spellCheck=False, className="input"),
+            dash.html.Button(id=trigger_pattern, hidden=True),
             # run tweak_textarea (from assets/tweaks.js) to tweak the behavior of the textarea:
             #    shift-enter clicks trigger_id
             #    resizes height on every input
             # TODO: can we get rid of hidden button by making tweak_textarea more sophisticated?
             util.exec_js(f"tweak_textarea('{in_id}', '{trigger_id}')"),
-            dash.html.Div(output, id=out_id, className="output"),
+            dash.html.Div(output, id=out_pattern, className="output"),
         ], id=pair_id, className="pair")
 
+        #NEXT: use patterns so the newly appened pair works
+        """
         @self.app.callback(
-            #dash.Output(self.top_id, "children"),
+            #dash.Output(self.top_idÃ, "children"),
             dash.Output(out_id, "children"),
             dash.Input(trigger_id, "n_clicks"),
             dash.State(in_id, "value"),
@@ -309,23 +353,9 @@ class BrowserFrontEnd(DashFrontEnd):
             new_pair.append(self.pair())
             return output_layout
             #return new_pair, output_layout
+        """
 
         return layout
-
-    def __init__(self):
-
-        # initialize app and start server
-        super().__init__()
-
-        # initial layout is --run input plus a blank pair
-        self.pair_number = 0
-        self.top_id = "browser-front-end"
-        init_pairs = [self.pair(input, self.process_input(input)) for input in run[args.run]] if args.run else []
-        self.app.layout = dash.html.Div([*init_pairs, self.pair()], id=self.top_id)
-
-        # point a browser at our page
-        url = f"http://127.0.0.1:{self.server.server_port}"
-        browser.show(url)
 
 
 browser = Browser()
