@@ -1,21 +1,21 @@
 "use strict";
 
-function tweak_textarea(in_id, trigger_id) {
-    let ta = document.getElementById(in_id)
-    ta.addEventListener("keydown", (event) => {
+function tweak_pair(pair_id) {
+    let pair = document.getElementById(pair_id)
+    let textarea = pair.querySelector("textarea")
+    let button = pair.querySelector("button")
+    textarea.addEventListener("keydown", (event) => {
         if (event.key === "Enter" && event.shiftKey) {
             event.preventDefault()
-            let e = document.getElementById(trigger_id)
-            console.log("triggering", e)
-            e.click();
+            button.click();
         }
     })
     let setHeight = () => {
-        ta.style.height = "auto"
-        ta.style.height = (ta.scrollHeight + 5) + "px"
-        ta.scrollIntoView()
+        textarea.style.height = "auto"
+        textarea.style.height = (textarea.scrollHeight + 5) + "px"
+        textarea.scrollIntoView({behavior: "smooth"})
     }
-    ta.addEventListener("input", setHeight)
+    textarea.addEventListener("input", setHeight)
     setHeight()
 }
-    
+
