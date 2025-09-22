@@ -112,6 +112,8 @@ def eval_Plot3D(fe, expr):
 
 # TODO: this is temporary until I figure out how to hook eval_Plot3D into expr.evaluate
 def eval_expr(fe, expr, quiet=False):
+    if not hasattr(expr, "head"):
+        return expr
     with util.Timer(f"eval {expr.head}"):
         funs = {
             "Demo`Plot3D": eval_Plot3D,

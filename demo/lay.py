@@ -132,7 +132,6 @@ def layout_Manipulate(fe, expr):
     return layout
 
 
-
 #
 # compute a layout for a Graphics3D object, such as returned by Plot3D
 #
@@ -201,6 +200,7 @@ def layout_Graphics3D(fe, expr):
     axes = True
     showscale = False
     colorscale = "viridis"
+    size = None
     for sym, value in ex.get_rule_values(expr):
         if sym == mat.SymbolPlotRange:
             if not isinstance(value, (list,tuple)):
@@ -222,6 +222,8 @@ def layout_Graphics3D(fe, expr):
             # TODO: for some reason value is coming through with literal quotes?
             # TODO: what if differs from PlotLegends?
             colorscale = value[1:-1]
+        elif sym == mat.SymbolImageSize:
+            size = value
         else:
             # TODO: Plot is passing through all options even e.g. PlotPoints
             #print(f"option {sym} not recognized")
@@ -260,19 +262,37 @@ def layout_Graphics3D(fe, expr):
             #dash.dcc.Markdown(f"${title}$", mathjax=True) if fancy else dash.html.Div(title, className="title"),
             dash.dcc.Graph(figure=figure, className="graph")
         ], className="plot")
+        if size:
+            layout.style = dict(width=f"{size}pt", height=f"{size}pt")
 
     return layout
+
+def layout_Row(fe, expr):
+    def do(e):
+        # TODO: temp demo hack until we integrate Demo` into system and eliminate ev.eval_expr
+        # then this will already have been done
+        e = ev.eval_expr(fe, e)
+        return layout_expr(fe, e)
+    # TODO: expr.elements[1] is a separator
+    layout = dash.html.Div([do(e) for e in expr.elements[0].elements], className="m-row")
+    return layout
+
 
 #
 # Compute a layout 
 #
 
 def layout_expr(fe, expr):
+    # TODO: wrapped in div?
+    if not hasattr(expr, "head"):
+        return expr.value
     with util.Timer(f"layout {expr.head}"):
         if expr.head == mat.SymbolManipulate:
             result = layout_Manipulate(fe, expr)
         elif expr.head == mat.SymbolGraphics3D:
             result = layout_Graphics3D(fe, expr)
+        elif expr.head == mat.SymbolRow:
+            result = layout_Row(fe, expr)
         else:
             raise Exception(f"Unknown head {expr.head} in layout_expr")
     return result

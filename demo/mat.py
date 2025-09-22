@@ -1,5 +1,6 @@
 from mathics.core.symbols import Symbol, SymbolList, SymbolPlus, SymbolTimes, SymbolPower, SymbolList
-from mathics.core.systemsymbols import SymbolSin, SymbolCos, SymbolSqrt, SymbolAbs, SymbolGamma, SymbolRule, SymbolI, SymbolE
+from mathics.core.systemsymbols import SymbolSin, SymbolCos, SymbolSqrt, SymbolAbs, SymbolGamma, \
+    SymbolRule, SymbolI, SymbolE, SymbolRow
 
 from mathics.core.atoms import Integer, Real
 from mathics.core.list import ListExpression
@@ -19,6 +20,7 @@ SymbolAxes = Symbol("System`Axes")
 SymbolColorFunction = Symbol("System`ColorFunction")
 SymbolPlotLegends = Symbol("Global`PlotLegends") # TODO: move to System
 SymbolBarLegend = Symbol("Global`BarLegend") # TODO: move to System
+SymbolImageSize = Symbol("System`ImageSize")
 
 SymbolManipulate = Symbol("Global`Manipulate") # TODO: move to System
 SymbolGraphics3D = Symbol("System`Graphics3D")

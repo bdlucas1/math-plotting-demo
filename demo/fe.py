@@ -53,6 +53,23 @@ Manipulate[
 ]
 """
 
+demo_row = """
+Row[{
+    "This",
+    Demo`Plot3D[
+        Sin[x]*Cos[y], {x,0,10}, {y,0,10},
+        PlotPoints->{200,200}, Axes->False, ImageSize->150
+    ],
+    "is a",
+    Demo`Plot3D[
+        Sin[(x^2+y^2)] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3},
+        PlotPoints->{200,200}, Axes->False, ImageSize->150
+    ],
+    "row"
+}]
+"""
+
+
 test_gc1 = """
     Graphics3D[GraphicsComplex[
         {{0, 0, 0}, {2, 0, 0}, {2, 2, 0}, {0, 2, 0}, {1, 1, 2}},
@@ -73,7 +90,8 @@ run = dict(
     demos = [
         plot_sin,
         plot_manipulate_sin,
-        plot_manipulate_hypergeometric
+        plot_manipulate_hypergeometric,
+        demo_row
     ],
 
     tests = [
@@ -97,13 +115,15 @@ run = dict(
         #"Demo`Plot3D[Sin[x], {x,0,10}, {y,0,10}, PlotPoints->{200,200}]",
         #"Plot3D[Sin[x], {x,0,10}, {y,0,10}, PlotPoints->{20,20}]",
         #plot_manipulate_sin
-        """
-        Demo`Plot3D[
-            Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3},
-            PlotPoints -> {200,200}, Axes->False,
-            ColorFunction->"viridis", PlotLegends->BarLegend["rainbow"]
-        ]
-        """
+        #"""
+        #Demo`Plot3D[
+        #    Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3},
+        #    PlotPoints -> {200,200}, Axes->False,
+        #    ImageSize -> 200,
+        #    ColorFunction->"viridis", PlotLegends->BarLegend["rainbow"]
+        #]
+        #"""
+        demo_row
     ]
 )
 
