@@ -319,18 +319,20 @@ class BrowserFrontEnd(DashFrontEnd):
         button_id = dict(type="pair-button", pair_number=self.pair_number)
         out_id =    dict(type="pair-out",    pair_number=self.pair_number)
 
-        # create an input field, a div to hold output, and a hidden button
+        # create an input field, a div to hold output, a hidden button, and a number label
         # that is used to signal that the user has pressed shift-enter
         # TODO: can we get rid of hidden button by making tweak_pair more sophisticated?
         instructions = "Type expression followed by shift-enter"
         layout = dash.html.Div([
             dash.dcc.Textarea(id=in_id, value=input.strip(), placeholder=instructions, spellCheck=False, className="input"),
             dash.html.Button(id=button_id, hidden=True),
+            dash.html.Div(output, id=out_id, className="output"),
+            dash.html.Div(str(self.pair_number), className="number"),
             # run tweak_pair (from assets/tweaks.js) to tweak the behavior of the pair:
             #    shift-enter in textarea clicks the button
             #    resize textarea height on every input
             util.exec_js(f"tweak_pair('{pair_id}')"),
-            dash.html.Div(output, id=out_id, className="output"),
+
         ], id=pair_id, className="pair")
 
         return layout
