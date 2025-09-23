@@ -19,8 +19,9 @@ then accept more input expressions. Try for example:
 Supported now to some degree:
 
     Row[{item, ...}] where items can be graphics or other expr (displayed as text for now)
-    Plot3D       slow current Plot3D
-    Demo`Plot3D  fast demo Plot3D
+    Grid[{{item, ...}, ...}]
+    Plot3D - slow current Plot3D
+    Demo`Plot3D - fast demo Plot3D
     Graphics3D
     PlotPoints -> n or {xn, yn}
     PlotRange -> {xspec, yspec, zspec}, where spec is Automatic or {lo,hi}
@@ -30,7 +31,6 @@ Supported now to some degree:
 
 Supported soon:
 
-    Grid
     Plot
     Graphics
     math formatting?

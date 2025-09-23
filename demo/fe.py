@@ -34,6 +34,7 @@ run = dict(
         # for now just use Demo`Hypergeomtric which compile knows about but mathics evaluate doesn't
         "plot_manipulate_hypergeometric",
         "demo_row",
+        "demo_grid",
     ],
 
     tests = [
@@ -54,7 +55,8 @@ run = dict(
     ],
 
     dev = [
-        "demo_row"
+        #"demo_row"
+        "demo_grid"
     ]
 )
 

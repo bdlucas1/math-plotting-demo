@@ -277,6 +277,29 @@ def layout_Row(fe, expr):
     layout = dash.html.Div([do(e) for e in expr.elements[0].elements], className="m-row")
     return layout
 
+def layout_Grid(fe, expr):
+
+    def do(e):
+        # TODO: temp demo hack until we integrate Demo` into system and eliminate ev.eval_expr
+        # then this will already have been done
+        e = ev.eval_expr(fe, e)
+        layout = layout_expr(fe, e)
+
+        # assign row and column using variables that are picked up by css
+        if not hasattr(layout, "style"):
+            layout.style = {}
+        layout.style["--row"] = str(row_number+1)
+        layout.style["--col"] = str(col_number+1)
+
+        return layout
+
+    grid_content = []
+    for row_number, row in enumerate(expr.elements[0]):
+        for col_number, cell in enumerate(row.elements):
+            grid_content.append(do(cell))
+
+    layout = dash.html.Div(grid_content, className="m-grid")
+    return layout
 
 #
 # Compute a layout 
@@ -286,13 +309,13 @@ layout_funs = {
     mat.SymbolManipulate: layout_Manipulate,
     mat.SymbolGraphics3D: layout_Graphics3D,
     mat.SymbolRow: layout_Row,
+    mat.SymbolGrid: layout_Grid,
 }
 
-
 def layout_expr(fe, expr):
-    # TODO: wrapped in div?
     if not hasattr(expr, "head"):
-        return expr.value
+        # TODO: works for demo, but is this correct in general?
+        return dash.html.Div(str(expr.value) if hasattr(expr,"value") else str(expr))
     with util.Timer(f"layout {expr.head}"):
         if expr.head in layout_funs:
             result = layout_funs[expr.head](fe, expr)
