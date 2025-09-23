@@ -14,121 +14,6 @@ import mat
 import util
 
 #
-# 
-#
-
-plot_sin_old_200   = "Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {200,200}, MaxRecursion -> -1]"
-plot_sin_old_20   = "Plot3D[Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3}, PlotPoints -> {20,20}, MaxRecursion -> -1]"
-
-plot_sin = """
-Demo`Plot3D[
-   Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3},
-   PlotPoints -> {200,200}, ColorFunction->"viridis", PlotLegends->BarLegend["viridis"]
-]
-"""
-
-plot_manipulate_sin = """
-Manipulate[
-    Demo`Plot3D[
-        Sin[(x^2+y^2)*freq] / Sqrt[x^2+y^2+1] * amp, {x,-3,3}, {y,-3,3},
-        PlotPoints -> {200,200}, PlotRange -> {Automatic, Automatic, {-0.25,0.5}}
-    ],
-    {{freq,1.0}, 0.1, 2.0, 0.2}, (* freq slider spec *)
-    {{amp,1.0}, 0.0, 2.0, 0.2}  (* amp slider spec *)
-]
-"""
-
-# TODO: System`Hypergeometric1F1 gets rewritten to varous functions involving gamma, bessel, etc.
-# need to build those out in compile.py to handle
-# for now just use Demo`Hypergeomtric which compile knows about but mathics evaluate doesn't
-plot_manipulate_hypergeometric = """
-Manipulate[
-    Demo`Plot3D[
-        Demo`Hypergeometric1F1[a, b, (x + I y)^2], {x, -2, 2}, {y, -2, 2},
-        PlotPoints -> {200,200}, PlotRange -> {Automatic, Automatic, {-5,14}},
-        ColorFunction->"rainbow", PlotLegends->BarLegend["rainbow"]
-    ],
-    {{a,1}, 0.5, 1.5, 0.1}, (* a slider spec *)
-    {{b,2}, 1.5, 2.5, 0.1}  (* b slider spec *)
-]
-"""
-
-demo_row = """
-Row[{
-    "This",
-    Demo`Plot3D[
-        Sin[x]*Cos[y], {x,0,10}, {y,0,10},
-        PlotPoints->{200,200}, Axes->False, ImageSize->150
-    ],
-    "is a",
-    Demo`Plot3D[
-        Sin[(x^2+y^2)] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3},
-        PlotPoints->{200,200}, Axes->False, ImageSize->150
-    ],
-    "row"
-}]
-"""
-
-
-test_gc1 = """
-    Graphics3D[GraphicsComplex[
-        {{0, 0, 0}, {2, 0, 0}, {2, 2, 0}, {0, 2, 0}, {1, 1, 2}},
-        Polygon[{{1, 2, 5}, {2, 3, 5}, {3, 4, 5}, {4, 1, 5}}]
-    ]]
-"""
-
-# TODO: display has a triangle and a quad - why?
-test_gc2 = """
-    Graphics3D[GraphicsComplex[
-        {{0, 0, 0}, {2, 0, 0}, {2, 2, 0}, {0, 2, 0}, {1, 1, 2}},
-        Polygon[{{1, 2, 3, 4}, {1, 2, 4, 5}}]
-    ]]
-"""
-
-run = dict(
-
-    demos = [
-        plot_sin,
-        plot_manipulate_sin,
-        plot_manipulate_hypergeometric,
-        demo_row
-    ],
-
-    tests = [
-        plot_sin_old_20,
-        plot_sin,
-        plot_manipulate_sin,
-        plot_manipulate_hypergeometric,
-        test_gc1,
-        test_gc2
-    ],
-
-    # run multiple times, take fastest
-    timing = [
-        #plot_sin_old_200, plot_sin_old_200,
-        plot_sin, plot_sin, plot_sin, 
-        #plot_manipulate_sin, plot_manipulate_sin, plot_manipulate_sin,
-        #plot_manipulate_hypergeometric, plot_manipulate_hypergeometric, plot_manipulate_hypergeometric,
-    ],
-
-    dev = [
-        #"Demo`Plot3D[Sin[x], {x,0,10}, {y,0,10}, PlotPoints->{200,200}]",
-        #"Plot3D[Sin[x], {x,0,10}, {y,0,10}, PlotPoints->{20,20}]",
-        #plot_manipulate_sin
-        #"""
-        #Demo`Plot3D[
-        #    Sin[x^2+y^2] / Sqrt[x^2+y^2+1], {x,-3,3}, {y,-3,3},
-        #    PlotPoints -> {200,200}, Axes->False,
-        #    ImageSize -> 200,
-        #    ColorFunction->"viridis", PlotLegends->BarLegend["rainbow"]
-        #]
-        #"""
-        demo_row
-    ]
-)
-
-
-#
 #
 #
 
@@ -138,6 +23,48 @@ parser.add_argument("--fe", choices=["shell", "browser"], default="shell")
 parser.add_argument("--browser", choices=["webview", "webbrowser"], default="webview")
 parser.add_argument("--run", choices=["demos","tests","timing","dev"], default=None)
 args = parser.parse_args()
+
+run = dict(
+
+    demos = [
+        "plot_sin",
+        "plot_manipulate_sin",
+        # TODO: System`Hypergeometric1F1 gets rewritten to varous functions involving gamma, bessel, etc.
+        # need to build those out in compile.py to handle
+        # for now just use Demo`Hypergeomtric which compile knows about but mathics evaluate doesn't
+        "plot_manipulate_hypergeometric",
+        "demo_row",
+    ],
+
+    tests = [
+        "plot_sin_old_20",
+        "plot_sin",
+        "plot_manipulate_sin",
+        "plot_manipulate_hypergeometric",
+        "test_gc1",
+        "test_gc2",
+    ],
+
+    # run multiple times, take fastest
+    timing = [
+        #"plot_sin_old_200", "plot_sin_old_200",
+        "plot_sin", "plot_sin", "plot_sin" ,
+        #"plot_manipulate_sin", "plot_manipulate_sin", "plot_manipulate_sin",
+        #"plot_manipulate_hypergeometric", "plot_manipulate_hypergeometric", "plot_manipulate_hypergeometric",
+    ],
+
+    dev = [
+        "demo_row"
+    ]
+)
+
+# read demo files
+def read_demo(s):
+    with open(f"demos/{s}.m") as f:
+        return f.read()
+run[args.run] = [read_demo(s) for s in run[args.run]]
+
+
 
 # load a url into a browser, using either:
 # webview - pop up new standalone window using pywebview
@@ -164,7 +91,7 @@ class Browser():
             # real windows will be provided later
             webview.create_window("hidden", hidden=True)
             webview.start()
-        """
+            """
         elif args.browser == "webbrowser":
             time.sleep(1e6)
         """
