@@ -1,6 +1,6 @@
 import numpy as np
 
-import mat
+import mcs
 
 #
 # expression helpers
@@ -8,11 +8,11 @@ import mat
 
 value = lambda expr, default=None: getattr(expr, "value", default)
 
-list_expr = lambda *a: mat.ListExpression(*a, literal_values = a)
+list_expr = lambda *a: mcs.ListExpression(*a, literal_values = a)
 
 def get_rules(expr):
     for e in expr.elements:
-        if hasattr(e, "head") and e.head == mat.SymbolRule:
+        if hasattr(e, "head") and e.head == mcs.SymbolRule:
             yield e
 
 def get_rule_values(expr):
@@ -23,7 +23,7 @@ def get_rule_values(expr):
 # this is slow
 def numpy_array_list_expr(v, mathics_type):
     if isinstance(v, np.ndarray):
-        return mat.ListExpression(*(numpy_array_list_expr(vv, mathics_type) for vv in v), literal_values = v)
+        return mcs.ListExpression(*(numpy_array_list_expr(vv, mathics_type) for vv in v), literal_values = v)
     else:
         # numpy scalar as mathics type
         return mathics_type(v.item())
@@ -35,7 +35,7 @@ def numpy_array_list_expr(v, mathics_type):
 class NumpyArrayListExpr:
 
     def __init__(self, value, mathics_type):
-        self.head = mat.SymbolList
+        self.head = mcs.SymbolList
         self.value = value
         self.mathics_type = mathics_type
         self._elements = None

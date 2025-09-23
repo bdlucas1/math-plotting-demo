@@ -1,3 +1,9 @@
+#
+# symbols etc. are hidden away in a confusing array of packages and modules,
+# and also not a big fan of the from...import... pattern, so hide that all away here
+#
+
+
 from mathics.core.symbols import Symbol, SymbolList, SymbolPlus, SymbolTimes, SymbolPower, SymbolList
 from mathics.core.systemsymbols import SymbolSin, SymbolCos, SymbolSqrt, SymbolAbs, SymbolGamma, \
     SymbolRule, SymbolI, SymbolE, SymbolRow, SymbolGrid

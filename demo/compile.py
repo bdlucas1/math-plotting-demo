@@ -2,7 +2,7 @@ import math
 import numpy as np
 import scipy
 
-import mat
+import mcs
 
 def hyppfq(p, q, x):
     if len(p) == 1 and len(q) == 1:
@@ -22,34 +22,34 @@ def gamma(*args):
 def to_python_expr(expr, lib = "np"):
 
     funs = {
-        mat.SymbolSin: f"{lib}.sin",
-        mat.SymbolCos: f"{lib}.cos",
-        mat.SymbolSqrt: f"{lib}.sqrt",
-        mat.SymbolAbs: f"{lib}.abs",
+        mcs.SymbolSin: f"{lib}.sin",
+        mcs.SymbolCos: f"{lib}.cos",
+        mcs.SymbolSqrt: f"{lib}.sqrt",
+        mcs.SymbolAbs: f"{lib}.abs",
 
         # just do Hypergemetric, no simplification
-        mat.Symbol("Demo`Hypergeometric1F1"): "scipy.special.hyp1f1",
+        mcs.Symbol("Demo`Hypergeometric1F1"): "scipy.special.hyp1f1",
 
         # following are subtitutions made in evaluating System`Hypergeometric1F1
-        mat.SymbolHypergeometricPFQ: "hyppfq", # TODO is this defined in some import?
-        mat.SymbolGamma: "gamma",
+        mcs.SymbolHypergeometricPFQ: "hyppfq", # TODO is this defined in some import?
+        mcs.SymbolGamma: "gamma",
         # System`exp_polar
         # System`BesselI
     }
 
     listfuns = {
-        mat.SymbolList: "list",
-        mat.SymbolPlus: "sum", # TODO: np.sum?
-        mat.SymbolTimes: "math.prod", # TODO: np.prod?
+        mcs.SymbolList: "list",
+        mcs.SymbolPlus: "sum", # TODO: np.sum?
+        mcs.SymbolTimes: "math.prod", # TODO: np.prod?
     }
 
     binops = {
-        mat.SymbolPower: "**",
+        mcs.SymbolPower: "**",
     }
 
     symbols = {
-        mat.SymbolI: "1j",
-        mat.SymbolE: f"{lib}.e"
+        mcs.SymbolI: "1j",
+        mcs.SymbolE: f"{lib}.e"
     }
 
     if not hasattr(expr, "head"):

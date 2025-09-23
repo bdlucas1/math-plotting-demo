@@ -10,7 +10,7 @@ import werkzeug
 
 import ev
 import lay
-import mat
+import mcs
 import util
 
 #
@@ -117,7 +117,7 @@ class DashFrontEnd:
         print("using port", self.server.server_port)
 
         # everybody needs a Mathics session
-        self.session = mat.MathicsSession()
+        self.session = mcs.MathicsSession()
 
         # register pattern-matching callbacks for dymanically generated content, used by all front ends
         lay.register_callbacks(self)
@@ -176,7 +176,7 @@ class ShellFrontEnd(DashFrontEnd):
                 browser.show(url)
 
             # text output
-            if getattr(expr, "head", None) in set([mat.SymbolGraphics, mat.SymbolGraphics3D]):
+            if getattr(expr, "head", None) in set([mcs.SymbolGraphics, mcs.SymbolGraphics3D]):
                 text_output = str(expr.head)
             else:
                 # TODO: how to get this to output Sin instead of System`Sin etc.
@@ -258,7 +258,7 @@ class BrowserFrontEnd(DashFrontEnd):
 
         # text output
         if not result:
-            if getattr(expr, "head", None) in set([mat.SymbolGraphics, mat.SymbolGraphics3D]):
+            if getattr(expr, "head", None) in set([mcs.SymbolGraphics, mcs.SymbolGraphics3D]):
                 result = str(expr.head)
             else:
                 # TODO: how to get this to output Sin instead of System`Sin etc.

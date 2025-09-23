@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 
 import ev
 import ex
-import mat
+import mcs
 import util
 
 #
@@ -82,7 +82,7 @@ class Panel:
         # TODO: always Global?
         # TODO: always Real?
         # TODO: best order for replace_vars and eval?
-        expr = self.expr.replace_vars({"Global`"+n: mat.Real(v) for n, v in values.items()})
+        expr = self.expr.replace_vars({"Global`"+n: mcs.Real(v) for n, v in values.items()})
         expr = ev.eval_expr(self.fe, expr) # TODO: move this to __init__?
         layout = layout_expr(self.fe, expr)
         return layout
@@ -142,23 +142,23 @@ def layout_Graphics3D(fe, expr):
 
     def handle_g(g):
 
-        if g.head == mat.SymbolPolygon:
+        if g.head == mcs.SymbolPolygon:
             poly = [p.value for p in g.elements[0].elements]
             i = len(xyzs)
             xyzs.extend(poly)
             ijks.append([i+1,i+2,i+3]) # ugh - 1-based to match GraphicsComplex Polygon
 
-        elif g.head == mat.SymbolLine:
+        elif g.head == mcs.SymbolLine:
             line = [p.value for p in g.elements[0].elements]
 
-        elif g.head == mat.SymbolGraphicsComplex:
+        elif g.head == mcs.SymbolGraphicsComplex:
 
             with util.Timer("xyzs"):
                 xyzs.extend(g.elements[0].value)
 
             def handle_c(c):
 
-                if c.head == mat.SymbolPolygon:
+                if c.head == mcs.SymbolPolygon:
 
                     polys = c.elements[0]
                     if isinstance(polys, ex.NumpyArrayListExpr):
@@ -182,10 +182,10 @@ def layout_Graphics3D(fe, expr):
             for c in g.elements[1:]:
                 handle_c(c)
 
-        elif g.head == mat.SymbolRule:
+        elif g.head == mcs.SymbolRule:
             pass
 
-        elif g.head == mat.SymbolList:
+        elif g.head == mcs.SymbolList:
             for gg in g.elements:
                 handle_g(gg)
 
@@ -202,27 +202,27 @@ def layout_Graphics3D(fe, expr):
     colorscale = "viridis"
     size = None
     for sym, value in ex.get_rule_values(expr):
-        if sym == mat.SymbolPlotRange:
+        if sym == mcs.SymbolPlotRange:
             if not isinstance(value, (list,tuple)):
                 value = [value, value, value]
             x_range, y_range, z_range = [v if isinstance(v, (tuple,list)) else None for v in value]
-        elif sym == mat.SymbolAxes:
+        elif sym == mcs.SymbolAxes:
             axes = value
-        elif sym == mat.SymbolPlotLegends:
+        elif sym == mcs.SymbolPlotLegends:
             # TODO: what if differs from ColorFunction->?
             # TODO: what if multiple legends requested?
             showscale = True
             # TODO: value sometimes comes through as expr, sometimes as tuple?
-            if getattr(value, "head", None) == mat.SymbolBarLegend:
+            if getattr(value, "head", None) == mcs.SymbolBarLegend:
                 # TODO: for some reason value has literal quotes?
                 colorscale = str(value.elements[0])[1:-1]
             elif isinstance(value, (tuple,list)):
                 colorscale = value[0]
-        elif sym == mat.SymbolColorFunction:
+        elif sym == mcs.SymbolColorFunction:
             # TODO: for some reason value is coming through with literal quotes?
             # TODO: what if differs from PlotLegends?
             colorscale = value[1:-1]
-        elif sym == mat.SymbolImageSize:
+        elif sym == mcs.SymbolImageSize:
             size = value
         else:
             # TODO: Plot is passing through all options even e.g. PlotPoints
@@ -306,10 +306,10 @@ def layout_Grid(fe, expr):
 #
 
 layout_funs = {
-    mat.SymbolManipulate: layout_Manipulate,
-    mat.SymbolGraphics3D: layout_Graphics3D,
-    mat.SymbolRow: layout_Row,
-    mat.SymbolGrid: layout_Grid,
+    mcs.SymbolManipulate: layout_Manipulate,
+    mcs.SymbolGraphics3D: layout_Graphics3D,
+    mcs.SymbolRow: layout_Row,
+    mcs.SymbolGrid: layout_Grid,
 }
 
 def layout_expr(fe, expr):

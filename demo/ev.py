@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 
 import ex
 import compile
-import mat
+import mcs
 import util
 
 #
@@ -33,7 +33,7 @@ def eval_plot3d_xyzs(fe, expr):
     # TODO: hook into existing infrastructure for plotting
     x_points = y_points = 10 # default
     for sym, value in ex.get_rule_values(expr):
-        if sym == mat.SymbolPlotPoints:
+        if sym == mcs.SymbolPlotPoints:
             if isinstance(value, (tuple,list)):
                 x_points, y_points = value
             else:
@@ -87,11 +87,11 @@ def grid_to_graphics_complex(xs, ys, zs, np_expr):
     # ugh - indices in Polygon are 1-based
     quads += 1
 
-    quads_expr = np_expr(quads, mat.Integer)
-    xyzs_expr = np_expr(xyzs, mat.Real)
-    poly_expr = mat.Expression(mat.SymbolPolygon, quads_expr)
-    gc_expr = mat.Expression(mat.SymbolGraphicsComplex, xyzs_expr, poly_expr)
-    result = mat.Expression(mat.SymbolGraphics3D, gc_expr)
+    quads_expr = np_expr(quads, mcs.Integer)
+    xyzs_expr = np_expr(xyzs, mcs.Real)
+    poly_expr = mcs.Expression(mcs.SymbolPolygon, quads_expr)
+    gc_expr = mcs.Expression(mcs.SymbolGraphicsComplex, xyzs_expr, poly_expr)
+    result = mcs.Expression(mcs.SymbolGraphics3D, gc_expr)
     
     return result
 
