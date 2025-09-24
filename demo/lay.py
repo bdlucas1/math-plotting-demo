@@ -314,9 +314,15 @@ layout_funs = {
 }
 
 def layout_expr(fe, expr):
+    # TODO: make the logic here less convoluted
     if not hasattr(expr, "head"):
         # TODO: works for demo, but is this correct in general?
-        return dash.html.Div(str(expr.value) if hasattr(expr,"value") else str(expr))
+        if hasattr(expr, "value") and isinstance(expr.value, str):
+            return dash.html.Div(expr.value)
+        else:
+            # TODO: ok to use jax to handle everything but strings?
+            # TODO: should also use jax to handle strings? rows? grids?
+            return jax.to_math(expr)
     with util.Timer(f"layout {expr.head}"):
         if expr.head in layout_funs:
             # TODO: handle this the same way as the following `result :=` pattern?

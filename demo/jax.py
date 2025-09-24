@@ -4,6 +4,8 @@ import mcs
 
 class NotMath(Exception): pass
 
+# TODO: input "2 I" gives weird result - guess not correctly formatting complex numbers - where at??
+
 def xlate(expr, outer_precedence=0):
     
     list_ops = {
