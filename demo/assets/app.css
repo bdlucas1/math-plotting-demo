@@ -91,8 +91,21 @@ body {
 .m-row {
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: baseline;
     width: max-content;
+
+    /* stupid css trick to make the baseline of a plot in a row be its vertical center
+       so that it is centered vertically relative to other content.
+       TODO: the translate is ugly; look into whether there's a cleaner way to do this. */
+    .plot {
+        transform: translateY(-50%);
+    }
+    .plot::before {
+        display: inline-block;
+        content: "";
+        width: 0;
+        height: 50%; /* baseline = bottom of this inline-block */
+    }
 }
 
 .m-grid {
@@ -107,6 +120,8 @@ body {
         grid-column: var(--col);
         grid-row: var(--row);
     }
+
+    /* TODO: same alignment trick for plots as m-row? */
 }
 
 

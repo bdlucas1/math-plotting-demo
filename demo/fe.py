@@ -47,6 +47,7 @@ run = dict(
         "plot_manipulate_hypergeometric",
         "test_gc1",
         "test_gc2",
+        "align",
     ],
 
     # run multiple times, take fastest
@@ -60,8 +61,9 @@ run = dict(
     dev = [
         #"demo_row"
         #"demo_grid"
-        "jax",
-        "mixed",
+        #"jax",
+        #"mixed",
+        "align",
     ]
 )
 
