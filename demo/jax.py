@@ -10,7 +10,7 @@ import mcs
 # TODO: order out is not same as order in 
 # TODO: a little convoluted - refactor
 
-def xlate(fe, expr, outer_precedence=0):
+def _layout_expr(fe, expr, outer_precedence=0):
     
     # temp hack until we get Demo`Plot3D integrated and ev.eval_expr goes away
     # and these are already evaluted by the time we get here
@@ -48,7 +48,8 @@ def xlate(fe, expr, outer_precedence=0):
         return result
 
     def non_math(op, inner):
-        inner = [dash.dcc.Markdown("$"+i+"$", mathjax=True) if isinstance(i,str) else i for i in inner]
+        # TODO: baslines aren't quite aligned for math and non-math
+        inner = [wrap_math(i) for i in inner]
         result = [ctx(str(op)), "[", inner[0]]
         for i in inner[1:]:
             result.extend([",", i])
@@ -67,7 +68,7 @@ def xlate(fe, expr, outer_precedence=0):
             result = ctx(str(expr))
     elif expr.head in ops:
         fun, op, op_precedence, inner_precedence = ops[expr.head]
-        inner = [xlate(fe, e, inner_precedence) for e in expr.elements]
+        inner = [_layout_expr(fe, e, inner_precedence) for e in expr.elements]
         # TODO: should this be str vs html or non-html vs html?
         if not all(isinstance(i, str) for i in inner):
             result = non_math(expr.head, inner)
@@ -78,14 +79,15 @@ def xlate(fe, expr, outer_precedence=0):
     elif expr.head in graphics.layout_funs:
         result = graphics.layout_funs[expr.head](fe, expr)                
     else:
-        inner = [xlate(fe, e) for e in expr.elements]
+        inner = [_layout_expr(fe, e) for e in expr.elements]
         result = non_math(expr.head, inner)
 
     return result
 
-def layout_expr(fe, expr):
+def wrap_math(s):
+    return dash.dcc.Markdown("$"+s+"$", mathjax=True) if isinstance(s, str) else s
 
-    result = xlate(fe, expr)
-    if isinstance(result, str):
-        result = dash.dcc.Markdown("$" + result + "$", mathjax=True)
+def layout_expr(fe, expr):
+    result = _layout_expr(fe, expr)
+    result = wrap_math(result)
     return result
