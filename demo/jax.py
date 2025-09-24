@@ -53,9 +53,7 @@ def xlate(fe, expr, outer_precedence=0):
         for i in inner[1:]:
             result.extend([",", i])
         result.append("]")
-        # TODO: use css instead of style
-        # TODO: baseline alignment
-        return dash.html.Div(result, style=dict(display="flex"))
+        return dash.html.Div(result, className="m-row")
 
     if not hasattr(expr, "head"):
         if hasattr(expr, "value"):
