@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 
 import ev
 import ex
+import jax
 import mcs
 import util
 
@@ -318,7 +319,10 @@ def layout_expr(fe, expr):
         return dash.html.Div(str(expr.value) if hasattr(expr,"value") else str(expr))
     with util.Timer(f"layout {expr.head}"):
         if expr.head in layout_funs:
+            # TODO: handle this the same way as the following `result :=` pattern?
             result = layout_funs[expr.head](fe, expr)
+        elif result := jax.to_math(expr):
+            pass
         else:
             raise Exception(f"Unknown head {expr.head} in layout_expr")
     return result

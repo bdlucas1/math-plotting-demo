@@ -35,6 +35,7 @@ run = dict(
         "plot_manipulate_hypergeometric",
         "demo_row",
         "demo_grid",
+        "jax",
     ],
 
     tests = [
@@ -56,7 +57,8 @@ run = dict(
 
     dev = [
         #"demo_row"
-        "demo_grid"
+        #"demo_grid"
+        "jax"
     ]
 )
 

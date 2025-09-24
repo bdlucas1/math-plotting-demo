@@ -28,9 +28,9 @@ Supported now to some degree:
     PlotLegends -> BarLegend[name] where name is a Plotly colorscale name
     ColorFunction => name where name is a Plotly colorscale name
     Axes -> True or False
+    some rudimentary math formatting (see demo, jax.m, jax.py for details)
 
 Supported soon:
 
     Plot
     Graphics
-    math formatting?
