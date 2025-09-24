@@ -31,6 +31,24 @@ def xlate(expr, outer_precedence=0):
         mcs.SymbolPi: "\\pi"
     }
 
+    # TODO: correctly handle contexts
+    def ctx(s):
+        parts = s.split("`")
+        if parts[0] in ["Global", "System"]:
+            result = parts[1]
+        else:
+            result = str(expr)
+        return result
+
+    def non_math(op, inner):
+        inner = [dash.dcc.Markdown("$"+i+"$", mathjax=True) if isinstance(i,str) else i for i in inner]
+        result = [ctx(str(op)), "[", inner[0]]
+        for i in inner[1:]:
+            result.extend([",", i])
+        result.append("]")
+        # TODO: use css instead of style
+        return dash.html.Div(result, style=dict(display="flex"))
+
     # TODO: order out is not same as order in 
 
     if not hasattr(expr, "head"):
@@ -39,23 +57,31 @@ def xlate(expr, outer_precedence=0):
         elif expr in constants:
             result = constants[expr]
         else:
-            # TODO: correctly handle contexts
-            result = str(expr).split("`")[-1]
+            result = ctx(str(expr))
     elif expr.head in ops:
         fun, op, op_precedence, inner_precedence = ops[expr.head]
-        result = fun(expr, op, [xlate(e, inner_precedence) for e in expr.elements])
-        if op_precedence < outer_precedence:
-            result = "(" + result + ")"
+        inner = [xlate(e, inner_precedence) for e in expr.elements]
+        # TODO: should this be str vs html or non-html vs html?
+        if not all(isinstance(i, str) for i in inner):
+            result = non_math(expr.head, inner)
+        else:
+            result = fun(expr, op, ["{" + i + "}" for i in inner])
+            if op_precedence < outer_precedence:
+                result = "(" + result + ")"
     else:
-        raise NotMath(str(expr.head))
+        #raise NotMath(str(expr.head))
+        inner = [xlate(e) for e in expr.elements]
+        result = non_math(expr.head, inner)
 
-    return "{" + result + "}"
+    return result
 
 def to_math(expr):
 
     try:
-        latex = "$" + xlate(expr) + "$"
-        result = dash.dcc.Markdown(latex, mathjax=True)
+        result = xlate(expr)
+        print("xxx result 1", result)
+        if isinstance(result, str):
+            result = dash.dcc.Markdown("$" + result + "$", mathjax=True)
         return result
 
     except NotMath as e:
