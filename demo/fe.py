@@ -9,6 +9,7 @@ import webview
 import werkzeug
 
 import ev
+import jax
 import lay
 import mcs
 import util
@@ -165,7 +166,7 @@ class ShellFrontEnd(DashFrontEnd):
                     expr = self.session.parse(s)
                     if expr:
                         expr = ev.eval_expr(self, expr)
-                        layout = lay.layout_expr(self, expr)
+                        layout = jax.layout_expr(self, expr)
                 except Exception as e:
                     if args.run == "dev" or args.debug:
                         traceback.print_exc()
@@ -253,7 +254,7 @@ class BrowserFrontEnd(DashFrontEnd):
                 expr = self.session.parse(s)
                 if expr:
                     expr = ev.eval_expr(self, expr)
-                    result = lay.layout_expr(self, expr)
+                    result = jax.layout_expr(self, expr)
             except Exception as e:
                 if args.run == "dev":
                     traceback.print_exc()

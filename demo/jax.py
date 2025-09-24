@@ -84,7 +84,7 @@ def xlate(fe, expr, outer_precedence=0):
 
     return result
 
-def to_math(fe, expr):
+def layout_expr(fe, expr):
 
     result = xlate(fe, expr)
     if isinstance(result, str):

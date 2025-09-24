@@ -85,7 +85,7 @@ class Panel:
         # TODO: best order for replace_vars and eval?
         expr = self.expr.replace_vars({"Global`"+n: mcs.Real(v) for n, v in values.items()})
         expr = ev.eval_expr(self.fe, expr) # TODO: move this to __init__?
-        layout = layout_expr(self.fe, expr)
+        layout = jax.layout_expr(self.fe, expr)
         return layout
 
     def layout(self):
@@ -273,7 +273,7 @@ def layout_Row(fe, expr):
         # TODO: temp demo hack until we integrate Demo` into system and eliminate ev.eval_expr
         # then this will already have been done
         e = ev.eval_expr(fe, e)
-        return layout_expr(fe, e)
+        return jax.layout_expr(fe, e)
     # TODO: expr.elements[1] is a separator
     layout = dash.html.Div([do(e) for e in expr.elements[0].elements], className="m-row")
     return layout
@@ -284,7 +284,7 @@ def layout_Grid(fe, expr):
         # TODO: temp demo hack until we integrate Demo` into system and eliminate ev.eval_expr
         # then this will already have been done
         e = ev.eval_expr(fe, e)
-        layout = layout_expr(fe, e)
+        layout = jax.layout_expr(fe, e)
 
         # assign row and column using variables that are picked up by css
         if not hasattr(layout, "style"):
@@ -313,25 +313,3 @@ layout_funs = {
     mcs.SymbolGrid: layout_Grid,
 }
 
-def layout_expr(fe, expr):
-    return jax.to_math(fe, expr)
-    """
-    # TODO: make the logic here less convoluted
-    if not hasattr(expr, "head"):
-        # TODO: works for demo, but is this correct in general?
-        if hasattr(expr, "value") and isinstance(expr.value, str):
-            return dash.html.Div(expr.value)
-        else:
-            # TODO: ok to use jax to handle everything but strings?
-            # TODO: should also use jax to handle strings? rows? grids?
-            return jax.to_math(fe, expr)
-    with util.Timer(f"layout {expr.head}"):
-        if expr.head in layout_funs:
-            # TODO: handle this the same way as the following `result :=` pattern?
-            result = layout_funs[expr.head](fe, expr)
-        elif result := jax.to_math(fe, expr):
-            pass
-        else:
-            raise Exception(f"Unknown head {expr.head} in layout_expr")
-    return result
-    """
