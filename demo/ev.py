@@ -111,13 +111,13 @@ def eval_Plot3D(fe, expr):
 ###from ev_slow2 import eval_Plot3D
 
 # TODO: this is temporary until I figure out how to hook eval_Plot3D into expr.evaluate
+funs = {
+    "Demo`Plot3D": eval_Plot3D,
+}
 def eval_expr(fe, expr, quiet=False):
     if not hasattr(expr, "head"):
         return expr
     with util.Timer(f"eval {expr.head}"):
-        funs = {
-            "Demo`Plot3D": eval_Plot3D,
-        }
         if str(expr.head) in funs:
             result = funs[str(expr.head)](fe, expr)
         else:

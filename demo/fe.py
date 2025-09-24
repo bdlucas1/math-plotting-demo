@@ -36,7 +36,7 @@ run = dict(
         "demo_row",
         "demo_grid",
         "jax",
-        "nonmath",
+        "mixed",
     ],
 
     tests = [
@@ -60,7 +60,7 @@ run = dict(
         #"demo_row"
         #"demo_grid"
         "jax",
-        "nonmath",
+        "mixed",
     ]
 )
 

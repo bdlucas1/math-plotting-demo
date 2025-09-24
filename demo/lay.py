@@ -314,6 +314,8 @@ layout_funs = {
 }
 
 def layout_expr(fe, expr):
+    return jax.to_math(fe, expr)
+    """
     # TODO: make the logic here less convoluted
     if not hasattr(expr, "head"):
         # TODO: works for demo, but is this correct in general?
@@ -322,14 +324,14 @@ def layout_expr(fe, expr):
         else:
             # TODO: ok to use jax to handle everything but strings?
             # TODO: should also use jax to handle strings? rows? grids?
-            return jax.to_math(expr)
+            return jax.to_math(fe, expr)
     with util.Timer(f"layout {expr.head}"):
         if expr.head in layout_funs:
             # TODO: handle this the same way as the following `result :=` pattern?
             result = layout_funs[expr.head](fe, expr)
-        elif result := jax.to_math(expr):
+        elif result := jax.to_math(fe, expr):
             pass
         else:
             raise Exception(f"Unknown head {expr.head} in layout_expr")
     return result
-
+    """
