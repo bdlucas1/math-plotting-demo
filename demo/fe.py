@@ -10,7 +10,7 @@ import werkzeug
 
 import ev
 import jax
-import lay
+import graphics
 import mcs
 import util
 
@@ -125,7 +125,7 @@ class DashFrontEnd:
         self.session = mcs.MathicsSession()
 
         # register pattern-matching callbacks for dymanically generated content, used by all front ends
-        lay.register_callbacks(self)
+        graphics.register_callbacks(self)
 
 
 # read expressions from terminal, display results in a browser winddow

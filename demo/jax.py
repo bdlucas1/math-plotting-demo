@@ -1,7 +1,7 @@
 import dash
 
 import ev
-import lay
+import graphics
 import mcs
 
 # TODO: input "2 I" gives weird result - guess not correctly formatting complex numbers - where at??
@@ -54,6 +54,7 @@ def xlate(fe, expr, outer_precedence=0):
             result.extend([",", i])
         result.append("]")
         # TODO: use css instead of style
+        # TODO: baseline alignment
         return dash.html.Div(result, style=dict(display="flex"))
 
     if not hasattr(expr, "head"):
@@ -76,8 +77,8 @@ def xlate(fe, expr, outer_precedence=0):
             result = fun(expr, op, ["{" + i + "}" for i in inner])
             if op_precedence < outer_precedence:
                 result = "(" + result + ")"
-    elif expr.head in lay.layout_funs:
-        result = lay.layout_funs[expr.head](fe, expr)                
+    elif expr.head in graphics.layout_funs:
+        result = graphics.layout_funs[expr.head](fe, expr)                
     else:
         inner = [xlate(fe, e) for e in expr.elements]
         result = non_math(expr.head, inner)
