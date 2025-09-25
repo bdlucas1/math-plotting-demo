@@ -6,7 +6,6 @@ import mcs
 
 # TODO: input "2 I" gives weird result - guess not correctly formatting complex numbers - where at??
 # TODO: -x becomes + -1*x; special case that?
-# TODO: Sqrt[x] becomes x^(1/2); special case that?
 # TODO: order out is not same as order in 
 # TODO: a little convoluted - refactor
 
@@ -23,11 +22,22 @@ def _layout_expr(fe, expr, outer_precedence=0):
     def unary_op(expr, op, inner):
         return op + inner[0]
 
+    # eval turns sqrt(x) to x^(1/2), so special-case that and display as sqrt
+    def power(expr, op, inner):
+        # TODO: this picks up x^0.5 as well - is that ok?
+        # Sqrt[x] per se comes back as mathics.core.atoms.Rational with value sympy.core.numbers.Half
+        # this does not seem to support comparison with float, but does support subtract, so we do that
+        #if hasattr(expr.elements[1], "value") and expr.elements[1].value and expr.elements[1].value-0.5==0:
+        if getattr(expr.elements[1], "value", None) and expr.elements[1].value-0.5==0:
+            return unary_op(expr, "\\sqrt", inner)
+        else:
+            return list_op(expr, op, inner)
+
     ops = {
 
         mcs.SymbolPlus: (list_op, "+", 0, 0),
         mcs.SymbolTimes: (list_op, " ", 1, 1),
-        mcs.SymbolPower: (list_op, "^", 2, 0),
+        mcs.SymbolPower: (power, "^", 2, 0),
 
         mcs.SymbolSqrt: (unary_op, "\\sqrt", 0, 0),
         mcs.SymbolSin: (unary_op, "\\sin", 0, 1),

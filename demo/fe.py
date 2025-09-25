@@ -63,7 +63,8 @@ run = dict(
         #"demo_grid"
         #"jax",
         #"mixed",
-        "align",
+        #"align",
+        "fancy"
     ]
 )
 
