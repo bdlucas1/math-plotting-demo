@@ -288,16 +288,16 @@ class BrowserFrontEnd(DashFrontEnd):
         # TODO: can we get rid of hidden button by making tweak_pair more sophisticated?
         instructions = "Type expression followed by shift-enter"
         layout = dash.html.Div([
-            dash.dcc.Textarea(id=in_id, value=input.strip(), placeholder=instructions, spellCheck=False, className="input"),
+            dash.dcc.Textarea(id=in_id, value=input.strip(), placeholder=instructions, spellCheck=False, className="m-input"),
             dash.html.Button(id=button_id, hidden=True),
-            dash.html.Div(output, id=out_id, className="output"),
-            dash.html.Div(str(self.pair_number), className="number"),
+            dash.html.Div(output, id=out_id, className="m-output"),
+            dash.html.Div(str(self.pair_number), className="m-number"),
             # run tweak_pair (from assets/tweaks.js) to tweak the behavior of the pair:
             #    shift-enter in textarea clicks the button
             #    resize textarea height on every input
             util.exec_js(f"tweak_pair('{pair_id}')"),
 
-        ], id=pair_id, className="pair")
+        ], id=pair_id, className="m-pair")
 
         return layout
 

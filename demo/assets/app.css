@@ -18,7 +18,7 @@ body {
     gap: 2em;
 }
 
-.pair {
+.m-pair {
 
     --border-color: #dddddd;
 
@@ -27,8 +27,8 @@ body {
     padding-left: 1em;
     padding-top: 1em;
     
-    position: relative; /* anchor for .number */
-    overflow: visible;  /* allow .number to spill out */
+    position: relative; /* anchor for .m-number */
+    overflow: visible;  /* allow .m-number to spill out */
 
     display: flex;
     flex-direction: column;
@@ -36,7 +36,7 @@ body {
     
     font: 10pt menlo, consolas, 'DejaVu Sans Mono', monospace;
 
-    .input {
+    .m-input {
         border: none;
         outline: none;
         white-space: pre;
@@ -44,11 +44,11 @@ body {
         font: inherit;
     }
     
-    .input::placeholder {
+    .m-input::placeholder {
         font: 12pt sans-serif;
     }
 
-    .number {
+    .m-number {
         position: absolute;
         top: 0;
         right: 0;
@@ -64,16 +64,16 @@ body {
         border-radius: 9999px;
     }
     
-    /*
-    .output {
+    .m-output {
+        /*
         .MathJax {
             font-size: 11pt;
         }
+       */
     }
-    */
 }
 
-.sliders {
+.m-sliders {
         
     padding-top: 2em;
     
@@ -87,31 +87,33 @@ body {
     }
 }
 
-/* TODO: should be baseline aligned, with "baseline" for images being about center */
-.m-row {
-    display: flex;
-    flex-direction: row;
-    align-items: baseline;
-    width: max-content;
+.m-row, .m-grid {
 
     /* stupid css trick to make the baseline of a plot in a row be its vertical center
        so that it is centered vertically relative to other content.
        TODO: the translate is ugly; look into whether there's a cleaner way to do this. */
-    .plot {
+    .m-plot {
         transform: translateY(-50%);
     }
-    .plot::before {
+    .m-plot::before {
         display: inline-block;
         content: "";
         width: 0;
         height: 50%; /* baseline = bottom of this inline-block */
     }
+
+    align-items: baseline;
+}
+
+.m-row {
+    display: flex;
+    flex-direction: row;
+    width: max-content;
 }
 
 .m-grid {
 
     display: grid;
-    align-items: center;
     justify-items: center;
     width: max-content;
 
@@ -120,8 +122,6 @@ body {
         grid-column: var(--col);
         grid-row: var(--row);
     }
-
-    /* TODO: same alignment trick for plots as m-row? */
 }
 
 

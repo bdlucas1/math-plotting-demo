@@ -111,8 +111,8 @@ class Panel:
         slider_layouts = list(itertools.chain(*[slider_layout(s) for s in self.sliders]))
         layout = dash.html.Div([
             dash.html.Div(init_target_layout, id=target_id),
-            dash.html.Div(slider_layouts, className="sliders")
-        ], className="manipulate")
+            dash.html.Div(slider_layouts, className="m-sliders")
+        ], className="m-manipulate")
 
         return layout
 
@@ -260,9 +260,9 @@ def layout_Graphics3D(fe, expr):
 
     with util.Timer("layout"):
         layout = dash.html.Div ([
-            #dash.dcc.Markdown(f"${title}$", mathjax=True) if fancy else dash.html.Div(title, className="title"),
-            dash.dcc.Graph(figure=figure, className="graph")
-        ], className="plot")
+            #dash.dcc.Markdown(f"${title}$", mathjax=True) if fancy else dash.html.Div(title, className="m-title"),
+            dash.dcc.Graph(figure=figure, className="m-graph")
+        ], className="m-plot")
         if size:
             layout.style = dict(width=f"{size}pt", height=f"{size}pt")
 
