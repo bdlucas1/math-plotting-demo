@@ -23,6 +23,7 @@ parser.add_argument("--debug", action="store_true")
 parser.add_argument("--fe", choices=["shell", "browser"], default="shell")
 parser.add_argument("--browser", choices=["webview", "webbrowser"], default="webview")
 parser.add_argument("--run", choices=["demos","tests","timing","dev"], default=None)
+parser.add_argument("--dev", type=str, default=None)
 args = parser.parse_args()
 
 run = dict(
@@ -57,22 +58,17 @@ run = dict(
         #"plot_manipulate_sin", "plot_manipulate_sin", "plot_manipulate_sin",
         #"plot_manipulate_hypergeometric", "plot_manipulate_hypergeometric", "plot_manipulate_hypergeometric",
     ],
-
-    dev = [
-        #"demo_row"
-        #"demo_grid"
-        #"jax",
-        #"mixed",
-        #"align",
-        "fancy"
-    ]
 )
 
-# read demo files
+# process --run and --dev, read demo files
 def read_demo(s):
     with open(f"demos/{s}.m") as f:
         return f.read()
-run[args.run] = [read_demo(s) for s in run[args.run]]
+if args.dev:    
+    run["dev"] = [args.dev]
+    args.run = "dev"
+if args.run:
+    run[args.run] = [read_demo(s) for s in run[args.run]]
 
 
 
