@@ -25,6 +25,7 @@ def prt(expr, indent=1):
 class Timer:
 
     level = -1 # all
+    quiet = False
     timers = []
 
     def start(name):
@@ -34,7 +35,8 @@ class Timer:
         name, start = Timer.timers.pop()
         ms = (time.time() - start) * 1000
         if Timer.level < 0 or len(Timer.timers) < Timer.level:
-            print(f"{"  "*len(Timer.timers)}{name}: {ms:.1f} ms")
+            if not Timer.quiet:
+                print(f"{"  "*len(Timer.timers)}{name}: {ms:.1f} ms")
 
     def __init__(self, name, quiet = False):
         self.name = name
