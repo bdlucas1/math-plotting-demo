@@ -20,7 +20,7 @@ import util
 
 parser = argparse.ArgumentParser(description="Graphics demo")
 parser.add_argument("--debug", action="store_true")
-parser.add_argument("--fe", choices=["shell", "browser"], default="shell")
+parser.add_argument("--fe", choices=["shell", "browser", "jupyter"], default="shell")
 parser.add_argument("--browser", choices=["webview", "webbrowser"], default="webview")
 parser.add_argument("--run", choices=["demos","tests","timing","dev"], default=None)
 parser.add_argument("--dev", type=str, default=None)
@@ -109,16 +109,18 @@ class DashFrontEnd:
 
     def __init__(self):
 
+
         # create app, set options
         self.app = dash.Dash(__name__, suppress_callback_exceptions=True)
         self.app.enable_dev_tools(debug = args.debug, dev_tools_silence_routes_logging = not args.debug)
 
-        # start server on its own thread, allowing something else to run on main thread
-        # pass it self.app.server which is a Flask WSGI compliant app so could be hooked to any WSGI compliant server
-        # make_server picks a free port because we passed 0 as port number
-        self.server = werkzeug.serving.make_server("127.0.0.1", 0, self.app.server)
-        threading.Thread(target = self.server.serve_forever).start()
-        print("using port", self.server.server_port)
+        if args.fe != "jupyter":
+            # start server on its own thread, allowing something else to run on main thread
+            # pass it self.app.server which is a Flask WSGI compliant app so could be hooked to any WSGI compliant server
+            # make_server picks a free port because we passed 0 as port number
+            self.server = werkzeug.serving.make_server("127.0.0.1", 0, self.app.server)
+            threading.Thread(target = self.server.serve_forever).start()
+            print("using port", self.server.server_port)
 
         # everybody needs a Mathics session
         self.session = mcs.MathicsSession()
@@ -240,8 +242,12 @@ class BrowserFrontEnd(DashFrontEnd):
             raise dash.exceptions.PreventUpdate
             
         # point a browser at our page
-        url = f"http://127.0.0.1:{self.server.server_port}"
-        browser.show(url)
+        if args.fe == "jupyter":
+            self.app.run(jupyter_mode="inline")
+        else:
+            url = f"http://127.0.0.1:{self.server.server_port}"
+            browser.show(url)
+            
 
     def process_input(self, s):
 
