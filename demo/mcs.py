@@ -6,7 +6,7 @@
 
 from mathics.core.symbols import Symbol, SymbolList, SymbolPlus, SymbolTimes, SymbolPower, SymbolList
 from mathics.core.systemsymbols import SymbolSin, SymbolCos, SymbolSqrt, SymbolAbs, SymbolGamma, \
-    SymbolRule, SymbolI, SymbolE, SymbolPi, SymbolRow, SymbolGrid
+    SymbolRule, SymbolI, SymbolE, SymbolPi, SymbolRow, SymbolGrid, SymbolTraditionalForm
 
 from mathics.core.atoms import Integer, Real
 from mathics.core.list import ListExpression

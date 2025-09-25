@@ -8,6 +8,7 @@ import mcs
 # TODO: -x becomes + -1*x; special case that?
 # TODO: order out is not same as order in 
 # TODO: a little convoluted - refactor
+# TODO: hacks like power to do Sqrt probably wouldn't be needed if TraditionalForm worked
 
 def _layout_expr(fe, expr, outer_precedence=0):
     
@@ -15,6 +16,9 @@ def _layout_expr(fe, expr, outer_precedence=0):
     # and these are already evaluted by the time we get here
     if hasattr(expr, "head") and str(expr.head) in ev.funs:
         expr = ev.eval_expr(fe, expr)
+
+    # foo, this gets max recursion depth exceeded
+    #expr = mcs.Expression(mcs.SymbolTraditionalForm, expr).evaluate(fe.session.evaluation)
 
     def list_op(expr, op, inner):
         return op.join(inner)
