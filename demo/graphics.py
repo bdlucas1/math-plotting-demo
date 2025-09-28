@@ -2,13 +2,14 @@ import collections
 import itertools
 import numpy as np
 
-import dash
+#import dash
 import plotly.graph_objects as go
 
 import ev
 import ex
 import jax
 import mcs
+import mode
 import util
 
 #
@@ -34,18 +35,11 @@ def uid(s):
 # 
 
 def register_callbacks(fe):
-    Panel.register_callback(fe)
-
-#
-# plot plus sliders
-#
-class Panel:
-
-    panels = []
 
     # one callback handles all dynamically created panels and sliders
     # sliders are matched to their corresponding plot output by matching on panel_number
     def register_callback(fe):
+        import dash
         @fe.app.callback(
             dash.Output(dict(type="target", panel_number=dash.MATCH), "children"),
             dash.Input(dict(type="slider", panel_number=dash.MATCH, index=dash.ALL), "value"),
@@ -57,6 +51,13 @@ class Panel:
                 panel = Panel.panels[panel_number]
                 result = panel.eval_and_layout({s.name: a for s, a in zip(panel.sliders, values)})
             return result
+
+#
+# plot plus sliders
+#
+class Panel:
+
+    panels = []
 
     def __init__(self, fe, expr, slider_exprs):
 
@@ -99,20 +100,17 @@ class Panel:
             # TODO: handling of tick marks and step needs work; this code is just for demo purposes
             marks = {value: f"{value:g}" for value in np.arange(s.lo, s.hi, s.step)}
             return [
-                dash.html.Label(s.name),
-                dash.dcc.Slider(
-                    id=s.id, marks=marks, updatemode="drag",
-                    min=s.lo, max=s.hi, step=s.step/10, value=s.init,
-                )
+                mode.label(s.name),
+                mode.slider(id=s.id, marks=marks, lo=s.lo, hi=s.hi, step=s.step/10, init=s.init)
             ]
 
         # compute initial layout including target_expr and slider
         init_target_layout = self.eval_and_layout(init_values)
         slider_layouts = list(itertools.chain(*[slider_layout(s) for s in self.sliders]))
-        layout = dash.html.Div([
-            dash.html.Div(init_target_layout, id=target_id),
-            dash.html.Div(slider_layouts, className="m-sliders")
-        ], className="m-manipulate")
+        layout = mode.manipulate_box([
+            mode.id_box(init_target_layout, target_id),
+            mode.slider_box(slider_layouts)
+        ])
 
         return layout
 
@@ -259,12 +257,7 @@ def layout_Graphics3D(fe, expr):
             figure.update_layout(scene = dict(zaxis = dict(range=z_range)))
 
     with util.Timer("layout"):
-        layout = dash.html.Div ([
-            #dash.dcc.Markdown(f"${title}$", mathjax=True) if fancy else dash.html.Div(title, className="m-title"),
-            dash.dcc.Graph(figure=figure, className="m-graph")
-        ], className="m-plot")
-        if size:
-            layout.style = dict(width=f"{size}pt", height=f"{size}pt")
+        layout = mode.graph(figure, size)
 
     return layout
 
@@ -275,7 +268,7 @@ def layout_Row(fe, expr):
         e = ev.eval_expr(fe, e)
         return jax.layout_expr(fe, e)
     # TODO: expr.elements[1] is a separator
-    layout = dash.html.Div([do(e) for e in expr.elements[0].elements], className="m-row")
+    layout = mode.row([do(e) for e in expr.elements[0].elements])
     return layout
 
 def layout_Grid(fe, expr):
@@ -298,8 +291,7 @@ def layout_Grid(fe, expr):
     for row_number, row in enumerate(expr.elements[0]):
         for col_number, cell in enumerate(row.elements):
             grid_content.append(do(cell))
-
-    layout = dash.html.Div(grid_content, className="m-grid")
+    layout = mode.grid(grid_content)
     return layout
 
 #

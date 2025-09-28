@@ -1,8 +1,7 @@
-import dash
-
 import ev
 import graphics
 import mcs
+import mode
 
 # TODO: input "2 I" gives weird result - guess not correctly formatting complex numbers - where at??
 # TODO: -x becomes + -1*x; special case that?
@@ -68,12 +67,12 @@ def _layout_expr(fe, expr, outer_precedence=0):
         for i in inner[1:]:
             result.extend([",", i])
         result.append("]")
-        return dash.html.Div(result, className="m-row")
+        return mode.row(result)
 
     if not hasattr(expr, "head"):
         if hasattr(expr, "value"):
             if isinstance(expr.value, str):
-                result = dash.html.Div(expr.value)
+                result = mode.wrap(expr.value)
             else:
                 result = str(expr.value)
         elif expr in constants:
@@ -99,7 +98,7 @@ def _layout_expr(fe, expr, outer_precedence=0):
     return result
 
 def wrap_math(s):
-    return dash.dcc.Markdown("$"+s+"$", mathjax=True) if isinstance(s, str) else s
+    return mode.latex(s) if isinstance(s, str) else s
 
 def layout_expr(fe, expr):
     result = _layout_expr(fe, expr)
