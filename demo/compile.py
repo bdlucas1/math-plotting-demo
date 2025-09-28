@@ -63,7 +63,6 @@ def to_python_expr(expr, lib = "np"):
         else:
             result = str(expr)
     elif expr.head in funs:
-        #print("xxx fun", expr.head)
         fun = funs[expr.head]
         args = (to_python_expr(e,lib) for e in expr.elements)
         result = f"{fun}({",".join(args)})"

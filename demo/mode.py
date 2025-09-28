@@ -40,9 +40,12 @@ if use_dash:
     # implements the layout for Manipulate
     #
 
-    # each element is (slider, eval_and_layout) pair
+    # each element is a callback for a given panel that takes
+    # a list of slider values and returns a new layout for the target
     panels = []
 
+    # wire up the sliders for a given panel by matching slider and target panel_number
+    # this pattern does the wiring for all panels
     def register_callbacks(fe):
 
         @fe.app.callback(
@@ -53,14 +56,14 @@ if use_dash:
         def update(values):
             with util.Timer("slider update"):
                 panel_number = dash.ctx.outputs_list["id"]["panel_number"]
-                sliders, eval_and_layout = panels[panel_number]
-                result = eval_and_layout({s.name: a for s, a in zip(sliders, values)})
+                eval_and_layout = panels[panel_number]
+                result = eval_and_layout(values)
             return result
 
     def panel(init_target_layout, sliders, eval_and_layout):
 
         panel_number = len(panels)
-        panels.append((sliders, eval_and_layout))
+        panels.append(eval_and_layout)
 
         # compute a slider layout from a slider spec (S namedtuple)
         def slider_layout(s, inx):
@@ -73,6 +76,7 @@ if use_dash:
             ]
         slider_layouts = list(itertools.chain(*[slider_layout(s, inx) for inx, s in enumerate(sliders)]))
 
+        # put the target and sliders together
         target_id = dict(type="target", panel_number=panel_number)
         layout = dash.html.Div([
             dash.html.Div(init_target_layout, id=target_id),

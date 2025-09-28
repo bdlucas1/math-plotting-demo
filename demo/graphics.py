@@ -39,16 +39,6 @@ def layout_Manipulate(fe, manipulate_expr):
     target_expr = manipulate_expr.elements[0]
     slider_exprs = manipulate_expr.elements[1:]
 
-    # compute a layout for an expr given a set of values
-    def eval_and_layout(values):
-        # TODO: always Global?
-        # TODO: always Real?
-        # TODO: best order for replace_vars and eval?
-        expr = target_expr.replace_vars({"Global`"+n: mcs.Real(v) for n, v in values.items()})
-        expr = ev.eval_expr(fe, expr)
-        layout = jax.layout_expr(fe, expr)
-        return layout
-
     # parse slider specs
     S = collections.namedtuple("S", ["name", "lo", "init", "hi", "step"])
     def slider(e):
@@ -61,8 +51,20 @@ def layout_Manipulate(fe, manipulate_expr):
         return spec
     sliders = [slider(e) for e in slider_exprs]
 
+    # compute a layout for an expr given a set of values
+    # this is the callback for this Manipulate to update the target with new values
+    def eval_and_layout(values):
+        # TODO: always Global?
+        # TODO: always Real?
+        # TODO: best order for replace_vars and eval?
+        values = {s.name: a for s, a in zip(sliders, values)}
+        expr = target_expr.replace_vars({"Global`"+n: mcs.Real(v) for n, v in values.items()})
+        expr = ev.eval_expr(fe, expr)
+        layout = jax.layout_expr(fe, expr)
+        return layout
+
     # compute the layout for the plot
-    init_values = {s.name: s.init for s in sliders}
+    init_values = [s.init for s in sliders]
     init_target_layout = eval_and_layout(init_values)
     layout = mode.panel(init_target_layout, sliders, eval_and_layout)
         
