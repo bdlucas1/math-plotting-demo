@@ -34,94 +34,37 @@ def uid(s):
 # and it would complicate the implementation
 # 
 
-def register_callbacks(fe):
+def layout_Manipulate(fe, manipulate_expr):
 
-    # one callback handles all dynamically created panels and sliders
-    # sliders are matched to their corresponding plot output by matching on panel_number
-    def register_callback(fe):
-        import dash
-        @fe.app.callback(
-            dash.Output(dict(type="target", panel_number=dash.MATCH), "children"),
-            dash.Input(dict(type="slider", panel_number=dash.MATCH, index=dash.ALL), "value"),
-            prevent_initial_call=True
-        )
-        def update(values):
-            with util.Timer("slider update"):
-                panel_number = dash.ctx.outputs_list["id"]["panel_number"]
-                panel = Panel.panels[panel_number]
-                result = panel.eval_and_layout({s.name: a for s, a in zip(panel.sliders, values)})
-            return result
-
-#
-# plot plus sliders
-#
-class Panel:
-
-    panels = []
-
-    def __init__(self, fe, expr, slider_exprs):
-
-        self.fe = fe
-        self.expr = expr
-        self.panel_number = len(Panel.panels)
-        Panel.panels.append(self)
-
-        # parse slider specs
-        S = collections.namedtuple("S", ["name", "lo", "init", "hi", "step", "id"])
-        def slider(e, inx):
-            spec = e.to_python()
-            v, lo, hi = spec[0:3]
-            step = spec[3] if len(spec) > 3 else (hi-lo)/10 # TODO: better default step
-            v, init = v if isinstance(v, (list,tuple)) else (v, lo)
-            v = str(v).split("`")[-1] # strip off namespace pfx
-            id = dict(type="slider", panel_number=self.panel_number, index=inx)
-            spec = S(v, lo, init, hi, step, id)
-            return spec
-        self.sliders = [slider(e, inx) for inx, e in enumerate(slider_exprs)]
+    target_expr = manipulate_expr.elements[0]
+    slider_exprs = manipulate_expr.elements[1:]
 
     # compute a layout for an expr given a set of values
-    def eval_and_layout(self, values):
+    def eval_and_layout(values):
         # TODO: always Global?
         # TODO: always Real?
         # TODO: best order for replace_vars and eval?
-        expr = self.expr.replace_vars({"Global`"+n: mcs.Real(v) for n, v in values.items()})
-        expr = ev.eval_expr(self.fe, expr) # TODO: move this to __init__?
-        layout = jax.layout_expr(self.fe, expr)
+        expr = target_expr.replace_vars({"Global`"+n: mcs.Real(v) for n, v in values.items()})
+        expr = ev.eval_expr(fe, expr)
+        layout = jax.layout_expr(fe, expr)
         return layout
 
-    def layout(self):
+    # parse slider specs
+    S = collections.namedtuple("S", ["name", "lo", "init", "hi", "step"])
+    def slider(e):
+        spec = e.to_python()
+        v, lo, hi = spec[0:3]
+        step = spec[3] if len(spec) > 3 else (hi-lo)/10 # TODO: better default step
+        v, init = v if isinstance(v, (list,tuple)) else (v, lo)
+        v = str(v).split("`")[-1] # strip off namespace pfx
+        spec = S(v, lo, init, hi, step)
+        return spec
+    sliders = [slider(e) for e in slider_exprs]
 
-        # compute the layout for the plot
-        target_id = dict(type="target", panel_number=self.panel_number)
-        init_values = {s.name: s.init for s in self.sliders}
-
-        # compute a slider layout from a slider spec (S namedtuple)
-        def slider_layout(s):
-            # TODO: handling of tick marks and step needs work; this code is just for demo purposes
-            marks = {value: f"{value:g}" for value in np.arange(s.lo, s.hi, s.step)}
-            return [
-                mode.label(s.name),
-                mode.slider(id=s.id, marks=marks, lo=s.lo, hi=s.hi, step=s.step/10, init=s.init)
-            ]
-
-        # compute initial layout including target_expr and slider
-        init_target_layout = self.eval_and_layout(init_values)
-        slider_layouts = list(itertools.chain(*[slider_layout(s) for s in self.sliders]))
-        layout = mode.manipulate_box([
-            mode.id_box(init_target_layout, target_id),
-            mode.slider_box(slider_layouts)
-        ])
-
-        return layout
-
-
-def layout_Manipulate(fe, expr):
-
-    target_expr = expr.elements[0]
-    slider_exprs = expr.elements[1:]
-
-    panel = Panel(fe, target_expr, slider_exprs)
-    layout = panel.layout()
+    # compute the layout for the plot
+    init_values = {s.name: s.init for s in sliders}
+    init_target_layout = eval_and_layout(init_values)
+    layout = mode.panel(init_target_layout, sliders, eval_and_layout)
         
     # set timer display for slider updates after initial display
     util.Timer.level = 1 # to see top-level timings as sliders move

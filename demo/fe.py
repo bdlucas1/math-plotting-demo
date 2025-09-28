@@ -12,6 +12,7 @@ import ev
 import jax
 import graphics
 import mcs
+import mode
 import util
 
 #
@@ -130,7 +131,7 @@ class DashFrontEnd:
         self.session = mcs.MathicsSession()
 
         # register pattern-matching callbacks for dymanically generated content, used by all front ends
-        graphics.register_callbacks(self)
+        mode.register_callbacks(self)
 
 
 # read expressions from terminal, display results in a browser winddow
