@@ -8,15 +8,15 @@ import webbrowser
 import webview
 import werkzeug
 
-global use_dash
-use_dash = True
-import mode
-
 import ev
 import jax
 import graphics
 import mcs
+import mode
 import util
+
+# this whole file is dash-based
+mode.use_dash()
 
 #
 #

@@ -5,8 +5,6 @@ import jax
 import mcs
 import util
 
-use_dash = True
-
 try:
     __IPYTHON__
     in_jupyter = True
@@ -17,10 +15,11 @@ except:
 #
 #
 
-if use_dash:
+def use_dash():
 
     import dash
 
+    global graph
     def graph(figure, size):
         layout = dash.html.Div ([
             #dash.dcc.Markdown(f"${title}$", mathjax=True) if fancy else dash.html.Div(title, className="m-title"),
@@ -30,19 +29,23 @@ if use_dash:
             layout.style = dict(width=f"{size}pt", height=f"{size}pt")
         return layout
 
+    global wrap
     def wrap(s):
         layout = dash.html.Div(s)
         return layout
 
+    global latex
     def latex(s):
         layout = dash.dcc.Markdown("$"+s+"$", mathjax=True)        
         return layout
 
     # TODO: just a one-row grid?
+    global row
     def row(ls):
         layout = dash.html.Div(ls, className="m-row")
         return layout
 
+    global grid
     def grid(grid_content):
         layout = dash.html.Div(grid_content, className="m-grid")
         return layout
@@ -58,6 +61,7 @@ if use_dash:
 
     # wire up the sliders for a given panel by matching slider and target panel_number
     # this pattern does the wiring for all panels
+    global register_callbacks
     def register_callbacks(app):
 
         @app.callback(
@@ -72,6 +76,7 @@ if use_dash:
                 result = eval_and_layout(values)
             return result
 
+    global panel
     def panel(init_target_layout, sliders, eval_and_layout):
 
         panel_number = len(panels)
@@ -113,6 +118,7 @@ if use_dash:
 
         # TODO: this starts a new Dash server for every evaluation
         # probably not what is wanted - use something like ShellFrontEnd?
+        global ev
         def ev(s):
             expr = the_fe.session.parse(s)
             app = dash.Dash()
