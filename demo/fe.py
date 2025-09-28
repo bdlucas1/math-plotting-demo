@@ -8,11 +8,14 @@ import webbrowser
 import webview
 import werkzeug
 
+global use_dash
+use_dash = True
+import mode
+
 import ev
 import jax
 import graphics
 import mcs
-import mode
 import util
 
 #
@@ -131,7 +134,7 @@ class DashFrontEnd:
         self.session = mcs.MathicsSession()
 
         # register pattern-matching callbacks for dymanically generated content, used by all front ends
-        mode.register_callbacks(self)
+        mode.register_callbacks(self.app)
 
 
 # read expressions from terminal, display results in a browser winddow

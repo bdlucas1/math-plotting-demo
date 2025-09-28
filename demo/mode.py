@@ -1,9 +1,21 @@
 import itertools
 import numpy as np
 
+import jax
+import mcs
 import util
 
 use_dash = True
+
+try:
+    __IPYTHON__
+    in_jupyter = True
+except:
+    in_jupyter = False
+
+#
+#
+#
 
 if use_dash:
 
@@ -46,9 +58,9 @@ if use_dash:
 
     # wire up the sliders for a given panel by matching slider and target panel_number
     # this pattern does the wiring for all panels
-    def register_callbacks(fe):
+    def register_callbacks(app):
 
-        @fe.app.callback(
+        @app.callback(
             dash.Output(dict(type="target", panel_number=dash.MATCH), "children"),
             dash.Input(dict(type="slider", panel_number=dash.MATCH, index=dash.ALL), "value"),
             prevent_initial_call=True
@@ -84,3 +96,27 @@ if use_dash:
         ], className="m-manipulate")
         return layout
         
+    #
+    # TODO: this is temp for demo - should be handled by custom kernel
+    #
+
+    if in_jupyter:
+
+        # FE stub - just wraps a session
+        # TODO: reconsider this?
+        class FE:
+            def __init__(self):
+                self.session = mcs.MathicsSession()
+        the_fe = FE()
+
+        util.Timer.quiet = True
+
+        # TODO: this starts a new Dash server for every evaluation
+        # probably not what is wanted - use something like ShellFrontEnd?
+        def ev(s):
+            expr = the_fe.session.parse(s)
+            app = dash.Dash()
+            register_callbacks(app)
+            app.layout = jax.layout_expr(the_fe, expr)
+            app.run(mode = "inline")
+            return None
