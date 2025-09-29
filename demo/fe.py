@@ -15,9 +15,6 @@ import mcs
 import mode
 import util
 
-# this whole file is dash-based
-mode.use_dash()
-
 #
 #
 #

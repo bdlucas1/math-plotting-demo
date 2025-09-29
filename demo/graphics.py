@@ -144,7 +144,8 @@ def layout_Graphics3D(fe, expr):
     axes = True
     showscale = False
     colorscale = "viridis"
-    size = None
+    width = 400
+    height = 350
     for sym, value in ex.get_rule_values(expr):
         if sym == mcs.SymbolPlotRange:
             if not isinstance(value, (list,tuple)):
@@ -167,7 +168,8 @@ def layout_Graphics3D(fe, expr):
             # TODO: what if differs from PlotLegends?
             colorscale = value[1:-1]
         elif sym == mcs.SymbolImageSize:
-            size = value
+            # TODO: separate width, height
+            width = height = value
         else:
             # TODO: Plot is passing through all options even e.g. PlotPoints
             #print(f"option {sym} not recognized")
@@ -185,7 +187,8 @@ def layout_Graphics3D(fe, expr):
         )
     
     with util.Timer("figure"):
-        figure = go.Figure(
+        #figure = go.Figure(
+        figure = go.FigureWidget(
             data = [mesh],
             layout = go.Layout(
                 margin = dict(l=0, r=0, t=0, b=0),
@@ -194,7 +197,9 @@ def layout_Graphics3D(fe, expr):
                     yaxis = dict(title="y", visible=axes), # TODO: name
                     zaxis = dict(title="z", visible=axes), # TODO: name
                     aspectmode="cube"
-                )
+                ),
+                width=width,
+                height=height
             )
         )
         # TODO: x_range and y_range
@@ -202,7 +207,7 @@ def layout_Graphics3D(fe, expr):
             figure.update_layout(scene = dict(zaxis = dict(range=z_range)))
 
     with util.Timer("layout"):
-        layout = mode.graph(figure, size)
+        layout = mode.graph(figure)
 
     return layout
 
@@ -223,19 +228,10 @@ def layout_Grid(fe, expr):
         # then this will already have been done
         e = ev.eval_expr(fe, e)
         layout = jax.layout_expr(fe, e)
-
-        # assign row and column using variables that are picked up by css
-        if not hasattr(layout, "style"):
-            layout.style = {}
-        layout.style["--row"] = str(row_number+1)
-        layout.style["--col"] = str(col_number+1)
-
         return layout
 
-    grid_content = []
-    for row_number, row in enumerate(expr.elements[0]):
-        for col_number, cell in enumerate(row.elements):
-            grid_content.append(do(cell))
+    # arrange in a ragged array
+    grid_content = [[do(cell) for cell in row] for row in expr.elements[0]]
     layout = mode.grid(grid_content)
     return layout
 

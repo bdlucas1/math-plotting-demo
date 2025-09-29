@@ -73,17 +73,23 @@ body {
     }
 }
 
-.m-sliders {
+/* TODO: should be m-panel? */
+.m-manipulate {
+
+    width: min-content;
+
+    .m-sliders {
         
-    padding-top: 2em;
+        padding-top: 2em;
     
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    align-items: center;
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        align-items: center;
     
-    label {
-        white-space: nowrap;
-        font: 12pt sans-serif;
+        label {
+            white-space: nowrap;
+            font: 12pt sans-serif;
+        }
     }
 }
 
