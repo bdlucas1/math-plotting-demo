@@ -207,7 +207,7 @@ def layout_Graphics3D(fe, expr):
             figure.update_layout(scene = dict(zaxis = dict(range=z_range)))
 
     with util.Timer("layout"):
-        layout = mode.graph(figure)
+        layout = mode.graph(figure, height)
 
     return layout
 

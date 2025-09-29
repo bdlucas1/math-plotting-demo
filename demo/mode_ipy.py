@@ -5,20 +5,15 @@ import mcs
 import mode
 import util
 
-def row(ls):
-    return ipw.HBox(ls, layout=ipw.Layout(align_items='baseline'))
+def wrap(s):
+    return ipw.Label(value=s)
 
 def latex(s):
     return ipw.Label(value="$"+s+"$") if isinstance(s, str) else s    
 
-# grid seems to need this wrapped in a box
-# TODO: make this baseline aligned - see stupid css trick in app.css
-# use ipw.html to emit a style sheet somewhere - maybe in the first output??
-def graph(figure):
-    return ipw.HBox([figure], layout=ipw.Layout(align_items='baseline'))
-
-def wrap(s):
-    return ipw.Label(value=s)
+def row(ls):
+    ls = [ipw.Label(l) if isinstance(l,str) else l for l in ls]
+    return ipw.HBox(ls, layout=ipw.Layout(align_items='baseline'))
 
 def grid(grid_content):
 
@@ -45,7 +40,11 @@ def grid(grid_content):
 
     return layout
 
-
+def graph(figure, height):
+    center_baseline = ipw.HBox([], layout=ipw.Layout(width="0", height=f"{height/2}px"))
+    layout = ipw.HBox([center_baseline, figure])
+    return layout
+                      
 def panel(init_target_layout, sliders, eval_and_layout):
 
     # TODO: for some reason tbd update is called once, and once only, on initialization; not sure how that happens
