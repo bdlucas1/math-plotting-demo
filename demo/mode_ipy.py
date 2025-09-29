@@ -46,6 +46,30 @@ def grid(grid_content):
     return layout
 
 
+def panel(init_target_layout, sliders, eval_and_layout):
+
+    # TODO: for some reason tbd update is called once, and once only, on initialization; not sure how that happens
+    # but that means that the init_target_layout is wasted work - so consider moving init_target_layout
+    # computation into mode.panel
+    def update(change):
+        target_layout = eval_and_layout([s.value for s in sliders])
+        target.children = (target_layout,)
+
+    def slider_layout(s):
+        slider = ipw.widget_float.FloatSlider(
+            description=s.name, min=s.lo, max=s.hi, step=s.step/10, value=s.init,
+            layout = ipw.Layout(width="100%")
+        )
+        slider.observe(update, names="value")
+        return slider
+    sliders = [slider_layout(s) for s in sliders]
+
+    target = ipw.VBox([])
+    layout = ipw.VBox([target, *sliders], layout=ipw.Layout(width="min-content"))
+
+    return layout
+
+
 #
 # TODO: this is temp for demo - should be handled by custom kernel
 # TODO: this starts a new Dash server for every evaluation
