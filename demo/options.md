@@ -23,7 +23,7 @@
   </tr>
   <tr>
     <td>browser</td>
-    <td>may be problematic. is this needed given jypyter integration?<td/>
+    <td>tbd. is this needed given jupyter integration?</td>
     <td>works well</td>    
   </tr>
 </table>
