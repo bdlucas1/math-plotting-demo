@@ -8,13 +8,13 @@
   </tr>
   <tr>
     <td>jupyter</td>
-    <td>good integration</td>
+    <td style="background-color:#FFDDC1;">good integration</td>
     <td>poor integration</td>
   </tr>
   <tr>
     <td>jupyterlite (pyodide)</td>
     <td>good integration</td>
-    <td>tbd</td>
+    <td>tbd. ran into problems, not sure if can solve.</td>
   </tr>
   <tr>
     <td>shell</td>
