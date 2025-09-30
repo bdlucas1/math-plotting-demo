@@ -8,7 +8,7 @@
   </tr>
   <tr>
     <td>jupyter</td>
-    <td style="background-color:#FFDDC1;">good integration</td>
+    <td">good integration</td>
     <td>poor integration</td>
   </tr>
   <tr>
