@@ -95,6 +95,21 @@ def panel(init_target_layout, sliders, eval_and_layout):
     return layout
 
 #
+# use in a layout to arrange for js to be executed after the layout is loaded
+# see code for examples
+#
+# TODO: this is a bit hacky - can we do better?
+#
+
+def exec_js(js):
+    import dash_extensions # causes problems in some env, only import if used
+    import urllib
+    params = urllib.parse.urlencode(dict(js=js))
+    url = f"/assets/exec_js.js?{params}"
+    return dash_extensions.DeferScript(src=url)
+
+
+#
 # TODO: this is temp for demo - should be handled by custom kernel
 # TODO: this starts a new Dash server for every evaluation
 # probably not what is wanted - use something like ShellFrontEnd?
@@ -105,3 +120,5 @@ def ev(s):
     app.layout = jax.layout_expr(mode.the_fe, expr)
     app.run(mode = "inline")
     return None
+
+

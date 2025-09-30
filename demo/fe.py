@@ -303,7 +303,7 @@ class BrowserFrontEnd(DashFrontEnd):
             # run tweak_pair (from assets/tweaks.js) to tweak the behavior of the pair:
             #    shift-enter in textarea clicks the button
             #    resize textarea height on every input
-            util.exec_js(f"tweak_pair('{pair_id}')"),
+            mode.exec_js(f"tweak_pair('{pair_id}')"),
 
         ], id=pair_id, className="m-pair")
 

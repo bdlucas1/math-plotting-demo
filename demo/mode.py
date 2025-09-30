@@ -8,6 +8,14 @@ try:
 except:
     in_jupyter = False
 
+try:
+    import pyodide
+    in_jupyterlite = True
+except:
+    in_jupyterlite = False
+
+
+# TODO: should this be harcoded?
 if "ipy" in use:
     from mode_ipy import *
 else:
