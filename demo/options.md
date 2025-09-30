@@ -8,7 +8,7 @@
   </tr>
   <tr>
     <td>jupyter</td>
-    <td">good integration</td>
+    <td>good integration</td>
     <td>poor integration</td>
   </tr>
   <tr>
@@ -18,7 +18,7 @@
   </tr>
   <tr>
     <td>shell</td>
-    <td>may be possible with voila</td>
+    <td>may be possible by with voila</td>
     <td>works well</td>
   </tr>
   <tr>
