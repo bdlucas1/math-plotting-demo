@@ -14,16 +14,16 @@
   <tr>
     <td>jupyterlite (pyodide)</td>
     <td>good integration</td>
-    <td>tbd</td>
+    <td>tbd. ran into problems, not sure if can solve.</td>
   </tr>
   <tr>
     <td>shell</td>
-    <td>may be possible with voila</td>
+    <td>may be possible by with voila</td>
     <td>works well</td>
   </tr>
   <tr>
     <td>browser</td>
-    <td>may be problematic. is this needed given jypyter integration?<td/>
+    <td>tbd. is this needed given jupyter integration?</td>
     <td>works well</td>    
   </tr>
 </table>
