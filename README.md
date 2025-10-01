@@ -59,7 +59,7 @@ Options for UI widgets like sliders, boxes, latex:
   for standalone apps. Still investigating.
 
 * dash - a set of widgets that are part of the Plotly package. Good
-  support for standaline, can be integrated into Jupyter notebooks but
+  support for standalone, can be integrated into Jupyter notebooks but
   the integration is not ideal and not sure if can be done in
   JupyterLite. Still investigating.
 
@@ -100,7 +100,7 @@ environments, but if necessary could use an adapter.
 
 For completeness, I tried two options for plotting, with plotly the clear winner:
 
-* plotly - integrates with plotly or dash, and provides very good
+* plotly - integrates with ipywidgets or dash, and provides very good
   interactivity for orbit/pan/zoom in either environment.
 
 * matplotlib - can be integrated with ipywidgets with poor performance
