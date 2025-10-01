@@ -18,6 +18,12 @@ Run demos with shell front end or browser front end:
     # then execute cells in sequence
     # note there is some boilerplate that will go away with better packaging
 
+    # jupyterlite running under pyodide in browser
+    open https://bdlucas1.github.io/math-plotting-demo
+    # then open demo.ipynb and execute cells in sequence
+    # give it a little time on first cell to load the required python packages
+
+
 After running the demos and displaying the results, the front ends
 then accept more input expressions. Try for example:
 
