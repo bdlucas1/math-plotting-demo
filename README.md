@@ -112,7 +112,7 @@ Options for plotting:
 
 
 
-## Performance
+## Plotting performance
 
 Timings for various Plot3D implementations to compute and display the following:
 
