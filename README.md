@@ -50,7 +50,69 @@ Supported soon:
     Demo`Plot
     Graphics
 
-## Timings
+## UI options
+
+Options for UI widgets like sliders, boxes, latex:
+
+* ipywidgets - these are the native Jupyter (nee IPython) widgets with
+  good integration into Jupyter notebooks, but uncertain possibility
+  for standalone apps. Still investigating.
+
+* dash - a set of widgets that are part of the Plotly package. Good
+  support for standaline, can be integrated into Jupyter notebooks but
+  the integration is not ideal and not sure if can be done in
+  JupyterLite. Still investigating.
+
+Hopefully we can find a way to use a single widget set for all
+environments, but if necessary could use an adapter.
+
+Options for plotting:
+
+* plotly - looks good, but tbd regarding full functionality.
+
+* matplotlib - mature, highly configurable. Need to investigate.
+
+<table>
+  <tr>
+    <td>
+    <th>ipywidgets+plotly</th>
+    <th>dash+plotly</th>
+    <th>ipywidgets+matplotlib</th>
+    <th>dash+matplotlib</th>
+  </tr>
+  <tr>
+    <td>jupyter</td>
+    <td>good integration</td>
+    <td>poor integration</td>
+    <td>tbd</td>
+    <td>tbd</td>
+  </tr>
+  <tr>
+    <td>jupyterlite (pyodide)</td>
+    <td>good integration</td>
+    <td>tbd. ran into problems, not sure if can solve.</td>
+    <td>tbd</td>
+    <td>tbd</td>
+  </tr>
+  <tr>
+    <td>shell</td>
+    <td>may be possible by with voila</td>
+    <td>works well</td>
+    <td>tbd</td>
+    <td>tbd</td>
+  </tr>
+  <tr>
+    <td>browser</td>
+    <td>tbd. is this needed given jupyter integration?</td>
+    <td>works well</td>    
+    <td>tbd</td>
+    <td>tbd</td>
+  </tr>
+</table>
+
+
+
+## Performance
 
 Timings for various Plot3D implementations to compute and display the following:
 
