@@ -66,49 +66,47 @@ Options for UI widgets like sliders, boxes, latex:
 Hopefully we can find a way to use a single widget set for all
 environments, but if necessary could use an adapter.
 
-Options for plotting:
-
-* plotly - looks good, but tbd regarding full functionality.
-
-* matplotlib - mature, highly configurable. Need to investigate.
-
 <table>
   <tr>
     <td>
     <th>ipywidgets+plotly</th>
     <th>dash+plotly</th>
-    <th>ipywidgets+matplotlib</th>
-    <th>dash+matplotlib</th>
   </tr>
   <tr>
     <td>jupyter</td>
-    <td>good integration</td>
-    <td>poor integration</td>
-    <td>tbd</td>
-    <td>tbd</td>
+    <td>good integration: cell output is saved and restored on opening
+    the notebook; output cell is sized to fit output automatically.</td>
+    <td>poor integration: 1) major: computed plot and layout is not
+    saved and restored on opening the notebook, 2) minor: is embedded
+    in an iframe of fixed size (could be fixable with a JS snipped to
+    resize iframe to fit content).</td>
   </tr>
   <tr>
     <td>jupyterlite (pyodide)</td>
     <td>good integration</td>
     <td>tbd. ran into problems, not sure if can solve.</td>
-    <td>tbd</td>
-    <td>tbd</td>
   </tr>
   <tr>
     <td>shell</td>
-    <td>may be possible by with voila</td>
+    <td>tbd. may be possible by with voila</td>
     <td>works well</td>
-    <td>tbd</td>
-    <td>tbd</td>
   </tr>
   <tr>
     <td>browser</td>
     <td>tbd. is this needed given jupyter integration?</td>
     <td>works well</td>    
-    <td>tbd</td>
-    <td>tbd</td>
   </tr>
 </table>
+
+For completeness, I tried two options for plotting, with plotly the clear winner:
+
+* plotly - integrates with plotly or dash, and provides very good
+  interactivity for orbit/pan/zoom in either environment.
+
+* matplotlib - can be integrated with ipywidgets with poor performance
+  for interactive orbit/pan/zoom; can be integrated with dash widgets
+  with no support for interactive orbin/pan/zoom.
+
 
 
 

@@ -2,9 +2,6 @@ import collections
 import itertools
 import numpy as np
 
-#import dash
-import plotly.graph_objects as go
-
 import ev
 import ex
 import jax
@@ -179,34 +176,8 @@ def layout_Graphics3D(fe, expr):
         xyzs = np.array(xyzs)
         ijks = np.array(ijks) - 1 # ugh - indices in Polygon are 1-based
 
-    with util.Timer("mesh"):
-        mesh = go.Mesh3d(
-            x=xyzs[:,0], y=xyzs[:,1], z=xyzs[:,2],
-            i=ijks[:,0], j=ijks[:,1], k=ijks[:,2],
-            showscale=showscale, colorscale=colorscale, colorbar=dict(thickness=10), intensity=xyzs[:,2],
-            #hoverinfo="skip"
-            hoverinfo="none"
-        )
-    
-    with util.Timer("figure"):
-        showspikes = True # the projected lines on the axes box
-        figure = go.FigureWidget(
-            data = [mesh],
-            layout = go.Layout(
-                margin = dict(l=0, r=0, t=0, b=0),
-                scene = dict(
-                    xaxis = dict(title="x", visible=axes, showspikes=showspikes), # TODO: name
-                    yaxis = dict(title="y", visible=axes, showspikes=showspikes), # TODO: name
-                    zaxis = dict(title="z", visible=axes, showspikes=showspikes), # TODO: name
-                    aspectmode="cube"
-                ),
-                width=width,
-                height=height
-            )
-        )
-        # TODO: x_range and y_range
-        if z_range:
-            figure.update_layout(scene = dict(zaxis = dict(range=z_range)))
+    with util.Timer("mode.mes3d_plot"):
+        figure = mode.mesh3d_plot(xyzs, ijks, showscale, colorscale, axes, width, height, z_range)
 
     with util.Timer("layout"):
         layout = mode.graph(figure, height)

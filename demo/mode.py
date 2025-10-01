@@ -18,25 +18,33 @@ except:
 # defaults
 if in_jupyter:
     use_widgets = "ipy"
+    use_plot = "plotly"
 else:
     use_widgets = "dash"
+    use_plot = "plotly"
 
-
-# override with env variable    
+# which widgets to use    
 use = os.getenv("DEMO_USE", "").split(",")
 if "ipy" in use:
     use_widgets = "ipy"
 elif "dash" in use:
     use_widgets = "dash"
-
-
-# which widgets to use    
 if use_widgets == "ipy":
     from mode_ipy import *
     requires = ["ipywidgets", "plotly"]
 elif use_widgets == "dash":
     from mode_dash import *
     requires = []
+
+# which plotting library to use    
+if "plotly" in use:
+    use_plot = "plotly"
+elif "matplotlib" in use:
+    use_plot = "matplotlib"
+if use_plot == "plotly":
+    from mode_plotly import *
+elif use_plot == "matplotlib":
+    from mode_matplotlib import *
 
 # in jupyterlite install requirements
 # TODO: this would require an async function for it to be called from

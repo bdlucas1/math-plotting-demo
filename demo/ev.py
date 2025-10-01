@@ -3,9 +3,6 @@ import itertools
 import math
 import numpy as np
 
-#import dash
-import plotly.graph_objects as go
-
 import ex
 import compile
 import mcs
