@@ -40,7 +40,7 @@ def graph(figure, height):
     # TODO: figure out whether the current mix of explicit style and implicit css is the cleanest way to do this
     # the corresponding code for ipy widgets seems a bit simpler and cleaner...
     layout = dash.html.Div ([
-        dash.dcc.Graph(figure=figure, className="m-graph")
+        dash.dcc.Graph(figure=figure, config={'displayModeBar': False}, className="m-graph")
     ], className="m-plot", style=dict(height=f"{height}px"))
     return layout
 

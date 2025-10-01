@@ -184,18 +184,20 @@ def layout_Graphics3D(fe, expr):
             x=xyzs[:,0], y=xyzs[:,1], z=xyzs[:,2],
             i=ijks[:,0], j=ijks[:,1], k=ijks[:,2],
             showscale=showscale, colorscale=colorscale, colorbar=dict(thickness=10), intensity=xyzs[:,2],
+            #hoverinfo="skip"
+            hoverinfo="none"
         )
     
     with util.Timer("figure"):
-        #figure = go.Figure(
+        showspikes = True # the projected lines on the axes box
         figure = go.FigureWidget(
             data = [mesh],
             layout = go.Layout(
                 margin = dict(l=0, r=0, t=0, b=0),
                 scene = dict(
-                    xaxis = dict(title="x", visible=axes), # TODO: name
-                    yaxis = dict(title="y", visible=axes), # TODO: name
-                    zaxis = dict(title="z", visible=axes), # TODO: name
+                    xaxis = dict(title="x", visible=axes, showspikes=showspikes), # TODO: name
+                    yaxis = dict(title="y", visible=axes, showspikes=showspikes), # TODO: name
+                    zaxis = dict(title="z", visible=axes, showspikes=showspikes), # TODO: name
                     aspectmode="cube"
                 ),
                 width=width,

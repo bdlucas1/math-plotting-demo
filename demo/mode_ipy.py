@@ -41,6 +41,7 @@ def grid(grid_content):
     return layout
 
 def graph(figure, height):
+    figure._config = dict(displayModeBar = False)
     center_baseline = ipw.HBox([], layout=ipw.Layout(width="0", height=f"{height/2}px"))
     layout = ipw.HBox([center_baseline, figure])
     return layout
