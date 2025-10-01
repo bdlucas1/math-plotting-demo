@@ -1,22 +1,19 @@
 ## Running demo
 
-Installation
-
-    pip install numpy dash plotly pywebview
-
-Run demos with shell front end or browser front end:
-
 * "shell" front-end - sparate window for each output
 
+        pip install numpy dash plotly pywebview
         python demo/fe.py --fe shell --run demos
 
 * browser front end - similar to a jupyter or mathematica notebook
 
+        pip install numpy dash plotly pywebview
         python demo/fe.py --fe browser --run demos
 
 * Jupyter notebook - run the following then execute cells in sequence.
   (Note that there is some boilerplate that will go away with better packaging)
  
+        pip install numpy dash plotly pywebview
         pip install jupyterlab # maybe some other stuff too, not sure
         jupyter-lab demo.ipynb
 
