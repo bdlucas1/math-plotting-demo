@@ -4,17 +4,8 @@
         "output_dir": "/tmp/lite-dist",
         "lite_dir": "/tmp/lite-dir"
     },
-    "XXXlitePluginSettings": {
-        "@jupyterlite/pyodide-kernel-extension:kernel": {
-            "packages": [
-                "ipywidgets",
-                "mathics3"
-            ]
-        }
-    },
     "PipliteAddon": {
         "piplite_urls": [
-
         ]
     }
 }
