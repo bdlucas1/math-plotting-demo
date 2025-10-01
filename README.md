@@ -6,23 +6,24 @@ Installation
 
 Run demos with shell front end or browser front end:
 
-    # "shell" front-end - sparate window for each output
-    python demo/fe.py --fe shell --run demos
+* "shell" front-end - sparate window for each output
 
-    # browser front end - similar to a jupyter or mathematica notebook
-    python demo/fe.py --fe browser --run demos
+        python demo/fe.py --fe shell --run demos
 
-    # jupyter notebook
-    pip install jupyterlab # maybe some other stuff too, not sure
-    jupyter-lab demo.ipynb
-    # then execute cells in sequence
-    # note there is some boilerplate that will go away with better packaging
+* browser front end - similar to a jupyter or mathematica notebook
 
-    # jupyterlite running under pyodide in browser
-    open https://bdlucas1.github.io/math-plotting-demo
-    # then open demo.ipynb and execute cells in sequence
-    # give it a little time on first cell to load the required python packages
+        python demo/fe.py --fe browser --run demos
 
+* Jupyter notebook - run the following then execute cells in sequence.
+  (Note that there is some boilerplate that will go away with better packaging)
+ 
+        pip install jupyterlab # maybe some other stuff too, not sure
+        jupyter-lab demo.ipynb
+
+* JupyterLite running under Pyodide in browser: open <a href="https://bdlucas1.github.io/math-plotting-demo">https://bdlucas1.github.io/math-plotting-demo</a>,
+  then open demo.ipynb and execute cells in sequence.
+  Give it a little time on first cell to load the required python packages.
+  If something seems to break, try Help | Clear Browser Data.
 
 After running the demos and displaying the results, the front ends
 then accept more input expressions. Try for example:
