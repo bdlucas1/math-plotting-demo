@@ -74,12 +74,19 @@ environments, but if necessary could use an adapter.
   </tr>
   <tr>
     <td>jupyter</td>
-    <td>good integration: cell output is saved and restored on opening
-    the notebook; output cell is sized to fit output automatically.</td>
-    <td>poor integration: 1) major: computed plot and layout is not
-    saved and restored on opening the notebook, 2) minor: is embedded
-    in an iframe of fixed size (could be fixable with a JS snipped to
-    resize iframe to fit content).</td>
+    <td>good integration:
+      <ul>
+        <li>cell output including plots and layout is saved and restored on opening the notebook</li>
+        <li>output cell is sized to fit output content automatically.</li>
+       </ul>
+    </td>
+    <td>poor integration:
+      <ul>
+        <li>computed cell output is not saved and restored on opening the notebook</li>
+        <li>dash content is embedded in an iframe of fixed size
+           (maybe fixable with a JS snipped to resize iframe)</li>
+      </ul>
+    </td>
   </tr>
   <tr>
     <td>jupyterlite (pyodide)</td>
