@@ -121,6 +121,16 @@ For completeness, I tried two options for plotting, with plotly the clear winner
   with no support for interactive orbin/pan/zoom.
 
 
+## Boxes
+
+The demos above are done without using the box mechanism because as
+far as I can tell it isn't sufficiently in place. Instead they
+generate HTML via dash or ipywidgets directly from the parsed and
+evaluated expression. For example if the user enters `x^2` this is
+generates the expressions `System`Power[Global\`x, 2]` which is
+traversed for display to generate the latex express `$x^2$` and is
+then wrapped in the appropriate dash or ipwidgets object to be
+rendered using mathjax as $x^2$.
 
 
 ## Plotting performance
