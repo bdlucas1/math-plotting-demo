@@ -63,8 +63,14 @@ Options for UI widgets like sliders, boxes, latex:
   the integration is not ideal and not sure if can be done in
   JupyterLite. Still investigating.
 
-Hopefully we can find a way to use a single widget set for all
-environments, but if necessary could use an adapter.
+Currently the demos above use ipywidgets for Jupyter and
+JupyterLite/Piodide front-ends, and dash for shell and browser. This
+is done for the demo through an adapter layer - see mode_ipy.py and
+mode_dash.py, imported by mode.py. This is fairly straightforward
+since ipywidgets and dash have comparable capabilities and semantics,
+which is unsurprising since they both ultimately map onto
+HTML. Hopefully we can find a way to use a single widget set for all
+environments, but if necessary could use such an adapter.
 
 <table>
   <tr>
