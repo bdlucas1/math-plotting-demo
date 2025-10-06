@@ -34,7 +34,7 @@ SymbolImageSize = Symbol("System`ImageSize")
 SymbolManipulate = Symbol("Global`Manipulate") # TODO: move to System
 SymbolGraphics3D = Symbol("System`Graphics3D")
 SymbolGraphics = Symbol("System`Graphics")
-SymbolGraphicsComplex = Symbol("Global`GraphicsComplex") # TODO: move to System
+SymbolGraphicsComplex = Symbol("System`GraphicsComplex") # TODO: move to System
 SymbolLine = Symbol("System`Line")
 SymbolPolygon = Symbol("System`Polygon")
 

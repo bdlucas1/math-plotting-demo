@@ -1,3 +1,4 @@
+import graphics
 import mcs
 import mode
 import util
@@ -51,7 +52,7 @@ def template_box(fe, expr):
     return row_box(fe, expr)
 
 def tag_box(fe, expr):
-    util.prt(expr.elements[0])
+    #util.prt(expr.elements[0])
     return _layout_box_expr(fe, expr.elements[0])
 
 def grid_box(fe, expr):
@@ -70,7 +71,7 @@ def grid_box(fe, expr):
 # allows Hold on box expressions as input forms to bypass evaluation
 # why are they being modified by evaluation anyway?
 def hold(fe, expr):
-    util.prt(expr.elements[0])
+    #util.prt(expr.elements[0])
     return _layout_box_expr(fe, expr.elements[0])
 
 box_types = {
@@ -104,6 +105,8 @@ def _layout_box_expr(fe, expr):
 
     if getattr(expr, "head", None) in box_types:
         return box_types[expr.head](fe, expr)
+    elif getattr(expr, "head", None) in graphics.layout_funs:
+        return graphics.layout_funs[expr.head](fe, expr)
     elif hasattr(expr, "value"):
         # TODO: actually everything is a string by this point, I think...
         value = expr.value

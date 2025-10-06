@@ -77,6 +77,8 @@ def layout_Manipulate(fe, manipulate_expr):
 #
 def layout_Graphics3D(fe, expr):
 
+    #util.prt(expr)
+
     xyzs = []
     ijks = []
 
