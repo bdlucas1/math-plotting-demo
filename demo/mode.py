@@ -1,5 +1,10 @@
 import os
 
+#
+# This is temporary scaffolding for experimenting with different implementation strategies
+# TODO: if any of this needs to be permanent maybe consider using classes instead of import *
+#
+
 # in jupyter?
 try:
     __IPYTHON__
@@ -45,6 +50,14 @@ if use_plot == "plotly":
     from mode_plotly import *
 elif use_plot == "matplotlib":
     from mode_matplotlib import *
+
+# whether to use boxes or not
+use_boxes = "boxes" in use
+if use_boxes:
+    from mode_box import *
+else:
+    from mode_unbox import *
+
 
 # in jupyterlite install requirements
 # TODO: this would require an async function for it to be called from

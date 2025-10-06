@@ -2,7 +2,6 @@ import dash
 import itertools
 import numpy as np
 
-import jax
 import mcs
 import mode
 import util
@@ -116,7 +115,7 @@ def ev(s):
     expr = mode.the_fe.session.parse(s)
     app = dash.Dash()
     register_callbacks(app)
-    app.layout = jax.layout_expr(mode.the_fe, expr)
+    app.layout = mode.layout_expr(mode.the_fe, expr)
     app.run(mode = "inline")
     return None
 

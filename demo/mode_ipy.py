@@ -1,6 +1,5 @@
 import ipywidgets as ipw
 
-import jax
 import mcs
 import mode
 import util
@@ -76,6 +75,6 @@ def panel(init_target_layout, sliders, eval_and_layout):
 # probably not what is wanted - use something like ShellFrontEnd?
 def ev(s):
     expr = mode.the_fe.session.parse(s)
-    layout = jax.layout_expr(mode.the_fe, expr)
+    layout = mode.layout_expr(mode.the_fe, expr)
     display(layout)
     return None

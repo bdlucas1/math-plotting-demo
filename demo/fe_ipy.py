@@ -6,7 +6,6 @@ import util
 import werkzeug
 
 import ev
-import jax
 import mcs
 
 def to_html(layout):
@@ -125,7 +124,7 @@ class XXXShellFrontEnd(IpyFrontEnd):
                     expr = self.session.parse(s)
                     if expr:
                         expr = ev.eval_expr(self, expr)
-                        layout = jax.layout_expr(self, expr)
+                        layout = mode.layout_expr(self, expr)
                 except Exception as e:
                     if args.run == "dev" or args.debug:
                         traceback.print_exc()
@@ -221,7 +220,7 @@ class BrowserFrontEnd(IpyFrontEnd):
                 expr = self.session.parse(s)
                 if expr:
                     expr = ev.eval_expr(self, expr)
-                    result = jax.layout_expr(self, expr)
+                    result = mode.layout_expr(self, expr)
             except Exception as e:
                 if args.run == "dev":
                     traceback.print_exc()

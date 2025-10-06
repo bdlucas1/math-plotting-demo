@@ -8,7 +8,6 @@ import webview
 import werkzeug
 
 import ev
-import jax
 import graphics
 import mcs
 import mode

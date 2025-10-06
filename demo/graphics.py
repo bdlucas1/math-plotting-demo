@@ -4,7 +4,6 @@ import numpy as np
 
 import ev
 import ex
-import jax
 import mcs
 import mode
 import util
@@ -57,7 +56,7 @@ def layout_Manipulate(fe, manipulate_expr):
         values = {s.name: a for s, a in zip(sliders, values)}
         expr = target_expr.replace_vars({"Global`"+n: mcs.Real(v) for n, v in values.items()})
         expr = ev.eval_expr(fe, expr)
-        layout = jax.layout_expr(fe, expr)
+        layout = mode.layout_expr(fe, expr)
         return layout
 
     # compute the layout for the plot
@@ -189,7 +188,7 @@ def layout_Row(fe, expr):
         # TODO: temp demo hack until we integrate Demo` into system and eliminate ev.eval_expr
         # then this will already have been done
         e = ev.eval_expr(fe, e)
-        return jax.layout_expr(fe, e)
+        return mode.layout_expr(fe, e)
     # TODO: expr.elements[1] is a separator
     layout = mode.row([do(e) for e in expr.elements[0].elements])
     return layout
@@ -200,7 +199,7 @@ def layout_Grid(fe, expr):
         # TODO: temp demo hack until we integrate Demo` into system and eliminate ev.eval_expr
         # then this will already have been done
         e = ev.eval_expr(fe, e)
-        layout = jax.layout_expr(fe, e)
+        layout = mode.layout_expr(fe, e)
         return layout
 
     # arrange in a ragged array
