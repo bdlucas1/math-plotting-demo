@@ -6,7 +6,10 @@
 
 from mathics.core.symbols import Symbol, SymbolList, SymbolPlus, SymbolTimes, SymbolPower, SymbolList
 from mathics.core.systemsymbols import SymbolSin, SymbolCos, SymbolSqrt, SymbolAbs, SymbolGamma, \
-    SymbolRule, SymbolI, SymbolE, SymbolPi, SymbolRow, SymbolGrid, SymbolTraditionalForm
+    SymbolRule, SymbolI, SymbolE, SymbolPi, SymbolRow, SymbolGrid, \
+    SymbolMakeBoxes, SymbolTraditionalForm, SymbolStandardForm, SymbolRowBox, SymbolFractionBox, SymbolSqrtBox, \
+    SymbolSuperscriptBox, SymbolHold
+
 
 from mathics.core.atoms import Integer, Real
 from mathics.core.list import ListExpression
@@ -34,3 +37,7 @@ SymbolGraphics = Symbol("System`Graphics")
 SymbolGraphicsComplex = Symbol("Global`GraphicsComplex") # TODO: move to System
 SymbolLine = Symbol("System`Line")
 SymbolPolygon = Symbol("System`Polygon")
+
+SymbolTemplateBox = Symbol("System`TemplateBox")
+SymbolTagBox = Symbol("System`TagBox")
+SymbolGridBox = Symbol("System`GridBox")

@@ -2,6 +2,7 @@ import ev
 import graphics
 import mcs
 import mode
+import mode_box
 
 # TODO: input "2 I" gives weird result - guess not correctly formatting complex numbers - where at??
 # TODO: -x becomes + -1*x; special case that?
@@ -79,6 +80,10 @@ def _layout_expr(fe, expr, outer_precedence=0):
             result = constants[expr]
         else:
             result = ctx(str(expr))
+    elif expr.head in mode_box.box_types:
+        # special case hack for now: if we're un unboxed mode but we're given a box,
+        # go into boxed mode
+        result = mode_box.layout_expr(fe, expr)
     elif expr.head in ops:
         fun, op, op_precedence, inner_precedence = ops[expr.head]
         inner = [_layout_expr(fe, e, inner_precedence) for e in expr.elements]

@@ -111,7 +111,7 @@ def exec_js(js):
 # TODO: this is temp for demo - should be handled by custom kernel
 # TODO: this starts a new Dash server for every evaluation
 # probably not what is wanted - use something like ShellFrontEnd?
-def ev(s):
+def eval(s):
     expr = mode.the_fe.session.parse(s)
     app = dash.Dash()
     register_callbacks(app)
