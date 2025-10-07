@@ -16,7 +16,7 @@ class DashFrontEnd:
 
         # create app, set options
         self.app = dash.Dash(__name__, suppress_callback_exceptions=True)
-        self.app.enable_dev_tools(debug = args.debug, dev_tools_silence_routes_logging = not args.debug)
+        self.app.enable_dev_tools(debug = args.debug, dev_tools_silence_routes_logging = True) #not args.debug)
 
         # TODO: I think this condition is always true now
         if args.fe != "jupyter":

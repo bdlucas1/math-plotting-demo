@@ -1,6 +1,7 @@
 import dash
 import itertools
 import numpy as np
+import time
 
 import mcs
 import mode
@@ -51,27 +52,47 @@ def graph(figure, height):
 # each element is a callback for a given panel that takes
 # a list of slider values and returns a new layout for the target
 panels = []
+pending_values = []
 
 # wire up the sliders for a given panel by matching slider and target panel_number
 # this pattern does the wiring for all panels
 def register_callbacks(app):
 
     @app.callback(
-        dash.Output(dict(type="target", panel_number=dash.MATCH), "children"),
+        dash.Output(dict(type="poll", panel_number=dash.MATCH), "disabled"),
         dash.Input(dict(type="slider", panel_number=dash.MATCH, index=dash.ALL), "value"),
         prevent_initial_call=True
     )
     def update(values):
+        panel_number = dash.ctx.inputs_list[0][0]["id"]["panel_number"]        
+        pending_values[panel_number] = values
+        return False
+
+    @app.callback(
+        dash.Output(dict(type="target", panel_number=dash.MATCH), "children"),
+        dash.Input(dict(type="poll", panel_number=dash.MATCH), "n_intervals"),
+        prevent_initial_call=True
+    )
+    def update(n_intervals):
+
+        panel_number = dash.ctx.outputs_list["id"]["panel_number"]
+        values = pending_values[panel_number]
+        if not values:
+            print("not updating")
+            raise dash.exceptions.PreventUpdate
+        pending_values[panel_number] = None
+
         with util.Timer("slider update"):
-            panel_number = dash.ctx.outputs_list["id"]["panel_number"]
             eval_and_layout = panels[panel_number]
             result = eval_and_layout(values)
+
         return result
 
 def panel(init_target_layout, sliders, eval_and_layout):
 
     panel_number = len(panels)
     panels.append(eval_and_layout)
+    pending_values.append(None)
 
     # compute a slider layout from a slider spec (S namedtuple)
     def slider_layout(s, inx):
@@ -80,15 +101,18 @@ def panel(init_target_layout, sliders, eval_and_layout):
         marks = {value: f"{value:g}" for value in np.arange(s.lo, s.hi, s.step)}
         return [
             dash.html.Label(s.name),
-            dash.dcc.Slider(id=slider_id, marks=marks, min=s.lo, max=s.hi, step=s.step/10, value=s.init, updatemode="drag")
+            dash.dcc.Slider(id=slider_id, marks=marks, min=s.lo, max=s.hi, step=s.step/10, value=s.init, updatemode="drag"),
+            #dash.dcc.Store(id=store_id, data=dict(gen=0))
         ]
     slider_layouts = list(itertools.chain(*[slider_layout(s, inx) for inx, s in enumerate(sliders)]))
 
     # put the target and sliders together
     target_id = dict(type="target", panel_number=panel_number)
+    poll_id = dict(type="poll", panel_number=panel_number)
     layout = dash.html.Div([
         dash.html.Div(init_target_layout, id=target_id),
-        dash.html.Div(slider_layouts, className="m-sliders")
+        dash.html.Div(slider_layouts, className="m-sliders"),
+        dash.dcc.Interval(id=poll_id, interval=100, disabled=True)
     ], className="m-manipulate")
     return layout
 
