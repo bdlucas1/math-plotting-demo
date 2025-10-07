@@ -51,48 +51,51 @@ def graph(figure, height):
 
 # each element is a callback for a given panel that takes
 # a list of slider values and returns a new layout for the target
-panels = []
-pending_values = []
+panel_callbacks = []
+panel_values = []
 
 # wire up the sliders for a given panel by matching slider and target panel_number
 # this pattern does the wiring for all panels
 def register_callbacks(app):
 
+    # "trigger" is an Inteval timer that fires only once (max_intervals=1)
+    # when we get a slider movement we remember the values, and then reset n_intervals to 0,
+    # causing trigger fire again once, which triggers an update with the new values
+    # this allows us to coalesce multiple slider events and only process the most recent one
     @app.callback(
-        dash.Output(dict(type="poll", panel_number=dash.MATCH), "disabled"),
+        dash.Output(dict(type="trigger", panel_number=dash.MATCH), "n_intervals"),
         dash.Input(dict(type="slider", panel_number=dash.MATCH, index=dash.ALL), "value"),
         prevent_initial_call=True
     )
     def update(values):
+        #print(f"xxx slid {time.time():.3f}")
         panel_number = dash.ctx.inputs_list[0][0]["id"]["panel_number"]        
-        pending_values[panel_number] = values
-        return False
+        panel_values[panel_number] = values
+        return 0
 
+    # trigger an update with the new values whenever "trigger" fires
     @app.callback(
         dash.Output(dict(type="target", panel_number=dash.MATCH), "children"),
-        dash.Input(dict(type="poll", panel_number=dash.MATCH), "n_intervals"),
+        dash.Input(dict(type="trigger", panel_number=dash.MATCH), "n_intervals"),
         prevent_initial_call=True
     )
     def update(n_intervals):
 
-        panel_number = dash.ctx.outputs_list["id"]["panel_number"]
-        values = pending_values[panel_number]
-        if not values:
-            print("not updating")
-            raise dash.exceptions.PreventUpdate
-        pending_values[panel_number] = None
+        #print(f"xxx trig {time.time():.3f}")
 
         with util.Timer("slider update"):
-            eval_and_layout = panels[panel_number]
+            panel_number = dash.ctx.outputs_list["id"]["panel_number"]
+            values = panel_values[panel_number]
+            eval_and_layout = panel_callbacks[panel_number]
             result = eval_and_layout(values)
 
         return result
 
 def panel(init_target_layout, sliders, eval_and_layout):
 
-    panel_number = len(panels)
-    panels.append(eval_and_layout)
-    pending_values.append(None)
+    panel_number = len(panel_callbacks)
+    panel_callbacks.append(eval_and_layout)
+    panel_values.append(None)
 
     # compute a slider layout from a slider spec (S namedtuple)
     def slider_layout(s, inx):
@@ -102,17 +105,16 @@ def panel(init_target_layout, sliders, eval_and_layout):
         return [
             dash.html.Label(s.name),
             dash.dcc.Slider(id=slider_id, marks=marks, min=s.lo, max=s.hi, step=s.step/10, value=s.init, updatemode="drag"),
-            #dash.dcc.Store(id=store_id, data=dict(gen=0))
         ]
     slider_layouts = list(itertools.chain(*[slider_layout(s, inx) for inx, s in enumerate(sliders)]))
 
     # put the target and sliders together
     target_id = dict(type="target", panel_number=panel_number)
-    poll_id = dict(type="poll", panel_number=panel_number)
+    trigger_id = dict(type="trigger", panel_number=panel_number)
     layout = dash.html.Div([
         dash.html.Div(init_target_layout, id=target_id),
         dash.html.Div(slider_layouts, className="m-sliders"),
-        dash.dcc.Interval(id=poll_id, interval=100, disabled=True)
+        dash.dcc.Interval(id=trigger_id, interval=100, n_intervals=1, max_intervals=1)
     ], className="m-manipulate")
     return layout
 
