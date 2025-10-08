@@ -54,6 +54,8 @@ def graph(figure, height):
 panel_callbacks = []
 panel_values = []
 
+last_slider_update = None
+
 # wire up the sliders for a given panel by matching slider and target panel_number
 # this pattern does the wiring for all panels
 def register_callbacks(app):
@@ -83,11 +85,17 @@ def register_callbacks(app):
 
         #print(f"xxx trig {time.time():.3f}")
 
+        global last_slider_update
+        if last_slider_update and not util.Timer.quiet:
+            print(f"between slider updates: {(time.time()-last_slider_update)*1000:.1f}")
+
         with util.Timer("slider update"):
             panel_number = dash.ctx.outputs_list["id"]["panel_number"]
             values = panel_values[panel_number]
             eval_and_layout = panel_callbacks[panel_number]
             result = eval_and_layout(values)
+
+        last_slider_update = time.time()
 
         return result
 

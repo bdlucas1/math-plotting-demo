@@ -1,4 +1,5 @@
 import os
+import sys
 
 #
 # This is temporary scaffolding for experimenting with different implementation strategies
@@ -78,5 +79,7 @@ if in_jupyter:
             self.session = mcs.MathicsSession()
     the_fe = FE()
 
-    util.Timer.quiet = True
+    sys.stdout = sys.__stderr__
+    if not os.getenv("DEMO_DEBUG", False):
+        util.Timer.quiet = True
     

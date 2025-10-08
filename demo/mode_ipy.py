@@ -1,4 +1,5 @@
 import ipywidgets as ipw
+import time
 
 import mcs
 import mode
@@ -45,14 +46,24 @@ def graph(figure, height):
     layout = ipw.HBox([center_baseline, figure])
     return layout
                       
+last_slider_update = None
+
 def panel(init_target_layout, sliders, eval_and_layout):
 
     # TODO: for some reason tbd update is called once, and once only, on initialization; not sure how that happens
     # but that means that the init_target_layout is wasted work - so consider moving init_target_layout
     # computation into mode.panel
     def update(change):
-        target_layout = eval_and_layout([s.value for s in sliders])
-        target.children = (target_layout,)
+
+        global last_slider_update
+        if last_slider_update and not util.Timer.quiet:
+            print(f"between slider updates: {(time.time()-last_slider_update)*1000:.1f}")
+
+        with util.Timer("slider update"):
+            target_layout = eval_and_layout([s.value for s in sliders])
+            target.children = (target_layout,)
+
+        last_slider_update = time.time()
 
     def slider_layout(s):
         slider = ipw.widget_float.FloatSlider(
@@ -78,3 +89,5 @@ def eval(s):
     layout = mode.layout_expr(mode.the_fe, expr)
     display(layout)
     return None
+
+
