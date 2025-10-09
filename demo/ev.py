@@ -84,8 +84,8 @@ def grid_to_graphics_complex(xs, ys, zs, np_expr):
     # ugh - indices in Polygon are 1-based
     quads += 1
 
-    quads_expr = np_expr(quads, mcs.Integer)
-    xyzs_expr = np_expr(xyzs, mcs.Real)
+    quads_expr = np_expr(quads)
+    xyzs_expr = np_expr(xyzs)
     poly_expr = mcs.Expression(mcs.SymbolPolygon, quads_expr)
     gc_expr = mcs.Expression(mcs.SymbolGraphicsComplex, xyzs_expr, poly_expr)
     result = mcs.Expression(mcs.SymbolGraphics3D, gc_expr)
@@ -94,7 +94,7 @@ def grid_to_graphics_complex(xs, ys, zs, np_expr):
 
 def eval_Plot3D(fe, expr):
     xs, ys, zs = eval_plot3d_xyzs(fe, expr)
-    graphics = grid_to_graphics_complex(xs, ys, zs, ex.NumpyArrayListExpr)
+    graphics = grid_to_graphics_complex(xs, ys, zs, ex.NumpyArrayListExpression)
     # append rules to the graphics
     # TODO: only pass through the ones we don't consume ourselfs?
     # TODO: is modifying elements like this legit?

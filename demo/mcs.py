@@ -11,7 +11,7 @@ from mathics.core.systemsymbols import SymbolSin, SymbolCos, SymbolSqrt, SymbolA
     SymbolSuperscriptBox, SymbolHold
 
 
-from mathics.core.atoms import Integer, Real
+from mathics.core.atoms import Integer, Real, Complex
 from mathics.core.list import ListExpression
 from mathics.core.expression import Expression
 from mathics.session import MathicsSession

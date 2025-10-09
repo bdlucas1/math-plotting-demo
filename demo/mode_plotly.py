@@ -32,5 +32,20 @@ def mesh3d_plot(xyzs, ijks, showscale, colorscale, axes, width, height, z_range)
         # TODO: x_range and y_range
         if z_range:
             figure.update_layout(scene = dict(zaxis = dict(range=z_range)))
+        """
+        opts = dict(
+            showbackground=False,
+            showgrid=False,  # Hide grid lines
+            zeroline=True,  # Hide the zero line
+            showline=True,   # Show the axis line (edge)
+            mirror="all",      # Mirror the axis line on the opposite side
+            color="red",
+            linecolor="red",
+            zerolinecolor="red"
+
+        )
+        figure.update_layout(scene=dict(xaxis=opts, yaxis=opts, zaxis=opts))
+        """
+
 
     return figure

@@ -103,8 +103,8 @@ def layout_Graphics3D(fe, expr):
                 if c.head == mcs.SymbolPolygon:
 
                     polys = c.elements[0]
-                    if isinstance(polys, ex.NumpyArrayListExpr):
-                        with util.Timer("ijks from NumpyArrayListExpr"):
+                    if isinstance(polys, ex.NumpyArrayListExpression):
+                        with util.Timer("ijks from NumpyArrayListExpression"):
                             # use advanced indexing to break the polygons down into triangles
                             ngon = polys.value.shape[1]
                             for i in range(1, ngon-1):
