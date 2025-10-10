@@ -1,23 +1,4 @@
-import numpy as np
 
-import mcs
-
-#
-# expression helpers
-#
-
-value = lambda expr, default=None: getattr(expr, "value", default)
-
-list_expr = lambda *a: mcs.ListExpression(*a, literal_values = a)
-
-def get_rules(expr):
-    for e in expr.elements:
-        if hasattr(e, "head") and e.head == mcs.SymbolRule:
-            yield e
-
-def get_rule_values(expr):
-    for rule in get_rules(expr):
-        yield rule.elements[0], rule.elements[1].to_python()
 
 #
 # Lazily evaluated list expressions
@@ -25,6 +6,7 @@ def get_rule_values(expr):
 #
 
 import abc
+import numpy as np
 from typing import Sequence, Tuple, cast
 
 from mathics.core.list import ListExpression

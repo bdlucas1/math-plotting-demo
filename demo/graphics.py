@@ -3,7 +3,6 @@ import itertools
 import numpy as np
 
 import ev
-import ex
 import mcs
 import mode
 import util
@@ -103,7 +102,7 @@ def layout_Graphics3D(fe, expr):
                 if c.head == mcs.SymbolPolygon:
 
                     polys = c.elements[0]
-                    if isinstance(polys, ex.NumpyArrayListExpression):
+                    if isinstance(polys, mcs.NumpyArrayListExpression):
                         with util.Timer("ijks from NumpyArrayListExpression"):
                             # use advanced indexing to break the polygons down into triangles
                             ngon = polys.value.shape[1]
@@ -144,7 +143,7 @@ def layout_Graphics3D(fe, expr):
     colorscale = "viridis"
     width = 400
     height = 350
-    for sym, value in ex.get_rule_values(expr):
+    for sym, value in util.get_rule_values(expr):
         if sym == mcs.SymbolPlotRange:
             if not isinstance(value, (list,tuple)):
                 value = [value, value, value]

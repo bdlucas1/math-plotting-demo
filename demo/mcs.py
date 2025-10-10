@@ -16,6 +16,10 @@ from mathics.core.list import ListExpression
 from mathics.core.expression import Expression
 from mathics.session import MathicsSession
 
+# choose whether to use NALE from mathics.core.list or from ext
+# use the former once merged; otherwise use the latter
+#from mathics.core.list import NumpyArrayListExpression
+from ext import NumpyArrayListExpression
 
 #
 # where to find these?

@@ -3,7 +3,6 @@ import itertools
 import math
 import numpy as np
 
-import ex
 import compile
 import mcs
 import util
@@ -29,7 +28,7 @@ def eval_plot3d_xyzs(fe, expr):
     # TODO: use symbol, not string
     # TODO: hook into existing infrastructure for plotting
     x_points = y_points = 10 # default
-    for sym, value in ex.get_rule_values(expr):
+    for sym, value in util.get_rule_values(expr):
         if sym == mcs.SymbolPlotPoints:
             if isinstance(value, (tuple,list)):
                 x_points, y_points = value
@@ -94,11 +93,11 @@ def grid_to_graphics_complex(xs, ys, zs, np_expr):
 
 def eval_Plot3D(fe, expr):
     xs, ys, zs = eval_plot3d_xyzs(fe, expr)
-    graphics = grid_to_graphics_complex(xs, ys, zs, ex.NumpyArrayListExpression)
+    graphics = grid_to_graphics_complex(xs, ys, zs, mcs.NumpyArrayListExpression)
     # append rules to the graphics
     # TODO: only pass through the ones we don't consume ourselfs?
     # TODO: is modifying elements like this legit?
-    graphics.elements = graphics.elements + tuple(ex.get_rules(expr))
+    graphics.elements = graphics.elements + tuple(util.get_rules(expr))
     return graphics
 
 # previous slower implementations retained only for timing purposes

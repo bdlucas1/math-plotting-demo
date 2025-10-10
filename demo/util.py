@@ -1,6 +1,9 @@
 import time
 import urllib.parse
 
+import mcs
+
+
 #
 # pretty print expr
 #
@@ -44,4 +47,17 @@ class Timer:
     def __exit__(self, *args):
         if not self.quiet:
             Timer.stop()
+
+#
+#
+#
+
+def get_rules(expr):
+    for e in expr.elements:
+        if hasattr(e, "head") and e.head == mcs.SymbolRule:
+            yield e
+
+def get_rule_values(expr):
+    for rule in get_rules(expr):
+        yield rule.elements[0], rule.elements[1].to_python()
 

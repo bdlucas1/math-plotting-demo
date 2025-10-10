@@ -2,7 +2,7 @@
 
 * "shell" front-end - sparate window for each output
 
-        pip install numpy dash plotly pywebview
+        pip install pywebview werkzeug dash dash_extensions anywidget
         python demo/fe.py --fe shell --run demos
 
 * browser front end - similar to a jupyter or mathematica notebook
@@ -13,8 +13,7 @@
 * Jupyter notebook - run the following then execute cells in sequence.
   (Note that there is some boilerplate that will go away with better packaging)
  
-        pip install numpy dash plotly pywebview
-        pip install jupyterlab # maybe some other stuff too, not sure
+        pip install jupyterlab jupyterlite jupyterlite-pyodide-kernel
         jupyter-lab demo.ipynb
 
 * JupyterLite running under Pyodide in browser: open <a href="https://bdlucas1.github.io/math-plotting-demo">https://bdlucas1.github.io/math-plotting-demo</a>,
