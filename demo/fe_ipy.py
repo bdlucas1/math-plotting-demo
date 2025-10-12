@@ -5,7 +5,6 @@ import traceback
 import util
 import werkzeug
 
-import ev
 import mcs
 
 def to_html(layout):
@@ -123,10 +122,10 @@ class XXXShellFrontEnd(IpyFrontEnd):
                 try:
                     expr = self.session.parse(s)
                     if expr:
-                        expr = ev.eval_expr(self, expr)
+                        expr = expr.evaluate(self.session.evaluation)
                         layout = mode.layout_expr(self, expr)
                 except Exception as e:
-                    if args.run == "dev" or args.debug:
+                    if args.run == "dev" or mode.debug:
                         traceback.print_exc()
                     else:
                         print("ERROR:", e)
@@ -219,10 +218,10 @@ class BrowserFrontEnd(IpyFrontEnd):
             try:
                 expr = self.session.parse(s)
                 if expr:
-                    expr = ev.eval_expr(self, expr)
+                    expr = expr.evaluate(self.session.evaluation)
                     result = mode.layout_expr(self, expr)
             except Exception as e:
-                if args.run == "dev":
+                if args.run == "dev" or mode.debug:
                     traceback.print_exc()
                 else:
                     print(e)

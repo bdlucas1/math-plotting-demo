@@ -1,8 +1,8 @@
 import collections 
 import itertools
 import numpy as np
+import os
 
-import ev
 import mcs
 import mode
 import util
@@ -54,7 +54,7 @@ def layout_Manipulate(fe, manipulate_expr):
         # TODO: best order for replace_vars and eval?
         values = {s.name: a for s, a in zip(sliders, values)}
         expr = target_expr.replace_vars({"Global`"+n: mcs.Real(v) for n, v in values.items()})
-        expr = ev.eval_expr(fe, expr)
+        expr = expr.evaluate(fe.session.evaluation)
         layout = mode.layout_expr(fe, expr)
         return layout
 
@@ -64,9 +64,8 @@ def layout_Manipulate(fe, manipulate_expr):
     layout = mode.panel(init_target_layout, sliders, eval_and_layout)
         
     # set timer display for slider updates after initial display
-    util.Timer.level = 1 # to see top-level timings as sliders move
-    #util.Timer.level = 0 # no timings as sliders move
-
+    if not os.getenv("DEMO_DEBUG", False):
+        util.Timer.level = 1 # to see top-level timings as sliders move
 
     return layout
 
@@ -166,7 +165,9 @@ def layout_Graphics3D(fe, expr):
             colorscale = value[1:-1]
         elif sym == mcs.SymbolImageSize:
             # TODO: separate width, height
-            width = height = value
+            #print("xxx height value", value, type(value))
+            if not isinstance(value, str):
+                width = height = value
         else:
             # TODO: Plot is passing through all options even e.g. PlotPoints
             #print(f"option {sym} not recognized")
@@ -185,26 +186,16 @@ def layout_Graphics3D(fe, expr):
     return layout
 
 def layout_Row(fe, expr):
-    def do(e):
-        # TODO: temp demo hack until we integrate Demo` into system and eliminate ev.eval_expr
-        # then this will already have been done
-        e = ev.eval_expr(fe, e)
-        return mode.layout_expr(fe, e)
     # TODO: expr.elements[1] is a separator
-    layout = mode.row([do(e) for e in expr.elements[0].elements])
+    do = lambda e: mode.layout_expr(fe, e)
+    row_content = [do(e) for e in expr.elements[0].elements]
+    layout = mode.row(row_content)
     return layout
 
 # TODO: I think this should be in mode_unbox.py
 def layout_Grid(fe, expr):
-
-    def do(e):
-        # TODO: temp demo hack until we integrate Demo` into system and eliminate ev.eval_expr
-        # then this will already have been done
-        e = ev.eval_expr(fe, e)
-        layout = mode.layout_expr(fe, e)
-        return layout
-
     # arrange in a ragged array
+    do = lambda e: mode.layout_expr(fe, e)
     grid_content = [[do(cell) for cell in row] for row in expr.elements[0]]
     layout = mode.grid(grid_content)
     return layout

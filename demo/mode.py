@@ -1,6 +1,13 @@
 import os
 import sys
 
+# install our plot
+import plot
+
+debug = os.getenv("DEMO_DEBUG", False)
+
+
+
 #
 # This is temporary scaffolding for experimenting with different implementation strategies
 # TODO: if any of this needs to be permanent maybe consider using classes instead of import *

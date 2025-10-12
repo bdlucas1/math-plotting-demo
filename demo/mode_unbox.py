@@ -1,4 +1,3 @@
-import ev
 import graphics
 import mcs
 import mode
@@ -12,11 +11,6 @@ import mode_box
 
 def _layout_expr(fe, expr, outer_precedence=0):
     
-    # temp hack until we get Demo`Plot3D integrated and ev.eval_expr goes away
-    # and these are already evaluted by the time we get here
-    if hasattr(expr, "head") and str(expr.head) in ev.funs:
-        expr = ev.eval_expr(fe, expr)
-
     # foo, this gets max recursion depth exceeded
     #expr = mcs.Expression(mcs.SymbolTraditionalForm, expr).evaluate(fe.session.evaluation)
 

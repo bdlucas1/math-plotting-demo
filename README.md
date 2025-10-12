@@ -24,18 +24,19 @@
 After running the demos and displaying the results, the front ends
 then accept more input expressions. Try for example:
 
+    (* try this with normal Plot3D not using demo code *)
     (* current implementation takes 10 sec on 50x50 grid *)
     Plot3D[Sin[x] * Cos[y], {x,0,10}, {y,0,10}, PlotPoints->{50,50}]
 
-    (* demo implementation takes 35 ms on 200x200 grid *)
-    Demo`Plot3D[Sin[x] * Cos[y], {x,0,10}, {y,0,10}, PlotPoints->{200,200}]
+    (* using demo code takes 35 ms on 200x200 grid *)
+    Plot3D[Sin[x] * Cos[y], {x,0,10}, {y,0,10}, PlotPoints->{200,200}]
 
 Supported now to some degree:
 
     Row[{item, ...}] where items can be graphics or other expr (displayed as text for now)
     Grid[{{item, ...}, ...}]
     Plot3D - slow current Plot3D
-    Demo`Plot3D - fast demo Plot3D
+    Plot3D - fast demo Plot3D
     Graphics3D
     PlotPoints -> n or {xn, yn}
     PlotRange -> {xspec, yspec, zspec}, where spec is Automatic or {lo,hi}
@@ -46,7 +47,7 @@ Supported now to some degree:
 
 Supported soon:
 
-    Demo`Plot
+    Plot
     Graphics
 
 ## UI options

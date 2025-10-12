@@ -8,10 +8,18 @@
 import abc
 import numpy as np
 from typing import Sequence, Tuple, cast
+import traceback
 
+from mathics.core.convert.python import from_python
 from mathics.core.list import ListExpression
-from mathics.core.element import BaseElement
+from mathics.core.expression import ExpressionCache
+from mathics.core.element import BaseElement, ElementsProperties
 
+import util
+
+# TODO: not sure how useful it is to have separated this out:
+# several additonal overrides that require value to be numeric
+# are needed in NumpyArrayListExpression to avoid instantiating ._elements
 
 class LazyListExpression(ListExpression, abc.ABC):
 
@@ -54,6 +62,15 @@ class LazyListExpression(ListExpression, abc.ABC):
     def _elements(self, e) -> None:
         self.__elements = e
 
+    # needed to avoid instantiating ._elements
+    def _build_elements_properties(self):
+        self.elements_properties =  ElementsProperties(True, True, True)
+
+    # needed to avoid instantiating ._elements
+    def _rebuild_cache(self):
+        self._cache = ExpressionCache(0, [], [])
+        return self._cache
+
     # this is primarily for testing
     @property
     def is_instantiated(self) -> bool:
@@ -71,18 +88,29 @@ class NumpyArrayListExpression(LazyListExpression):
     representation if required by some third party.
     """
 
-    def __init__(self, value: np.ndarray):
+    def __init__(self, value: np.ndarray, level = 0):
         # TODO: np.ndarray is not assignable to Sequence because nominal vs structural, but I think this is safe
         # also since .value is declared Sequence typechecker will complain if user tries to modify the array
         # even though arrays allow it; I guess this is a good thing
         super().__init__(cast(Sequence,value))
+        self.level = level
+
+    # needed to avoid instantiating ._elements
+    def is_numeric(self):
+        return True
+
+    # needed to avoid instantiating ._elements
+    def element_order(self):
+        return (GENERAL_NUMERIC_EXPRESSION_SORT_KEY, self.head, len(self.values), self.values, 1)
 
     # lazy computation of elements from numpy array
     def _make_elements(self) -> Tuple[BaseElement, ...]:
-        def np_to_m(v) -> BaseElement | NumpyArrayListExpression:
-            if isinstance(v, np.ndarray):
-                return NumpyArrayListExpression(v)
-            else:
-                return from_python(v.item())
-        return tuple(np_to_m(v) for v in self.value)
+        #traceback.print_stack()
+        with util.Timer("INSTANTIATING", quiet = self.level > 0):
+            def np_to_m(v) -> BaseElement | NumpyArrayListExpression:
+                if isinstance(v, np.ndarray):
+                    return NumpyArrayListExpression(v, self.level + 1)
+                else:
+                    return from_python(v.item())
+            return tuple(np_to_m(v) for v in self.value)
     

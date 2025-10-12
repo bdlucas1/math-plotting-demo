@@ -2,7 +2,7 @@
 Original input:
     Row[{
         a b Sin[x],
-        Demo`Plot3D[
+        Plot3D[
             x-y, {x,0,1}, {y,0,1},
             PlotPoints->{2,2}, Axes->True, ImageSize->150
         ],

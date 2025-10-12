@@ -79,7 +79,7 @@ def to_python_expr(expr, lib = "np"):
     #print("compile", expr, "->", result)
     return result
 
-def my_compile(evaluation, expr, arg_names, lib = "np"):
+def demo_compile(evaluation, expr, arg_names, lib = "np"):
     expr = expr.evaluate(evaluation) # pick up e.g. parameters for Plot. TODO: is this the right place?
     python_expr = to_python_expr(expr, lib)
     python_arg_names = [n.split("`")[-1] for n in arg_names]

@@ -28,6 +28,16 @@ class Timer:
     quiet = False
     timers = []
 
+    def __init__(self, name, quiet = False):
+        self.name = name
+        self.quiet = quiet or name is None
+
+    def __call__(self, fun):
+        def timed_fun(*args, **kwargs):
+            with self:
+                return fun(*args, **kwargs)
+        return timed_fun
+
     def start(name):
         Timer.timers.append((name, time.time()))
 
@@ -38,12 +48,10 @@ class Timer:
             if not Timer.quiet:
                 print(f"{"  "*len(Timer.timers)}{name}: {ms:.1f} ms")
 
-    def __init__(self, name, quiet = False):
-        self.name = name
-        self.quiet = quiet
     def __enter__(self):
         if not self.quiet:
             Timer.start(self.name)
+
     def __exit__(self, *args):
         if not self.quiet:
             Timer.stop()

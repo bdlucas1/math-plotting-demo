@@ -7,7 +7,6 @@ import webbrowser
 import webview
 import werkzeug
 
-import ev
 import graphics
 import mcs
 import mode
@@ -18,7 +17,6 @@ import util
 #
 
 parser = argparse.ArgumentParser(description="Graphics demo")
-parser.add_argument("--debug", action="store_true")
 parser.add_argument("--fe", choices=["shell", "browser", "jupyter"], default="shell")
 parser.add_argument("--browser", choices=["webview", "webbrowser"], default="webview")
 parser.add_argument("--run", choices=["demos","tests","timing","dev"], default=None)

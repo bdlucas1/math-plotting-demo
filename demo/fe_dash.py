@@ -4,7 +4,6 @@ import traceback
 import util
 import werkzeug
 
-import ev
 import mcs
 import mode # really just need mode_dash
 
@@ -16,7 +15,7 @@ class DashFrontEnd:
 
         # create app, set options
         self.app = dash.Dash(__name__, suppress_callback_exceptions=True)
-        self.app.enable_dev_tools(debug = args.debug, dev_tools_silence_routes_logging = True) #not args.debug)
+        self.app.enable_dev_tools(debug = mode.debug, dev_tools_silence_routes_logging = True) #not args.debug)
 
         # TODO: I think this condition is always true now
         if args.fe != "jupyter":
@@ -71,10 +70,10 @@ class ShellFrontEnd(DashFrontEnd):
                 try:
                     expr = self.session.parse(s)
                     if expr:
-                        expr = ev.eval_expr(self, expr)
+                        expr = expr.evaluate(self.session.evaluation)
                         layout = mode.layout_expr(self, expr)
                 except Exception as e:
-                    if args.run == "dev" or args.debug:
+                    if args.run == "dev" or mode.debug:
                         traceback.print_exc()
                     else:
                         print("ERROR:", e)
@@ -85,12 +84,8 @@ class ShellFrontEnd(DashFrontEnd):
                 self.plots[plot_name] = layout
                 url = f"http://127.0.0.1:{self.server.server_port}/{plot_name}"
                 browser.show(url)
-
-            # text output
-            if getattr(expr, "head", None) in set([mcs.SymbolGraphics, mcs.SymbolGraphics3D]):
-                text_output = str(expr.head)
+                text_output = "--Graphics--"
             else:
-                # TODO: how to get this to output Sin instead of System`Sin etc.
                 text_output = str(expr)
             print(f"\noutput> {text_output}")
 
@@ -163,10 +158,10 @@ class BrowserFrontEnd(DashFrontEnd):
             try:
                 expr = self.session.parse(s)
                 if expr:
-                    expr = ev.eval_expr(self, expr)
+                    expr = expr.evaluate(self.session.evaluation)
                     result = mode.layout_expr(self, expr)
             except Exception as e:
-                if args.run == "dev":
+                if args.run == "dev" or mode.debug:
                     traceback.print_exc()
                 else:
                     print(e)
