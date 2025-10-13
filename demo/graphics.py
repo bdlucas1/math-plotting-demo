@@ -53,9 +53,11 @@ def layout_Manipulate(fe, manipulate_expr):
         # TODO: always Real?
         # TODO: best order for replace_vars and eval?
         values = {s.name: a for s, a in zip(sliders, values)}
-        expr = target_expr.replace_vars({"Global`"+n: mcs.Real(v) for n, v in values.items()})
-        expr = expr.evaluate(fe.session.evaluation)
-        layout = mode.layout_expr(fe, expr)
+        with util.Timer("replace and eval"):
+            expr = target_expr.replace_vars({"Global`"+n: mcs.Real(v) for n, v in values.items()})
+            expr = expr.evaluate(fe.session.evaluation)
+        with util.Timer("layout"):
+            layout = mode.layout_expr(fe, expr)
         return layout
 
     # compute the layout for the plot
@@ -74,11 +76,71 @@ tbd = set(["System`Hue"])
 # TODO: rename this as it handles both 2d and 3d
 # OR split apart with common code factored out
 
-def layout_Graphics3D(fe, expr):
+def process_options(fe, expr, dim):
 
-    dim = 3 if expr.head == mcs.SymbolGraphics3D else 2
+    # process options
+    # TODO: defaults here or in mode_plotly.py?
+    options = mode.Options(
+        x_range = None,
+        y_range = None,
+        z_range = None,
+        axes = True,
+        showscale = False,
+        colorscale = "viridis",
+        width = 400,
+        height = 350,
+    )
 
-    #util.prt(expr)
+    for sym, value in util.get_rule_values(expr):
+
+        # TODO: why are we having to evaluate - shouldn't it be done already by this point?
+        # or is there a simpler or more standard way to do this?
+        if isinstance(value, mcs.Expression):
+            value = mcs.Expression(mcs.Symbol("System`N"), value)
+            value = value.evaluate(fe.session.evaluation)
+            value = value.to_python()
+
+        # TODO: regularize this
+        if sym == mcs.SymbolPlotRange:
+            if not isinstance(value, (list,tuple)):
+                value = [value, value, value]
+            ranges = [v if isinstance(v, (tuple,list)) else None for v in value]
+            if dim == 3:
+                x_range, y_range, z_range = ranges
+            else:
+                x_range, y_range = ranges
+        elif sym == mcs.SymbolAxes:
+            options.axes = value
+        elif sym == mcs.SymbolPlotLegends:
+            # TODO: what if differs from ColorFunction->?
+            # TODO: what if multiple legends requested?
+            options.showscale = True
+            # TODO: value sometimes comes through as expr, sometimes as tuple?
+            if getattr(value, "head", None) == mcs.SymbolBarLegend:
+                # TODO: for some reason value has literal quotes?
+                options.colorscale = str(value.elements[0])[1:-1]
+            elif isinstance(value, (tuple,list)):
+                options.colorscale = value[0]
+        elif sym == mcs.SymbolColorFunction:
+            # TODO: for some reason value is coming through with literal quotes?
+            # TODO: what if differs from PlotLegends?
+            options.colorscale = value[1:-1]
+        elif sym == mcs.SymbolImageSize:
+            # TODO: separate width, height
+            if not isinstance(value, str) and not isinstance(value, mcs.Expression):
+                options.width = options.height = value
+        elif sym == mcs.SymbolAspectRatio:
+            if not isinstance(value, str):
+                options.height = value * options.width
+        else:
+            # TODO: Plot is passing through all options even e.g. PlotPoints
+            #print(f"option {sym} not recognized")
+            pass
+
+    #options = mode.Options(axes=axes, width=width, height=height, showscale=showscale, colorscale=colorscale)
+    return options
+
+def collect_graphics(expr):
 
     xyzs = []
     ijks = []
@@ -97,7 +159,6 @@ def layout_Graphics3D(fe, expr):
 
         elif g.head == mcs.SymbolLine:
             for line in np.array(g.elements[0].to_python()):
-                print("appending line with shape", line.shape)
                 lines.append(line)
 
         elif g.head == mcs.SymbolPoint:
@@ -143,94 +204,57 @@ def layout_Graphics3D(fe, expr):
                 handle_g(gg)
 
         elif str(g.head) in tbd:
-            print("tbd", g.head)
+            #print("tbd", g.head)
+            pass
 
         else:
             raise Exception(f"Unknown head {g.head}")
 
+    # collect graphic elements
     for g in expr.elements:
         handle_g(g)
 
-    # process options
-    x_range = y_range = z_range = None
-    axes = True
-    showscale = False
-    colorscale = "viridis"
-    width = 400
-    height = 350
-    #print("xxx", list(util.get_rule_values(expr)))
-
-    for sym, value in util.get_rule_values(expr):
-
-        # TODO: why are we having to evaluate - shouldn't it be done already by this point?
-        # or is there a simpler or more standard way to do this?
-        if isinstance(value, mcs.Expression):
-            value = mcs.Expression(mcs.Symbol("System`N"), value)
-            value = value.evaluate(fe.session.evaluation)
-            value = value.to_python()
-
-        # TODO: regularize this
-        # create mode.Options first, then assign values
-        if sym == mcs.SymbolPlotRange:
-            if not isinstance(value, (list,tuple)):
-                value = [value, value, value]
-            ranges = [v if isinstance(v, (tuple,list)) else None for v in value]
-            if dim == 3:
-                x_range, y_range, z_range = ranges
-            else:
-                x_range, y_range = ranges
-        elif sym == mcs.SymbolAxes:
-            axes = value
-        elif sym == mcs.SymbolPlotLegends:
-            # TODO: what if differs from ColorFunction->?
-            # TODO: what if multiple legends requested?
-            showscale = True
-            # TODO: value sometimes comes through as expr, sometimes as tuple?
-            if getattr(value, "head", None) == mcs.SymbolBarLegend:
-                # TODO: for some reason value has literal quotes?
-                colorscale = str(value.elements[0])[1:-1]
-            elif isinstance(value, (tuple,list)):
-                colorscale = value[0]
-        elif sym == mcs.SymbolColorFunction:
-            # TODO: for some reason value is coming through with literal quotes?
-            # TODO: what if differs from PlotLegends?
-            colorscale = value[1:-1]
-        elif sym == mcs.SymbolImageSize:
-            # TODO: separate width, height
-            if not isinstance(value, str) and not isinstance(value, mcs.Expression):
-                width = height = value
-        elif sym == mcs.SymbolAspectRatio:
-            if not isinstance(value, str):
-                height = value * width
-        else:
-            # TODO: Plot is passing through all options even e.g. PlotPoints
-            #print(f"option {sym} not recognized")
-            pass
-
-    if dim==3:
-
+    # finalize to np arrays
+    # lines is already in final form: python list of np arrays
+    if len(xyzs) and len(ijks):
         with util.Timer("construct xyz and ijk arrays"):
             xyzs = np.array(xyzs)
             ijks = np.array(ijks) - 1 # ugh - indices in Polygon are 1-based
+    points = np.array(points)
 
-        with util.Timer("mode.plot3d"):
-            if not isinstance(axes, tuple):
-                axes = (axes,) * 3
-            options = mode.Options(axes=axes, width=width, height=height, showscale=showscale, colorscale=colorscale)
-            figure = mode.plot3d(xyzs, ijks, lines, points, options)
+    return xyzs, ijks, lines, points
 
-    else:
 
-        points = np.array(points)
-        if not isinstance(axes, tuple):
-            axes = (axes,) * 2
-        options = mode.Options(axes=axes, width=width, height=height)
-        figure = mode.plot2d(lines, points, options)
+def layout_Graphics3D(fe, expr):
+
+    xyzs, ijks, lines, points = collect_graphics(expr)
+    options = process_options(fe, expr, dim=3)
+
+    with util.Timer("mode.plot3d"):
+        if not isinstance(options.axes, tuple):
+            options.axes = (axes,) * 3
+        figure = mode.plot3d(xyzs, ijks, lines, points, options)
 
     with util.Timer("layout"):
-        layout = mode.graph(figure, height)
+        layout = mode.graph(figure, options.height)
 
     return layout
+
+
+def layout_Graphics(fe, expr):
+
+    xyzs, ijks, lines, points = collect_graphics(expr)
+    options = process_options(fe, expr, dim=2)
+
+    if not isinstance(options.axes, tuple):
+        options.axes = (options.axes,) * 2
+    figure = mode.plot2d(lines, points, options)
+
+    with util.Timer("layout"):
+        layout = mode.graph(figure, options.height)
+
+    return layout
+
 
 def layout_Row(fe, expr):
     # TODO: expr.elements[1] is a separator
@@ -254,7 +278,7 @@ def layout_Grid(fe, expr):
 layout_funs = {
     mcs.SymbolManipulate: layout_Manipulate,
     mcs.SymbolGraphics3D: layout_Graphics3D,
-    mcs.SymbolGraphics: layout_Graphics3D,
+    mcs.SymbolGraphics: layout_Graphics,
     mcs.SymbolRow: layout_Row,
     mcs.SymbolGrid: layout_Grid,
 }
