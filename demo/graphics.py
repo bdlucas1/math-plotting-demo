@@ -72,6 +72,7 @@ def layout_Manipulate(fe, manipulate_expr):
 tbd = set(["System`Hue"])
 
 # TODO: rename this as it handles both 2d and 3d
+# OR split apart with common code factored out
 
 def layout_Graphics3D(fe, expr):
 
@@ -95,8 +96,9 @@ def layout_Graphics3D(fe, expr):
             ijks.append([i+1,i+2,i+3]) # ugh - 1-based to match GraphicsComplex Polygon
 
         elif g.head == mcs.SymbolLine:
-            line = [p.value for p in g.elements[0].elements]
-            lines.append(line)
+            for line in np.array(g.elements[0].to_python()):
+                print("appending line with shape", line.shape)
+                lines.append(line)
 
         elif g.head == mcs.SymbolPoint:
             ps = g.elements[0].value
@@ -159,6 +161,16 @@ def layout_Graphics3D(fe, expr):
     #print("xxx", list(util.get_rule_values(expr)))
 
     for sym, value in util.get_rule_values(expr):
+
+        # TODO: why are we having to evaluate - shouldn't it be done already by this point?
+        # or is there a simpler or more standard way to do this?
+        if isinstance(value, mcs.Expression):
+            value = mcs.Expression(mcs.Symbol("System`N"), value)
+            value = value.evaluate(fe.session.evaluation)
+            value = value.to_python()
+
+        # TODO: regularize this
+        # create mode.Options first, then assign values
         if sym == mcs.SymbolPlotRange:
             if not isinstance(value, (list,tuple)):
                 value = [value, value, value]
@@ -185,8 +197,7 @@ def layout_Graphics3D(fe, expr):
             colorscale = value[1:-1]
         elif sym == mcs.SymbolImageSize:
             # TODO: separate width, height
-            #print("xxx height value", value, type(value))
-            if not isinstance(value, str):
+            if not isinstance(value, str) and not isinstance(value, mcs.Expression):
                 width = height = value
         elif sym == mcs.SymbolAspectRatio:
             if not isinstance(value, str):
@@ -206,12 +217,13 @@ def layout_Graphics3D(fe, expr):
             if not isinstance(axes, tuple):
                 axes = (axes,) * 3
             options = mode.Options(axes=axes, width=width, height=height, showscale=showscale, colorscale=colorscale)
-            figure = mode.plot3d(xyzs, ijks, options) #showscale, colorscale, axes, width, height, z_range)
+            figure = mode.plot3d(xyzs, ijks, lines, points, options)
 
     else:
 
-        lines = np.array(lines)
         points = np.array(points)
+        if not isinstance(axes, tuple):
+            axes = (axes,) * 2
         options = mode.Options(axes=axes, width=width, height=height)
         figure = mode.plot2d(lines, points, options)
 

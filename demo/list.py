@@ -106,7 +106,7 @@ class NumpyArrayListExpression(LazyListExpression):
     # lazy computation of elements from numpy array
     def _make_elements(self) -> Tuple[BaseElement, ...]:
         #traceback.print_stack()
-        print("INSTANTIATING")
+        #print("INSTANTIATING")
         with util.Timer("INSTANTIATING" if self.level == 0 else None):
             def np_to_m(v) -> BaseElement | NumpyArrayListExpression:
                 if isinstance(v, np.ndarray):

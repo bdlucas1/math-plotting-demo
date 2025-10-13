@@ -1,5 +1,5 @@
 Grid[{{
-    NumberLinePlot[{1,3,4}]
+    Plot[Sin[x], {x,0,10}, PlotPoints->10]
 }, {
     Plot3D[
         Sin[x]*Cos[y],
@@ -7,4 +7,6 @@ Grid[{{
         PlotPoints->{200,200},
         Axes -> {True,True,True}
     ]
+}, {
+    NumberLinePlot[{1,3,4}]
 }}]
