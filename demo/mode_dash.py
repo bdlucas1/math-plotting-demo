@@ -36,6 +36,7 @@ def grid(grid_content):
     layout = dash.html.Div(flat_grid_content, className="m-grid")
     return layout
 
+@util.Timer("dash graph")
 def graph(figure, height):
     # TODO: figure out whether the current mix of explicit style and implicit css is the cleanest way to do this
     # the corresponding code for ipy widgets seems a bit simpler and cleaner...

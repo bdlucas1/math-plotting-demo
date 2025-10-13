@@ -22,6 +22,7 @@ def axis(show, range, title):
         axis |= dict(visible=False, showline=False, ticks=None, showticklabels=False)
     return axis
 
+@util.Timer("plot2d")
 def plot2d(lines, points, options: Options):
 
     # plot layout
@@ -56,7 +57,7 @@ def plot2d(lines, points, options: Options):
 
     return figure
 
-
+@util.Timer("plot3d")
 def plot3d(xyzs, ijks, lines, points, options):
 
     # plot layout

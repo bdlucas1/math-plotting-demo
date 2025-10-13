@@ -105,12 +105,14 @@ def process_options(fe, expr, dim):
             if not isinstance(value, (list,tuple)):
                 value = [value, value, value]
             ranges = [v if isinstance(v, (tuple,list)) else None for v in value]
+            # TODO: just pass through as tuple?
             if dim == 3:
                 x_range, y_range, z_range = ranges
             else:
                 x_range, y_range = ranges
         elif sym == mcs.SymbolAxes:
-            options.axes = value
+            # TODO: expand to tuple here or just let flow into plot2d/plot3d?
+            options.axes = value if isinstance(value,(tuple,list)) else (value,) * dim
         elif sym == mcs.SymbolPlotLegends:
             # TODO: what if differs from ColorFunction->?
             # TODO: what if multiple legends requested?
@@ -149,8 +151,6 @@ def collect_graphics(expr):
 
     def handle_g(g):
 
-        #print("xxx handling", g.head)
-
         if g.head == mcs.SymbolPolygon:
             poly = [p.value for p in g.elements[0].elements]
             i = len(xyzs)
@@ -158,8 +158,8 @@ def collect_graphics(expr):
             ijks.append([i+1,i+2,i+3]) # ugh - 1-based to match GraphicsComplex Polygon
 
         elif g.head == mcs.SymbolLine:
-            for line in np.array(g.elements[0].to_python()):
-                lines.append(line)
+            for line in g.elements[0].to_python():
+                lines.append(np.array(line))
 
         elif g.head == mcs.SymbolPoint:
             ps = g.elements[0].value
@@ -215,7 +215,7 @@ def collect_graphics(expr):
         handle_g(g)
 
     # finalize to np arrays
-    # lines is already in final form: python list of np arrays
+    # lines is already in final form: python list of np arrays, each representing a line
     if len(xyzs) and len(ijks):
         with util.Timer("construct xyz and ijk arrays"):
             xyzs = np.array(xyzs)
@@ -224,37 +224,26 @@ def collect_graphics(expr):
 
     return xyzs, ijks, lines, points
 
-
+# dim=3, mode.plot3d
 def layout_Graphics3D(fe, expr):
-
     xyzs, ijks, lines, points = collect_graphics(expr)
     options = process_options(fe, expr, dim=3)
-
-    with util.Timer("mode.plot3d"):
-        if not isinstance(options.axes, tuple):
-            options.axes = (axes,) * 3
-        figure = mode.plot3d(xyzs, ijks, lines, points, options)
-
-    with util.Timer("layout"):
-        layout = mode.graph(figure, options.height)
-
+    figure = mode.plot3d(xyzs, ijks, lines, points, options)
+    layout = mode.graph(figure, options.height)
     return layout
 
-
+# dim=2, mode.plot2d
 def layout_Graphics(fe, expr):
-
     xyzs, ijks, lines, points = collect_graphics(expr)
     options = process_options(fe, expr, dim=2)
-
-    if not isinstance(options.axes, tuple):
-        options.axes = (options.axes,) * 2
+    # TODO: xyzs, ijks in 2d mode?
     figure = mode.plot2d(lines, points, options)
-
-    with util.Timer("layout"):
-        layout = mode.graph(figure, options.height)
-
+    layout = mode.graph(figure, options.height)
     return layout
 
+#
+#
+#
 
 def layout_Row(fe, expr):
     # TODO: expr.elements[1] is a separator
