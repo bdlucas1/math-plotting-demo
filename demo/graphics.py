@@ -107,9 +107,9 @@ def process_options(fe, expr, dim):
             ranges = [v if isinstance(v, (tuple,list)) else None for v in value]
             # TODO: just pass through as tuple?
             if dim == 3:
-                x_range, y_range, z_range = ranges
+                options.x_range, options.y_range, options.z_range = ranges
             else:
-                x_range, y_range = ranges
+                options.x_range, options.y_range = ranges
         elif sym == mcs.SymbolAxes:
             # TODO: expand to tuple here or just let flow into plot2d/plot3d?
             options.axes = value if isinstance(value,(tuple,list)) else (value,) * dim
