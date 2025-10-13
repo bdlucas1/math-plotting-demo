@@ -24,9 +24,9 @@ def plot2d(lines, points, options: Options):
 
     def axis(show, range):
         if show:
-            axis = dict(ticks="outside", showgrid=False, linecolor="black")
+            axis = dict(visible=show, ticks="outside", showgrid=False, linecolor="black")
         else:
-            axis = dict(showline=False, showgrid=False, ticks=None, showticklabels=False, showspikes=False)
+            axis = dict(visible=show, showline=False, showgrid=False, ticks=None, showticklabels=False, showspikes=False)
         if range:
             axis["range"] = range
         print("xxx axis", axis)
@@ -53,13 +53,13 @@ def plot2d(lines, points, options: Options):
     return figure
 
 
-def plot3d(xyzs, ijks, showscale, colorscale, axes, width, height, z_range):
+def plot3d(xyzs, ijks, options):
 
     with util.Timer("mesh"):
         mesh = go.Mesh3d(
             x=xyzs[:,0], y=xyzs[:,1], z=xyzs[:,2],
             i=ijks[:,0], j=ijks[:,1], k=ijks[:,2],
-            showscale=showscale, colorscale=colorscale, colorbar=dict(thickness=10), intensity=xyzs[:,2],
+            showscale=options.showscale, colorscale=options.colorscale, colorbar=dict(thickness=10), intensity=xyzs[:,2],
             #hoverinfo="skip"
             hoverinfo="none"
         )
@@ -71,19 +71,19 @@ def plot3d(xyzs, ijks, showscale, colorscale, axes, width, height, z_range):
             layout = go.Layout(
                 margin = dict(l=0, r=0, t=0, b=0),
                 scene = dict(
-                    xaxis = dict(title="x", visible=axes, showspikes=showspikes), # TODO: name
-                    yaxis = dict(title="y", visible=axes, showspikes=showspikes), # TODO: name
-                    zaxis = dict(title="z", visible=axes, showspikes=showspikes), # TODO: name
+                    xaxis = dict(title="x", visible=options.axes[0], showspikes=showspikes), # TODO: name
+                    yaxis = dict(title="y", visible=options.axes[1], showspikes=showspikes), # TODO: name
+                    zaxis = dict(title="z", visible=options.axes[2], showspikes=showspikes), # TODO: name
                 ),
-                width=width,
-                height=height
+                width=options.width,
+                height=options.height
             )
         )
         figure.add_trace(mesh)
 
         # TODO: x_range and y_range
-        if z_range:
-            figure.update_layout(scene = dict(zaxis = dict(range=z_range)))
+        if options.z_range:
+            figure.update_layout(scene = dict(zaxis = dict(range=options.z_range)))
         """
         opts = dict(
             showbackground=False,
