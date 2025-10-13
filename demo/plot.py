@@ -2,6 +2,7 @@ import collections
 import itertools
 import math
 import numpy as np
+import os
 
 import compile
 import mcs
@@ -60,8 +61,13 @@ def demo_eval_plot3d(
 
     return result
 
-# for demo monkey-patch it in
-import mathics.builtin.drawing.plot
-mathics.builtin.drawing.plot.eval_plot3d = demo_eval_plot3d
+if os.getenv("DEMO_USE_MATHICS_PLOT"):
+    print("using mathics plot")
+else:
+    # for demo monkey-patch it in
+    print("using demo plot")
+    import mathics.builtin.drawing.plot
+    mathics.builtin.drawing.plot.eval_plot3d = demo_eval_plot3d
+    mathics.builtin.drawing.plot.Plot3D.attributes = mcs.A_HOLD_FIRST | mcs.A_PROTECTED
 
 

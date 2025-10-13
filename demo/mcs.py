@@ -1,3 +1,5 @@
+import os
+
 #
 # symbols etc. are hidden away in a confusing array of packages and modules,
 # and also not a big fan of the from...import... pattern, so hide that all away here
@@ -9,6 +11,7 @@ from mathics.core.systemsymbols import SymbolSin, SymbolCos, SymbolSqrt, SymbolA
     SymbolRule, SymbolI, SymbolE, SymbolPi, SymbolRow, SymbolGrid, \
     SymbolMakeBoxes, SymbolTraditionalForm, SymbolStandardForm, SymbolRowBox, SymbolFractionBox, SymbolSqrtBox, \
     SymbolSuperscriptBox, SymbolHold
+from mathics.core.attributes import A_HOLD_FIRST, A_PROTECTED
 
 
 from mathics.core.atoms import Integer, Real, Complex
@@ -18,8 +21,12 @@ from mathics.session import MathicsSession, Evaluation
 
 # choose whether to use NALE from mathics.core.list or from ext
 # use the former once merged; otherwise use the latter
-#from mathics.core.list import NumpyArrayListExpression
-from list import NumpyArrayListExpression
+if os.getenv("DEMO_USE_MATHICS", False):
+    print("using mathics version of NALE")
+    from mathics.core.list import NumpyArrayListExpression
+else:
+    print("using demo version of NALE")
+    from list import NumpyArrayListExpression
 
 #
 # where to find these?
@@ -34,12 +41,14 @@ SymbolColorFunction = Symbol("System`ColorFunction")
 SymbolPlotLegends = Symbol("Global`PlotLegends") # TODO: move to System
 SymbolBarLegend = Symbol("Global`BarLegend") # TODO: move to System
 SymbolImageSize = Symbol("System`ImageSize")
+SymbolAspectRatio = Symbol("System`AspectRatio")
 
 SymbolManipulate = Symbol("Global`Manipulate") # TODO: move to System
 SymbolGraphics3D = Symbol("System`Graphics3D")
 SymbolGraphics = Symbol("System`Graphics")
 SymbolGraphicsComplex = Symbol("System`GraphicsComplex") # TODO: move to System
 SymbolLine = Symbol("System`Line")
+SymbolPoint = Symbol("System`Point")
 SymbolPolygon = Symbol("System`Polygon")
 
 SymbolTemplateBox = Symbol("System`TemplateBox")

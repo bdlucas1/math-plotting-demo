@@ -86,7 +86,7 @@ def register_callbacks(app):
         #print(f"xxx trig {time.time():.3f}")
 
         global last_slider_update
-        if last_slider_update and not util.Timer.quiet:
+        if last_slider_update:
             print(f"between slider updates: {(time.time()-last_slider_update)*1000:.1f}")
 
         with util.Timer("slider update"):

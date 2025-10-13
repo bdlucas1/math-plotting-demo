@@ -21,7 +21,6 @@ parser.add_argument("--fe", choices=["shell", "browser", "jupyter"], default="sh
 parser.add_argument("--browser", choices=["webview", "webbrowser"], default="webview")
 parser.add_argument("--run", choices=["demos","tests","timing","dev"], default=None)
 parser.add_argument("--dev", type=str, default=None)
-parser.add_argument("--quiet", action="store_true")
 args = parser.parse_args()
 
 run = dict(
@@ -67,11 +66,6 @@ if args.dev:
     args.run = "dev"
 if args.run:
     run[args.run] = [read_demo(s) for s in run[args.run]]
-
-
-if args.quiet:
-    util.Timer.quiet = True
-
 
 # load a url into a browser, using either:
 # webview - pop up new standalone window using pywebview

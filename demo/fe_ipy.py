@@ -115,7 +115,6 @@ class XXXShellFrontEnd(IpyFrontEnd):
 
         def handle_input(s):
 
-            util.Timer.level = -1 # print all timings until told otherwise (e.g. by Manipulate)
             layout = None
 
             with util.Timer(f"total parse+eval+layout"):
@@ -211,7 +210,6 @@ class BrowserFrontEnd(IpyFrontEnd):
 
     def process_input(self, s):
 
-        util.Timer.level = -1 # print all timings until told otherwise (e.g. by Manipulate)
         result = None
 
         with util.Timer(f"total parse+eval+layout"):

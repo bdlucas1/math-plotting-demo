@@ -2,6 +2,33 @@ import plotly.graph_objects as go
 
 import util
 
+# TODO: x and y range
+# TODO: merge these!
+
+def plot2d(lines, points, width, height):
+
+    figure = go.FigureWidget()
+
+    figure.add_trace(go.Scatter(
+        x = points[:,0], y = points[:,1],
+        mode='markers', marker=dict(color='black', size=8)
+    ))
+
+    figure.update_layout(
+        margin = dict(l=0, r=0, t=0, b=0),
+        plot_bgcolor='rgba(0,0,0,0)',
+        # or figure.update_xaxes
+        # or scene=dict(xaxis=dict
+        scene = dict(aspectratio=dict(x=1,y=0.1)),
+        xaxis = dict(ticks="inside", showgrid=False, linecolor="black"),
+        yaxis = dict(showline=False, ticks=None, showticklabels=False),
+        width=width,
+        height=height,
+    )
+
+    return figure
+
+
 def mesh3d_plot(xyzs, ijks, showscale, colorscale, axes, width, height, z_range):
 
     with util.Timer("mesh"):

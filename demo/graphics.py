@@ -63,24 +63,30 @@ def layout_Manipulate(fe, manipulate_expr):
     init_target_layout = eval_and_layout(init_values)
     layout = mode.panel(init_target_layout, sliders, eval_and_layout)
         
-    # set timer display for slider updates after initial display
-    if not os.getenv("DEMO_DEBUG", False):
-        util.Timer.level = 1 # to see top-level timings as sliders move
-
     return layout
 
 
 #
 # compute a layout for a Graphics3D object, such as returned by Plot3D
 #
+tbd = set(["System`Hue"])
+
+# TODO: rename this as it handles both 2d and 3d
+
 def layout_Graphics3D(fe, expr):
+
+    dim = 3 if expr.head == mcs.SymbolGraphics3D else 2
 
     #util.prt(expr)
 
     xyzs = []
     ijks = []
+    lines = []
+    points = []
 
     def handle_g(g):
+
+        #print("xxx handling", g.head)
 
         if g.head == mcs.SymbolPolygon:
             poly = [p.value for p in g.elements[0].elements]
@@ -90,6 +96,11 @@ def layout_Graphics3D(fe, expr):
 
         elif g.head == mcs.SymbolLine:
             line = [p.value for p in g.elements[0].elements]
+            lines.append(line)
+
+        elif g.head == mcs.SymbolPoint:
+            ps = g.elements[0].value
+            points.extend(ps)
 
         elif g.head == mcs.SymbolGraphicsComplex:
 
@@ -129,6 +140,9 @@ def layout_Graphics3D(fe, expr):
             for gg in g.elements:
                 handle_g(gg)
 
+        elif str(g.head) in tbd:
+            print("tbd", g.head)
+
         else:
             raise Exception(f"Unknown head {g.head}")
 
@@ -142,11 +156,17 @@ def layout_Graphics3D(fe, expr):
     colorscale = "viridis"
     width = 400
     height = 350
+    #print("xxx", list(util.get_rule_values(expr)))
+
     for sym, value in util.get_rule_values(expr):
         if sym == mcs.SymbolPlotRange:
             if not isinstance(value, (list,tuple)):
                 value = [value, value, value]
-            x_range, y_range, z_range = [v if isinstance(v, (tuple,list)) else None for v in value]
+            ranges = [v if isinstance(v, (tuple,list)) else None for v in value]
+            if dim == 3:
+                x_range, y_range, z_range = ranges
+            else:
+                x_range, y_range = ranges
         elif sym == mcs.SymbolAxes:
             axes = value
         elif sym == mcs.SymbolPlotLegends:
@@ -168,17 +188,28 @@ def layout_Graphics3D(fe, expr):
             #print("xxx height value", value, type(value))
             if not isinstance(value, str):
                 width = height = value
+        elif sym == mcs.SymbolAspectRatio:
+            if not isinstance(value, str):
+                height = value * width
         else:
             # TODO: Plot is passing through all options even e.g. PlotPoints
             #print(f"option {sym} not recognized")
             pass
 
-    with util.Timer("construct xyz and ijk arrays"):
-        xyzs = np.array(xyzs)
-        ijks = np.array(ijks) - 1 # ugh - indices in Polygon are 1-based
+    if dim==3:
 
-    with util.Timer("mode.mes3d_plot"):
-        figure = mode.mesh3d_plot(xyzs, ijks, showscale, colorscale, axes, width, height, z_range)
+        with util.Timer("construct xyz and ijk arrays"):
+            xyzs = np.array(xyzs)
+            ijks = np.array(ijks) - 1 # ugh - indices in Polygon are 1-based
+
+        with util.Timer("mode.mes3d_plot"):
+            figure = mode.mesh3d_plot(xyzs, ijks, showscale, colorscale, axes, width, height, z_range)
+
+    else:
+
+        lines = np.array(lines)
+        points = np.array(points)
+        figure = mode.plot2d(lines, points, width, height)
 
     with util.Timer("layout"):
         layout = mode.graph(figure, height)
@@ -207,6 +238,7 @@ def layout_Grid(fe, expr):
 layout_funs = {
     mcs.SymbolManipulate: layout_Manipulate,
     mcs.SymbolGraphics3D: layout_Graphics3D,
+    mcs.SymbolGraphics: layout_Graphics3D,
     mcs.SymbolRow: layout_Row,
     mcs.SymbolGrid: layout_Grid,
 }

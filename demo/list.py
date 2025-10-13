@@ -101,12 +101,13 @@ class NumpyArrayListExpression(LazyListExpression):
 
     # needed to avoid instantiating ._elements
     def element_order(self):
-        return (GENERAL_NUMERIC_EXPRESSION_SORT_KEY, self.head, len(self.values), self.values, 1)
+        return (GENERAL_NUMERIC_EXPRESSION_SORT_KEY, self.head, len(self.values), self.value, 1)
 
     # lazy computation of elements from numpy array
     def _make_elements(self) -> Tuple[BaseElement, ...]:
         #traceback.print_stack()
-        with util.Timer("INSTANTIATING", quiet = self.level > 0):
+        print("INSTANTIATING")
+        with util.Timer("INSTANTIATING" if self.level == 0 else None):
             def np_to_m(v) -> BaseElement | NumpyArrayListExpression:
                 if isinstance(v, np.ndarray):
                     return NumpyArrayListExpression(v, self.level + 1)

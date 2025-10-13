@@ -1,3 +1,4 @@
+import os
 import time
 import urllib.parse
 
@@ -17,20 +18,34 @@ def prt(expr, indent=1):
             prt(elt, indent + 1)
 
 
-#
-# to time a block of code use with Timer(name): code
-# use Timer.level to control max  nesting level:
-#     -1 all, 0 none, 1 only top level, etc.
-
 class Timer:
 
-    level = -1 # all
-    quiet = False
+    """
+    Times a block of code. Maybe be used as a decorator or as a context manager:
+
+        # decorator
+        @Timer(name):
+        def f(...):
+            ...
+
+        # context manager
+        with Timer(name):
+            ...
+
+    Timings are nested (in execution order), and the output prints the nested
+    timings as an "upside-down" indented outline, with an outer level printed after
+    all nested inner levels, supporting both detailed and summary timings.
+    
+    Timing.level controls how deeply nested timings are displayed:
+    -1 all, 0 none, 1 only top level, etc.  Default is 0. Use MATHICS_TIMING
+    environment variable to change.
+    """
+
+    level = int(os.getenv("MATHICS_TIMING", "0"))
     timers = []
 
-    def __init__(self, name, quiet = False):
+    def __init__(self, name):
         self.name = name
-        self.quiet = quiet or name is None
 
     def __call__(self, fun):
         def timed_fun(*args, **kwargs):
@@ -45,16 +60,22 @@ class Timer:
         name, start = Timer.timers.pop()
         ms = (time.time() - start) * 1000
         if Timer.level < 0 or len(Timer.timers) < Timer.level:
-            if not Timer.quiet:
-                print(f"{"  "*len(Timer.timers)}{name}: {ms:.1f} ms")
+            print(f"{'  '*len(Timer.timers)}{name}: {ms:.1f} ms")
 
     def __enter__(self):
-        if not self.quiet:
+        if self.name:
             Timer.start(self.name)
 
     def __exit__(self, *args):
-        if not self.quiet:
+        if self.name:
             Timer.stop()
+
+# possibly override our local definition
+if os.getenv("DEMO_USE_MATHICS", False):
+    print("using mathics version of Timer")
+    from mathics.core.util import Timer
+else:
+    print("using demo version of Timer")
 
 #
 #

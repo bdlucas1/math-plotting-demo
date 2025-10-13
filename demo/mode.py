@@ -87,6 +87,4 @@ if in_jupyter:
     the_fe = FE()
 
     sys.stdout = sys.__stderr__
-    if not os.getenv("DEMO_DEBUG", False):
-        util.Timer.quiet = True
     
