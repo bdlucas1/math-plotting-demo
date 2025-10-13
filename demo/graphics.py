@@ -202,14 +202,15 @@ def layout_Graphics3D(fe, expr):
             xyzs = np.array(xyzs)
             ijks = np.array(ijks) - 1 # ugh - indices in Polygon are 1-based
 
-        with util.Timer("mode.mes3d_plot"):
-            figure = mode.mesh3d_plot(xyzs, ijks, showscale, colorscale, axes, width, height, z_range)
+        with util.Timer("mode.mesh3d_plot"):
+            figure = mode.plot3d(xyzs, ijks, showscale, colorscale, axes, width, height, z_range)
 
     else:
 
         lines = np.array(lines)
         points = np.array(points)
-        figure = mode.plot2d(lines, points, width, height)
+        options = mode.Options(axes=axes, width=width, height=height)
+        figure = mode.plot2d(lines, points, options)
 
     with util.Timer("layout"):
         layout = mode.graph(figure, height)
