@@ -175,8 +175,12 @@ def collect_graphics(expr):
             ijks.append([i+1,i+2,i+3]) # ugh - 1-based to match GraphicsComplex Polygon
 
         elif g.head == mcs.SymbolLine:
-            for line in g.elements[0].to_python():
-                lines.append(np.array(line))
+            value = g.elements[0].to_python()
+            if isinstance(value[0][0], (tuple,list)):
+                for line in value:
+                    lines.append(np.array(line))
+            else:
+                lines.append(np.array(value))
 
         elif g.head == mcs.SymbolPoint:
             ps = g.elements[0].value

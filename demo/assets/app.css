@@ -145,6 +145,14 @@ body {
     align-items: baseline;
 }
 
+.m-grid {
+    /* TODO: demo hack - should be controlled by user,
+       and everybody should stick to their boxes, but
+       that's not currently the case. */
+    grid-row-gap: 1em;
+    grid-column-gap: 1em;
+}
+
 .m-row {
     display: flex;
     flex-direction: row;
