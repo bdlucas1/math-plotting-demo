@@ -3,6 +3,7 @@ import os
 #
 # symbols etc. are hidden away in a confusing array of packages and modules,
 # and also not a big fan of the from...import... pattern, so hide that all away here
+# for now, to make writing the demo a bit easier
 #
 
 

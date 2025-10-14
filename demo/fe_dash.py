@@ -72,7 +72,7 @@ class ShellFrontEnd(DashFrontEnd):
                         expr = expr.evaluate(self.session.evaluation)
                         layout = mode.layout_expr(self, expr)
                 except Exception as e:
-                    if args.run == "dev" or mode.debug:
+                    if True: #args.run == "dev" or mode.debug:
                         traceback.print_exc()
                     else:
                         print("ERROR:", e)

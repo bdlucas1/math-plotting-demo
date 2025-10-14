@@ -69,12 +69,10 @@ def layout_Manipulate(fe, manipulate_expr):
 
 
 #
-# compute a layout for a Graphics3D object, such as returned by Plot3D
+# collect options from a Graphics or Graphics3D element
+# TODO: this is probably just for the demo, and gets replaced
+# by machinery already in place in mathics core
 #
-tbd = set(["System`Hue"])
-
-# TODO: rename this as it handles both 2d and 3d
-# OR split apart with common code factored out
 
 def process_options(fe, expr, dim):
 
@@ -142,12 +140,31 @@ def process_options(fe, expr, dim):
     #options = mode.Options(axes=axes, width=width, height=height, showscale=showscale, colorscale=colorscale)
     return options
 
+#
+# traverse a Graphics or Graphics3D expression and collect points, lines, and triangles
+# as numpy arrays that are efficient to traverse
+#
+# TODO: can this be plugged into existing machinery for processing Graphics and Graphics3D?
+# there seems to be a bunch of stuff related to this in mathics.format that could be reused,
+# but it currently seems to assume that a string is being generated to be saved in a file
+#
+
 def collect_graphics(expr):
 
+    # xyzs is numpy array representing coordinates of triangular mesh points
+    # ijks is numpy array represent triangles as triples of indexes into xyzs
     xyzs = []
     ijks = []
+
+    # list of lines, each line represented by a numpy array containing
+    # coordinates of points on the line
     lines = []
+
+    # numpy array of point coordinates
     points = []
+
+    # options we ignore for now because not implemented
+    tbd = set(["System`Hue"])
 
     def handle_g(g):
 
@@ -228,6 +245,7 @@ def collect_graphics(expr):
 def layout_Graphics3D(fe, expr):
     xyzs, ijks, lines, points = collect_graphics(expr)
     options = process_options(fe, expr, dim=3)
+    # TODO: lines and points are currently ignored
     figure = mode.plot3d(xyzs, ijks, lines, points, options)
     layout = mode.graph(figure, options.height)
     return layout

@@ -70,6 +70,7 @@ def plot3d(xyzs, ijks, lines, points, options):
             xaxis = axis(options.axes[0], range=options.x_range, title="x"),
             yaxis = axis(options.axes[1], range=options.y_range, title="y"),
             zaxis = axis(options.axes[2], range=options.z_range, title="z"),
+            aspectmode="cube",
         )
     )
     figure = go.FigureWidget(layout = layout)

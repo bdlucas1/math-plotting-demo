@@ -65,8 +65,10 @@ def register_callbacks(app):
     # when we get a slider movement we remember the values, and then reset n_intervals to 0,
     # causing trigger fire again once, which triggers an update with the new values
     # this allows us to coalesce multiple slider events and only process the most recent one
+    # we also update labels that display the current values of the sliders
     @app.callback(
         dash.Output(dict(type="trigger", panel_number=dash.MATCH), "n_intervals"),
+        dash.Output(dict(type="value", panel_number=dash.MATCH, index=dash.ALL), "children"),
         dash.Input(dict(type="slider", panel_number=dash.MATCH, index=dash.ALL), "value"),
         prevent_initial_call=True
     )
@@ -74,7 +76,7 @@ def register_callbacks(app):
         #print(f"xxx slid {time.time():.3f}")
         panel_number = dash.ctx.inputs_list[0][0]["id"]["panel_number"]        
         panel_values[panel_number] = values
-        return 0
+        return 0, [str(v) for v in values]
 
     # trigger an update with the new values whenever "trigger" fires
     @app.callback(
@@ -110,10 +112,16 @@ def panel(init_target_layout, sliders, eval_and_layout):
     def slider_layout(s, inx):
         # TODO: handling of tick marks and step needs work; this code is just for demo purposes
         slider_id = dict(type="slider", panel_number=panel_number, index=inx)
-        marks = {value: f"{value:g}" for value in np.arange(s.lo, s.hi, s.step)}
+        value_id = dict(type="value", panel_number=panel_number, index=inx)
+        #marks = {value: f"{value:g}" for value in np.arange(s.lo, s.hi, s.step)}
+        marks = None;
         return [
             dash.html.Label(s.name),
-            dash.dcc.Slider(id=slider_id, marks=marks, min=s.lo, max=s.hi, step=s.step/10, value=s.init, updatemode="drag"),
+            dash.dcc.Slider(
+                id=slider_id, marks=marks, min=s.lo, max=s.hi, step=s.step, value=s.init, updatemode="drag",
+                className = "m-slider"
+            ),
+            dash.html.Label(str(s.init), id=value_id)
         ]
     slider_layouts = list(itertools.chain(*[slider_layout(s, inx) for inx, s in enumerate(sliders)]))
 
