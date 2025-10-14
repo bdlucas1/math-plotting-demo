@@ -132,10 +132,10 @@ body {
     /* stupid css trick to make the baseline of a plot in a row be its vertical center
        so that it is centered vertically relative to other content.
        TODO: the translate is ugly; look into whether there's a cleaner way to do this. */
-    .m-plot {
+    & > .m-plot {
         transform: translateY(-50%);
     }
-    .m-plot::before {
+    & > .m-plot::before {
         display: inline-block;
         content: "";
         width: 0;
