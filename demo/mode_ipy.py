@@ -5,6 +5,15 @@ import mcs
 import mode
 import util
 
+# load our stylesheet, shared with dash mode for consistency
+import IPython.display as ipd
+try:
+    file = open("assets/app.css")
+except:
+    file = open("app.css")
+css = f"<style>{file.read()}</style>"
+ipd.display(ipd.HTML(css))
+
 def wrap(s):
     return ipw.Label(value=s)
 
@@ -21,21 +30,18 @@ def grid(grid_content):
     n_cols = max(len(row) for row in grid_content)
     # TODO: unfortunately our use of "layout" conflicts with this use of layout
     # our use of layout derives from dash, so maybe we could find another term...
-    lay = ipw.Layout(
+    css = ipw.Layout(
         #align_items = "baseline", # vertically
         # TODO: for now until we get baseline working
         align_items = "center", # vertically
         justify_items = "center", # horizontally
+        grid_template_columns = f"repeat({n_cols}, auto)",
     )
-    layout = ipw.GridspecLayout(n_rows, n_cols, layout=lay)
-
-    # assign
-    for row_number, row in enumerate(grid_content):
-        for col_number, cell in enumerate(row):
-            layout[row_number, col_number] = cell
+    children = [cell for row in grid_content for cell in row]
+    layout = ipw.GridBox(layout=css, children=children)
+    layout._dom_classes = ["m-grid"]
 
     # this keeps the grid from expanding horizontally, not sure why
-    # TODO: but grid columns are all same width, based on max column width - is that what we want?
     layout = ipw.HBox([layout])
 
     return layout
@@ -73,9 +79,13 @@ def panel(init_target_layout, sliders, eval_and_layout):
         slider.observe(update, names="value")
         return slider
     sliders = [slider_layout(s) for s in sliders]
+    slider_box = ipw.VBox(sliders)
+    slider_box._dom_classes = ["m-sliders-ipy"]
 
-    target = ipw.VBox([])
-    layout = ipw.VBox([target, *sliders], layout=ipw.Layout(width="min-content"))
+    target = ipw.VBox([init_target_layout])
+    lay = ipw.Layout(width="min-content")
+    layout = ipw.VBox([target, slider_box],  layout=lay)
+    layout._dom_classes = ["m-manipulate"]
 
     return layout
 

@@ -92,10 +92,20 @@ body {
 
     }
 
+    /* for ipywidgets */
+    /* TODO: looks like this will just be m-sliders for common */
+    .m-sliders-ipy {
+        padding-top: 2em;
+    }
+
+    /* for dash - we do our own label and value */
+    /* TODO: should be split to m-sliders for common and  m-sliders-dash */
     .m-sliders {
         
+        /* this is common */
         padding-top: 2em;
     
+        /* from here down is specifc to dash */
         display: grid;
         grid-template-columns: auto 1fr auto;
         align-items: center;
@@ -107,6 +117,7 @@ body {
             font: 11pt sans-serif;
         }
 
+        /* TODO: can we do similar styling if ipy */
         .m-slider {
             padding: 0 !important;
             .rc-slider-track {
