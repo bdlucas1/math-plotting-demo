@@ -73,15 +73,14 @@ body {
     }
 }
 
-/* TODO: should be m-panel? */
 .m-manipulate {
 
     width: min-content;
     background-color: #f8f8f8;
     border: 1px solid #cccccc;
     border-radius: 3px;
-    padding: 1em;
-    padding-bottom: 1.5em;
+    padding: 12px;
+    padding-bottom: 20px;
 
     /* target of manipulate */
     & > :first-child {
@@ -92,47 +91,81 @@ body {
 
     }
 
-    /* for ipywidgets */
-    /* TODO: looks like this will just be m-sliders for common */
-    .m-sliders-ipy {
-        padding-top: 2em;
-    }
-
-    /* for dash - we do our own label and value */
-    /* TODO: should be split to m-sliders for common and  m-sliders-dash */
+    /* box containing sliders */
     .m-sliders {
         
-        /* this is common */
-        padding-top: 2em;
-    
-        /* from here down is specifc to dash */
+        padding-top: 30px;
+        overflow: visible;
+
         display: grid;
         grid-template-columns: auto 1fr auto;
         align-items: center;
-        grid-row-gap: 1.2em;
-        grid-column-gap: 1em;
+        grid-row-gap: 20px;
+        grid-column-gap: 10px;
     
-        label {
+        /* slider label and value readout */
+        * {
             white-space: nowrap;
             font: 11pt sans-serif;
         }
 
-        /* TODO: can we do similar styling if ipy */
+        --slider-track-color: #cccccc;
+        --slider-handle-width: 12px;
+        --slider-handle-height: 24px;
+        --slider-handle-radius: 4px;
+        --slider-handle-border: 1px solid #999999;
+
+        /* ipywidgets slider tweaks */
+        .widget-hslider {
+
+            /* slider parts are grandchildren of .m-sliders, so move them up a level */
+            display: contents;
+
+            .widget-label {
+                height: fit-content;
+                width: fit-content;
+                min-width: fit-content;
+            }
+
+            .slider-container {
+                .noUi-connects {
+                    background-color: var(--slider-track-color);
+                }
+                .noUi-handle {
+                    border: var(--slider-handle-border);
+                    width: var(--slider-handle-width);
+                    height: var(--slider-handle-height);
+                    border-radius: var(--slider-handle-radius);
+                    margin-top: -4px; /* TODO: calc? */
+                }
+            }
+
+            .widget-readout {
+                height: fit-content;
+                width: fit-content;
+                min-width: fit-content;
+                box-shadow: none;
+            }
+
+        }
+        
+
+        /* dash sliders */
         .m-slider {
             padding: 0 !important;
             .rc-slider-track {
-                background-color: #cccccc;
+                background-color: var(--slider-track-color);
             }
             .rc-slider-rail {
-                background-color: #cccccc;
+                background-color: var(--slider-track-color);
             }
             .rc-slider-handle {
                 background-color: white;
-                border: 1px solid #999999;
-                width: 12px;
-                height: 24px;
-                margin-top: -10px;
-                border-radius: 4px;
+                border: var(--slider-handle-border);
+                width: var(--slider-handle-width);
+                height: var(--slider-handle-height);
+                border-radius: var(--slider-handle-radius);
+                margin-top: -10px; /* TODO: calc? */
             }
         }
     }

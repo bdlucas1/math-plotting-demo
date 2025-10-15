@@ -68,7 +68,7 @@ def register_callbacks(app):
     # we also update labels that display the current values of the sliders
     @app.callback(
         dash.Output(dict(type="trigger", panel_number=dash.MATCH), "n_intervals"),
-        dash.Output(dict(type="value", panel_number=dash.MATCH, index=dash.ALL), "children"),
+        dash.Output(dict(type="readout", panel_number=dash.MATCH, index=dash.ALL), "children"),
         dash.Input(dict(type="slider", panel_number=dash.MATCH, index=dash.ALL), "value"),
         prevent_initial_call=True
     )
@@ -102,7 +102,7 @@ def register_callbacks(app):
 
         return result
 
-def panel(init_target_layout, sliders, eval_and_layout):
+def manipulate(init_target_layout, sliders, eval_and_layout):
 
     panel_number = len(panel_callbacks)
     panel_callbacks.append(eval_and_layout)
@@ -112,7 +112,7 @@ def panel(init_target_layout, sliders, eval_and_layout):
     def slider_layout(s, inx):
         # TODO: handling of tick marks and step needs work; this code is just for demo purposes
         slider_id = dict(type="slider", panel_number=panel_number, index=inx)
-        value_id = dict(type="value", panel_number=panel_number, index=inx)
+        readout_id = dict(type="readout", panel_number=panel_number, index=inx)
         #marks = {value: f"{value:g}" for value in np.arange(s.lo, s.hi, s.step)}
         marks = None;
         return [
@@ -121,7 +121,7 @@ def panel(init_target_layout, sliders, eval_and_layout):
                 id=slider_id, marks=marks, min=s.lo, max=s.hi, step=s.step, value=s.init, updatemode="drag",
                 className = "m-slider"
             ),
-            dash.html.Label(str(s.init), id=value_id)
+            dash.html.Label(str(s.init), id=readout_id)
         ]
     slider_layouts = list(itertools.chain(*[slider_layout(s, inx) for inx, s in enumerate(sliders)]))
 

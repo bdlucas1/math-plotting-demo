@@ -54,11 +54,8 @@ def graph(figure, height):
                       
 last_slider_update = None
 
-def panel(init_target_layout, sliders, eval_and_layout):
+def manipulate(init_target_layout, sliders, eval_and_layout):
 
-    # TODO: for some reason tbd update is called once, and once only, on initialization; not sure how that happens
-    # but that means that the init_target_layout is wasted work - so consider moving init_target_layout
-    # computation into mode.panel
     def update(change):
 
         global last_slider_update
@@ -80,7 +77,7 @@ def panel(init_target_layout, sliders, eval_and_layout):
         return slider
     sliders = [slider_layout(s) for s in sliders]
     slider_box = ipw.VBox(sliders)
-    slider_box._dom_classes = ["m-sliders-ipy"]
+    slider_box._dom_classes = ["m-sliders"]
 
     target = ipw.VBox([init_target_layout])
     lay = ipw.Layout(width="min-content")

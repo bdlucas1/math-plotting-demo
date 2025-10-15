@@ -63,7 +63,7 @@ def layout_Manipulate(fe, manipulate_expr):
     # compute the layout for the plot
     init_values = [s.init for s in sliders]
     init_target_layout = eval_and_layout(init_values)
-    layout = mode.panel(init_target_layout, sliders, eval_and_layout)
+    layout = mode.manipulate(init_target_layout, sliders, eval_and_layout)
         
     return layout
 
