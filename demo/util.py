@@ -1,8 +1,41 @@
 import os
+import sys
 import time
+import traceback
 import urllib.parse
 
 import mcs
+
+
+def print_stack_reversed(file=None):
+    """Print the current stack trace, from innermost to outermost."""
+    if file is None:
+        file = sys.stderr
+    stack = traceback.extract_stack()
+    for frame in reversed(stack):
+        print(f'  File "{frame.filename}", line {frame.lineno}, in {frame.name}', file=file)
+        if frame.line:
+            print(f'    {frame.line.strip()}', file=file)            
+
+def print_exc_reversed(exc_info=None, file=None):
+    """Like traceback.print_exc(), but prints traceback frames in reverse order (innermost to outermost)."""
+    if exc_info is None:
+        exc_info = sys.exc_info()
+    if file is None:
+        file = sys.stderr
+
+    etype, value, tb = exc_info
+    if tb is None:
+        print("No active exception", file=file)
+        return
+
+    stack = traceback.extract_tb(tb)
+    print("Traceback (most recent call last, reversed):", file=file)
+    for frame in reversed(stack):
+        print(f'  File "{frame.filename}", line {frame.lineno}, in {frame.name}', file=file)
+        if frame.line:
+            print(f'    {frame.line.strip()}', file=file)
+    print(f"{etype.__name__}: {value}", file=file)
 
 
 #
@@ -16,7 +49,6 @@ def prt(expr, indent=1):
         print("  " * indent + str(expr.head))
         for elt in expr.elements:
             prt(elt, indent + 1)
-
 
 class Timer:
 

@@ -159,10 +159,8 @@ class BrowserFrontEnd(DashFrontEnd):
                     expr = expr.evaluate(self.session.evaluation)
                     result = mode.layout_expr(self, expr)
             except Exception as e:
-                if args.run == "dev" or mode.debug:
-                    traceback.print_exc()
-                else:
-                    print(e)
+                print(e)
+                util.print_exc_reversed()
 
         # text output
         if not result:
