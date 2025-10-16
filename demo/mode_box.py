@@ -21,7 +21,10 @@ def row_box(fe, expr):
     
     parts = []
     s = ""
-    for e in expr.elements[0]:
+    print("xxx row_box", type(expr.elements[0]), expr.elements[0])
+    util.prt(expr)
+    #for e in expr.elements[0]:
+    for e in expr.elements: # unlike a RowBox Expression, a RowBox object has elements that are not in a list!
         l = _layout_box_expr(fe, e)
         if isinstance(l,str):
             s += l
@@ -78,12 +81,14 @@ box_types = {
 
     mcs.SymbolHold: hold,
 
-    mcs.SymbolRowBox: row_box,
-    mcs.SymbolFractionBox: fraction_box,
-    mcs.SymbolSqrtBox: sqrt_box,
     mcs.SymbolTemplateBox: template_box,
     mcs.SymbolTagBox: tag_box,
+    mcs.SymbolRowBox: row_box,
     mcs.SymbolGridBox: grid_box,
+
+    # TODO: can these be handled by mathics.core.formatter.boxes_to_format(expr, "latex") instead?
+    mcs.SymbolFractionBox: fraction_box,
+    mcs.SymbolSqrtBox: sqrt_box,
     mcs.SymbolSuperscriptBox: superscript_box,
 }
 
@@ -102,6 +107,10 @@ special = {
 #
 
 def _layout_box_expr(fe, expr):
+
+    util.print_stack_reversed()
+
+    print("xxx _layout_box_expr", type(expr))
 
     if getattr(expr, "head", None) in box_types:
         return box_types[expr.head](fe, expr)
@@ -125,17 +134,28 @@ def _layout_box_expr(fe, expr):
 
 # our main entry point
 # given an expr compute a layout
+
+#
+# TODO: missing from ToBoxes to make this useful:
+#     GraphicsComplex -> ??? GraphicsComplexBox (check W)
+#     Row -> RowBox
+#     Grid -> GridBox
+#
+
 def layout_expr(fe, expr):
 
     # box it if needed
     if getattr(expr, "head", None) in box_types:
-        boxes = expr
+        boxed = expr
     else:
-        boxes = mcs.Expression(mcs.SymbolMakeBoxes, expr).evaluate(fe.session.evaluation)
+        boxed = mcs.Expression(mcs.Symbol("System`ToBoxes"), expr).evaluate(fe.session.evaluation)
+
+    print("after boxing:")
+    util.prt(boxed)
 
     # compute a layout, which will either be a string containing latex,
     # or an object representing an html layout
-    layout = _layout_box_expr(fe, boxes)
+    layout = _layout_box_expr(fe, boxed)
 
     # if it's a latex string, wrap it in an object that represents an html element that invokes mathjax
     layout = wrap_math(layout)

@@ -174,7 +174,7 @@ def collect_graphics(expr):
             xyzs.extend(poly)
             ijks.append([i+1,i+2,i+3]) # ugh - 1-based to match GraphicsComplex Polygon
 
-        elif g.head == mcs.SymbolLine:
+        elif g.head == mcs.SymbolLine or g.head == mcs.SymbolLineBox:
             value = g.elements[0].to_python()
             if isinstance(value[0][0], (tuple,list)):
                 for line in value:
@@ -263,6 +263,20 @@ def layout_Graphics(fe, expr):
     layout = mode.graph(figure, options.height)
     return layout
 
+def layout_GraphicsBox(fe, expr):
+
+    # this seems to parse graphics options and set some variables on expr
+    # TODO: is ok?
+    opts = {}
+    graphics_elements, calc = expr._prepare_elements(expr.elements, opts)
+
+    # TODO: should be be using graphics_elements from above instead? need to figure that out...
+    xyzs, ijks, lines, points = collect_graphics(expr)
+    options = mode.Options(axes=[True,True], width=400, height=300) # TODO: get real values
+    figure = mode.plot2d(lines, points, options)
+    layout = mode.graph(figure, options.height)
+    return layout
+
 #
 #
 #
@@ -292,5 +306,7 @@ layout_funs = {
     mcs.SymbolGraphics: layout_Graphics,
     mcs.SymbolRow: layout_Row,
     mcs.SymbolGrid: layout_Grid,
+    mcs.SymbolGraphicsBox: layout_GraphicsBox,
+    mcs.SymbolHold: lambda fe, expr: expr.elements[0],
 }
 

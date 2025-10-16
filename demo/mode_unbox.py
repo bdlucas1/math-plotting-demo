@@ -74,6 +74,8 @@ def _layout_expr(fe, expr, outer_precedence=0):
             result = constants[expr]
         else:
             result = ctx(str(expr))
+    elif expr.head == mcs.SymbolHold:
+        result = _layout_expr(fe, expr.elements[0])
     elif expr.head in mode_box.box_types:
         # special case hack for now: if we're un unboxed mode but we're given a box,
         # go into boxed mode

@@ -9,11 +9,10 @@ import os
 
 from mathics.core.symbols import Symbol, SymbolList, SymbolPlus, SymbolTimes, SymbolPower, SymbolList
 from mathics.core.systemsymbols import SymbolSin, SymbolCos, SymbolSqrt, SymbolAbs, SymbolGamma, \
-    SymbolRule, SymbolI, SymbolE, SymbolPi, SymbolRow, SymbolGrid, \
-    SymbolMakeBoxes, SymbolTraditionalForm, SymbolStandardForm, SymbolRowBox, SymbolFractionBox, SymbolSqrtBox, \
-    SymbolSuperscriptBox, SymbolHold
+    SymbolRule, SymbolI, SymbolE, SymbolPi, SymbolRow, SymbolGrid, SymbolMakeBoxes, \
+    SymbolTraditionalForm, SymbolStandardForm, SymbolMathMLForm, SymbolOutputForm, SymbolTeXForm, \
+    SymbolRowBox, SymbolFractionBox, SymbolSqrtBox, SymbolSuperscriptBox, SymbolHold
 from mathics.core.attributes import A_HOLD_FIRST, A_PROTECTED
-
 
 from mathics.core.atoms import Integer, Real, Complex
 from mathics.core.list import ListExpression
@@ -47,11 +46,16 @@ SymbolAspectRatio = Symbol("System`AspectRatio")
 SymbolManipulate = Symbol("Global`Manipulate") # TODO: move to System
 SymbolGraphics3D = Symbol("System`Graphics3D")
 SymbolGraphics = Symbol("System`Graphics")
+SymbolGraphicsBox = Symbol("System`GraphicsBox")
 SymbolGraphicsComplex = Symbol("System`GraphicsComplex") # TODO: move to System
 SymbolLine = Symbol("System`Line")
 SymbolPoint = Symbol("System`Point")
 SymbolPolygon = Symbol("System`Polygon")
+SymbolLineBox = Symbol("System`LineBox")
 
 SymbolTemplateBox = Symbol("System`TemplateBox")
 SymbolTagBox = Symbol("System`TagBox")
 SymbolGridBox = Symbol("System`GridBox")
+
+# class, not symbol
+from mathics.builtin.box.graphics import LineBox
