@@ -1,5 +1,6 @@
 #
-# FAILED experiment - poor interactivity. Use mode_plotly
+# THIS FILE IS OBSOLETE -poor interactivity.
+# See mode_plotly.py instead
 #
 
 import matplotlib.pyplot as plt

@@ -51,6 +51,7 @@ SymbolGraphicsBox = Symbol("System`GraphicsBox")
 SymbolGraphicsComplex = Symbol("System`GraphicsComplex") # TODO: move to System
 SymbolLine = Symbol("System`Line")
 SymbolPoint = Symbol("System`Point")
+SymbolPointBox = Symbol("System`PointBox")
 SymbolPolygon = Symbol("System`Polygon")
 SymbolPolygon3DBox = Symbol("System`Polygon3DBox")
 SymbolLineBox = Symbol("System`LineBox")

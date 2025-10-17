@@ -1,4 +1,5 @@
-Grid[{{
+(* Unboxed and Hold are temp hacks for demo, will be removed *)
+Unboxed[Grid[{{
     Hold[Manipulate[
         Plot[Sin[x*f], {x,0,10}, PlotPoints->10],
         {{f,1.0}, 0.1, 2.0, 0.2}
@@ -32,4 +33,4 @@ Grid[{{
         ],
         {{a,1}, 0.7, 1.3, 0.01}
      ]]
-}}]
+}}]]

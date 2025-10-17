@@ -60,7 +60,7 @@ elif use_plot == "matplotlib":
     from mode_matplotlib import *
 
 # whether to use boxes or not
-use_boxes = "boxes" in use
+use_boxes = not "unboxed" in use
 if use_boxes:
     from mode_box import *
 else:

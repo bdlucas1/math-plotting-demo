@@ -1,3 +1,8 @@
+#
+# THIS FILE IS OBSOLETE
+# see mode_box.py instead
+#
+
 import graphics
 import mcs
 import mode

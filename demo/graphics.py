@@ -88,13 +88,19 @@ def process_options(fe, expr, dim):
         height = 350,
     )
 
+    graphics_options = expr.get_option_values(expr.elements[1:])
+    if graphics_options:
+        graphics_options = ((mcs.Symbol(k), v.to_python()) for k, v in graphics_options.items())
+    else:
+        # TODO: non-boxed case - remove when we go fully boxed?
+        graphics_options = util.get_rule_values(expr)
+
     # get_option_values supplies default values
     # TODO: see get_option_values impl - there may be some value in passing in an evaluation here
-    graphics_options =   expr.get_option_values(expr.elements[1:])
-    for sym, value in graphics_options.items():
+    for sym, value in graphics_options:
 
-        sym = mcs.Symbol(sym) # TODO or change the below to strings
-        value = value.to_python()
+        #sym = mcs.Symbol(sym) # TODO or change the below to strings
+        #value = value.to_python()
 
         # TODO: why are we having to evaluate - shouldn't it be done already by this point?
         # or is there a simpler or more standard way to do this?
@@ -187,7 +193,7 @@ def collect_graphics(expr):
             else:
                 lines.append(np.array(value))
 
-        elif g.head == mcs.SymbolPoint:
+        elif g.head == mcs.SymbolPoint or g.head == mcs.SymbolPointBox:
             ps = g.elements[0].value
             points.extend(ps)
 

@@ -1,3 +1,8 @@
+#
+# use dash widgets
+# good for browser and shell front ends
+#
+
 import dash
 import itertools
 import numpy as np

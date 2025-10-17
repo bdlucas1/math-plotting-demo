@@ -1,3 +1,9 @@
+#
+# use ipy widgets
+# good for jupyter and jupyterlite(piodide) environments
+#
+
+
 import ipywidgets as ipw
 import time
 

@@ -3,6 +3,8 @@ import mcs
 import mode
 import util
 
+import mathics.core.formatter as fmt
+
 def join(fe, expr, sep):
     return "{" + sep.join(_layout_box_expr(fe, e) for e in expr.elements) + "}"
 
@@ -12,7 +14,7 @@ def wrap_math(s):
 # concatenate latex strings as much as possible, allowing latex to handle the layout
 # where not possible use an object representing an html layout
 #
-# the result is either
+# the return value of this function is either
 #   * a single string containing latex if everything can be handled in latex, or
 #   * a layout object representing html elements that will form a baseline-aligned row,
 #     some of which might be contain latex to be rendered by mathjax
@@ -22,8 +24,9 @@ def row_box(fe, expr):
     parts = []
     s = ""
 
+    # surprise! unlike a RowBox Expression, a RowBox object has elements that are not in a list!
     #for e in expr.elements[0]:
-    for e in expr.elements: # unlike a RowBox Expression, a RowBox object has elements that are not in a list!
+    for e in expr.elements:
         l = _layout_box_expr(fe, e)
         if isinstance(l,str):
             s += l
@@ -43,16 +46,6 @@ def row_box(fe, expr):
 def style_box(fe, expr):
     # TODO: handle this appropriately
     return _layout_box_expr(fe, expr.elements[0])
-
-def fraction_box(fe, expr):
-    # TODO: latex \frac?
-    return join(fe, expr, "/")
-
-def sqrt_box(fe, expr):
-    return f"\\sqrt{{{_layout_box_expr(fe,expr.elements[0])}}}"
-
-def superscript_box(fe, expr):
-    return join(fe, expr, "^")
 
 def template_box(fe, expr):
     return row_box(fe, expr)
@@ -89,11 +82,6 @@ box_types = {
     mcs.SymbolTagBox: tag_box,
     mcs.SymbolRowBox: row_box,
     mcs.SymbolGridBox: grid_box,
-
-    # TODO: can these be handled by mathics.core.formatter.boxes_to_format(expr, "latex") instead?
-    mcs.SymbolFractionBox: fraction_box,
-    mcs.SymbolSqrtBox: sqrt_box,
-    mcs.SymbolSuperscriptBox: superscript_box,
 }
 
 special = {
@@ -115,30 +103,33 @@ def _layout_box_expr(fe, expr):
     #util.print_stack_reversed()
     #print("xxx _layout_box_expr", type(expr))
 
+    def try_latex():
+        try:
+            return fmt.boxes_to_format(expr, "latex")
+        except:
+            return None
+
     if getattr(expr, "head", None) in box_types:
         return box_types[expr.head](fe, expr)
     elif getattr(expr, "head", None) in graphics.layout_funs:
         return graphics.layout_funs[expr.head](fe, expr)
-    #elif latex := try_latex(expr):
-    #    value = latex
-    elif hasattr(expr, "value"):
-        # TODO: actually everything is a string by this point, I think...
-        value = expr.value
-        if isinstance(value,str):
-            if value in special:
-                value = special[value]
-            elif len(value) > 1:
-                # strip quotes - surprising they're still present?
-                if len(value) >= 2 and value[0] == '"' and value[-1] == '"':
-                    value = value[1:-1]
-                value = f"\\mathop{{\\mbox{{{value}}}}}"
+    elif isinstance(expr,mcs.String):
+        if expr.value in special:
+            value = special[expr.value]
+        elif len(expr.value) >= 2 and expr.value[0] == '"' and expr.value[-1] == '"':
+            # strip quotes - surprising they're still present?
+            value = f"\\mathsf{{\\mbox{{{expr.value[1:-1]}}}}}"
+        elif len(expr.value) > 1:
+            value = f"\\mathop{{\\mbox{{{expr.value}}}}}"
         else:
-            value = str(expr.value)
+            value = expr.value
         return value
     elif not hasattr(expr, "head"):
         return str(expr)
+    elif value := try_latex():
+        return value
     else:
-        raise Exception(f"{expr.head} is not a box")
+        raise Exception(f"Don't know how to lay out {expr.head}")
 
 # our main entry point
 # given an expr compute a layout
@@ -146,7 +137,6 @@ def _layout_box_expr(fe, expr):
 #
 # TODO: missing from ToBoxes - not needed for now...
 #     GraphicsComplex -> ??? GraphicsComplexBox (check W)
-#     Manipulate - need at least defn like Plot3D that does HOLD_FIRST
 #
 
 def layout_expr(fe, expr):
@@ -155,6 +145,10 @@ def layout_expr(fe, expr):
     # TODO: just look for ...Box in str(head)?
     if getattr(expr, "head", None) in box_types:
         boxed = expr
+    elif getattr(expr, "head", None) == mcs.Symbol("Global`Unboxed"):
+        # special hack for demo to allow Manipulate in Grid
+        # remove this when Manipulate is properly integrated
+        boxed = expr.elements[0] # not really boxed - depends for now on unboxed support in graphics
     else:
         form = mcs.SymbolTraditionalForm
         boxed = mcs.Expression(mcs.Symbol("System`ToBoxes"), expr, form).evaluate(fe.session.evaluation)
