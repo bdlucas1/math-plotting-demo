@@ -275,15 +275,9 @@ def layout_Graphics(fe, expr):
     return layout
 
 def layout_GraphicsBox(fe, expr):
-
-    # this seems to parse graphics options and set some variables on expr
-    # TODO: is ok?
-    opts = {}
-    graphics_elements, calc = expr._prepare_elements(expr.elements, opts)
-
-    # TODO: should be be using graphics_elements from above instead? need to figure that out...
     xyzs, ijks, lines, points = collect_graphics(expr)
-    options = mode.Options(axes=[True,True], width=400, height=300) # TODO: get real values
+    options = process_options(fe, expr, dim=2)
+    # TODO: xyzs, ijks in 2d mode?
     figure = mode.plot2d(lines, points, options)
     layout = mode.graph(figure, options.height)
     return layout
