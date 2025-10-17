@@ -21,8 +21,7 @@ def row_box(fe, expr):
     
     parts = []
     s = ""
-    print("xxx row_box", type(expr.elements[0]), expr.elements[0])
-    util.prt(expr)
+
     #for e in expr.elements[0]:
     for e in expr.elements: # unlike a RowBox Expression, a RowBox object has elements that are not in a list!
         l = _layout_box_expr(fe, e)
@@ -108,9 +107,8 @@ special = {
 
 def _layout_box_expr(fe, expr):
 
-    util.print_stack_reversed()
-
-    print("xxx _layout_box_expr", type(expr))
+    #util.print_stack_reversed()
+    #print("xxx _layout_box_expr", type(expr))
 
     if getattr(expr, "head", None) in box_types:
         return box_types[expr.head](fe, expr)
@@ -136,22 +134,22 @@ def _layout_box_expr(fe, expr):
 # given an expr compute a layout
 
 #
-# TODO: missing from ToBoxes to make this useful:
+# TODO: missing from ToBoxes - not needed for now...
 #     GraphicsComplex -> ??? GraphicsComplexBox (check W)
-#     Row -> RowBox
-#     Grid -> GridBox
+#     Manipulate - need at least defn like Plot3D that does HOLD_FIRST
 #
 
 def layout_expr(fe, expr):
 
     # box it if needed
+    # TODO: just look for ...Box in str(head)?
     if getattr(expr, "head", None) in box_types:
         boxed = expr
     else:
         boxed = mcs.Expression(mcs.Symbol("System`ToBoxes"), expr).evaluate(fe.session.evaluation)
 
     print("after boxing:")
-    util.prt(boxed)
+    #util.prt(boxed)
 
     # compute a layout, which will either be a string containing latex,
     # or an object representing an html layout

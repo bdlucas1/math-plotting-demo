@@ -52,6 +52,7 @@ def demo_eval_plot3d(
 
     # construct Graphics3D
     # TODO: use class from core
+    # TODO: see how the rules get passed on in mathics.builtin.drawing.plot.eval_plot3d and emulate that
     rules = [mcs.Expression(mcs.SymbolRule, mcs.Symbol(n), v) for n, v in options.items()]
     quads_expr = mcs.NumpyArrayListExpression(quads)
     xyzs_expr = mcs.NumpyArrayListExpression(xyzs)

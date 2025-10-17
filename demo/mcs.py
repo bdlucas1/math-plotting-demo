@@ -45,13 +45,16 @@ SymbolAspectRatio = Symbol("System`AspectRatio")
 
 SymbolManipulate = Symbol("Global`Manipulate") # TODO: move to System
 SymbolGraphics3D = Symbol("System`Graphics3D")
+SymbolGraphics3DBox = Symbol("System`Graphics3DBox")
 SymbolGraphics = Symbol("System`Graphics")
 SymbolGraphicsBox = Symbol("System`GraphicsBox")
 SymbolGraphicsComplex = Symbol("System`GraphicsComplex") # TODO: move to System
 SymbolLine = Symbol("System`Line")
 SymbolPoint = Symbol("System`Point")
 SymbolPolygon = Symbol("System`Polygon")
+SymbolPolygon3DBox = Symbol("System`Polygon3DBox")
 SymbolLineBox = Symbol("System`LineBox")
+SymbolLine3DBox = Symbol("System`Line3DBox")
 
 SymbolTemplateBox = Symbol("System`TemplateBox")
 SymbolTagBox = Symbol("System`TagBox")

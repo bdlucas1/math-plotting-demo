@@ -168,13 +168,13 @@ def collect_graphics(expr):
 
     def handle_g(g):
 
-        if g.head == mcs.SymbolPolygon:
+        if g.head == mcs.SymbolPolygon or g.head == mcs.SymbolPolygon3DBox:
             poly = [p.value for p in g.elements[0].elements]
             i = len(xyzs)
             xyzs.extend(poly)
             ijks.append([i+1,i+2,i+3]) # ugh - 1-based to match GraphicsComplex Polygon
 
-        elif g.head == mcs.SymbolLine or g.head == mcs.SymbolLineBox:
+        elif g.head == mcs.SymbolLine or g.head == mcs.SymbolLineBox or g.head == mcs.SymbolLine3DBox:
             value = g.elements[0].to_python()
             if isinstance(value[0][0], (tuple,list)):
                 for line in value:
@@ -277,6 +277,25 @@ def layout_GraphicsBox(fe, expr):
     layout = mode.graph(figure, options.height)
     return layout
 
+def layout_Graphics3DBox(fe, expr):
+
+    # this seems to parse graphics options and set some variables on expr
+    # TODO: is ok?
+    # TODO: i thought this made axes? maybe needs explicit instructions?
+    opts = dict(evaluation=fe.session.evaluation) # TODO: why needed here but not 2DBox?
+    graphics_elements, calc, *rest = expr._prepare_elements(expr.elements, opts)
+    # TODO: what is *rest?
+
+    # TODO: should be be using graphics_elements from above instead? need to figure that out...
+    xyzs, ijks, lines, points = collect_graphics(expr)
+    options = mode.Options(axes=[True,True,True], width=400, height=300) # TODO: get real values
+    figure = mode.plot3d(xyzs, ijks, lines, points, options)
+    layout = mode.graph(figure, options.height)
+    return layout
+
+
+
+
 #
 #
 #
@@ -302,11 +321,12 @@ def layout_Grid(fe, expr):
 
 layout_funs = {
     mcs.SymbolManipulate: layout_Manipulate,
-    mcs.SymbolGraphics3D: layout_Graphics3D,
     mcs.SymbolGraphics: layout_Graphics,
+    mcs.SymbolGraphics3D: layout_Graphics3D,
+    mcs.SymbolGraphicsBox: layout_GraphicsBox,
+    mcs.SymbolGraphics3DBox: layout_Graphics3DBox,
     mcs.SymbolRow: layout_Row,
     mcs.SymbolGrid: layout_Grid,
-    mcs.SymbolGraphicsBox: layout_GraphicsBox,
     mcs.SymbolHold: lambda fe, expr: expr.elements[0],
 }
 
