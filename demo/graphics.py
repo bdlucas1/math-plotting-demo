@@ -70,14 +70,13 @@ def layout_Manipulate(fe, manipulate_expr):
 
 #
 # collect options from a Graphics or Graphics3D element
-# TODO: this is probably just for the demo, and gets replaced
-# by machinery already in place in mathics core
+# TODO: see Graphics[3D]Box._prepare_elements
 #
 
 def process_options(fe, expr, dim):
 
     # process options
-    # TODO: defaults here or in mode_plotly.py?
+    # TODO: defaults come from get_option_values - eliminate these?
     options = mode.Options(
         x_range = None,
         y_range = None,
@@ -89,7 +88,13 @@ def process_options(fe, expr, dim):
         height = 350,
     )
 
-    for sym, value in util.get_rule_values(expr):
+    # get_option_values supplies default values
+    # TODO: see get_option_values impl - there may be some value in passing in an evaluation here
+    graphics_options =   expr.get_option_values(expr.elements[1:])
+    for sym, value in graphics_options.items():
+
+        sym = mcs.Symbol(sym) # TODO or change the below to strings
+        value = value.to_python()
 
         # TODO: why are we having to evaluate - shouldn't it be done already by this point?
         # or is there a simpler or more standard way to do this?
@@ -278,17 +283,8 @@ def layout_GraphicsBox(fe, expr):
     return layout
 
 def layout_Graphics3DBox(fe, expr):
-
-    # this seems to parse graphics options and set some variables on expr
-    # TODO: is ok?
-    # TODO: i thought this made axes? maybe needs explicit instructions?
-    opts = dict(evaluation=fe.session.evaluation) # TODO: why needed here but not 2DBox?
-    graphics_elements, calc, *rest = expr._prepare_elements(expr.elements, opts)
-    # TODO: what is *rest?
-
-    # TODO: should be be using graphics_elements from above instead? need to figure that out...
+    options = process_options(fe, expr, dim=3)
     xyzs, ijks, lines, points = collect_graphics(expr)
-    options = mode.Options(axes=[True,True,True], width=400, height=300) # TODO: get real values
     figure = mode.plot3d(xyzs, ijks, lines, points, options)
     layout = mode.graph(figure, options.height)
     return layout

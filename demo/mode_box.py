@@ -40,6 +40,10 @@ def row_box(fe, expr):
     else:
         return mode.row(list(wrap_math(p) for p in parts))
 
+def style_box(fe, expr):
+    # TODO: handle this appropriately
+    return _layout_box_expr(fe, expr.elements[0])
+
 def fraction_box(fe, expr):
     # TODO: latex \frac?
     return join(fe, expr, "/")
@@ -80,6 +84,7 @@ box_types = {
 
     mcs.SymbolHold: hold,
 
+    #mcs.SymbolStyleBox: style_box,
     mcs.SymbolTemplateBox: template_box,
     mcs.SymbolTagBox: tag_box,
     mcs.SymbolRowBox: row_box,
@@ -114,13 +119,18 @@ def _layout_box_expr(fe, expr):
         return box_types[expr.head](fe, expr)
     elif getattr(expr, "head", None) in graphics.layout_funs:
         return graphics.layout_funs[expr.head](fe, expr)
+    #elif latex := try_latex(expr):
+    #    value = latex
     elif hasattr(expr, "value"):
         # TODO: actually everything is a string by this point, I think...
         value = expr.value
-        if isinstance(expr.value,str):
+        if isinstance(value,str):
             if value in special:
                 value = special[value]
             elif len(value) > 1:
+                # strip quotes - surprising they're still present?
+                if len(value) >= 2 and value[0] == '"' and value[-1] == '"':
+                    value = value[1:-1]
                 value = f"\\mathop{{\\mbox{{{value}}}}}"
         else:
             value = str(expr.value)
@@ -146,10 +156,10 @@ def layout_expr(fe, expr):
     if getattr(expr, "head", None) in box_types:
         boxed = expr
     else:
-        boxed = mcs.Expression(mcs.Symbol("System`ToBoxes"), expr).evaluate(fe.session.evaluation)
+        form = mcs.SymbolTraditionalForm
+        boxed = mcs.Expression(mcs.Symbol("System`ToBoxes"), expr, form).evaluate(fe.session.evaluation)
 
-    print("after boxing:")
-    #util.prt(boxed)
+    #print("after boxing:"); util.prt(boxed)
 
     # compute a layout, which will either be a string containing latex,
     # or an object representing an html layout

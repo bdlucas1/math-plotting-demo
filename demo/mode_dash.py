@@ -73,7 +73,6 @@ def register_callbacks(app):
         prevent_initial_call=True
     )
     def update(values):
-        #print(f"xxx slid {time.time():.3f}")
         panel_number = dash.ctx.inputs_list[0][0]["id"]["panel_number"]        
         panel_values[panel_number] = values
         return 0, [str(v) for v in values]
@@ -85,8 +84,6 @@ def register_callbacks(app):
         prevent_initial_call=True
     )
     def update(n_intervals):
-
-        #print(f"xxx trig {time.time():.3f}")
 
         global last_slider_update
         if last_slider_update:

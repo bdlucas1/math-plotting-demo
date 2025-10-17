@@ -14,7 +14,7 @@ from mathics.core.systemsymbols import SymbolSin, SymbolCos, SymbolSqrt, SymbolA
     SymbolRowBox, SymbolFractionBox, SymbolSqrtBox, SymbolSuperscriptBox, SymbolHold
 from mathics.core.attributes import A_HOLD_FIRST, A_PROTECTED
 
-from mathics.core.atoms import Integer, Real, Complex
+from mathics.core.atoms import Integer, Real, Complex, String
 from mathics.core.list import ListExpression
 from mathics.core.expression import Expression
 from mathics.session import MathicsSession, Evaluation
@@ -57,6 +57,7 @@ SymbolLineBox = Symbol("System`LineBox")
 SymbolLine3DBox = Symbol("System`Line3DBox")
 
 SymbolTemplateBox = Symbol("System`TemplateBox")
+SymbolStyleBox = Symbol("System`StyleBox")
 SymbolTagBox = Symbol("System`TagBox")
 SymbolGridBox = Symbol("System`GridBox")
 
