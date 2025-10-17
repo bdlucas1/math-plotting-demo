@@ -296,6 +296,8 @@ def layout_Graphics3DBox(fe, expr):
 #
 #
 
+# TODO: properly belongs in mode_unbox.py
+# remove when we remove mode_unbox.py and Unboxed demo hack
 def layout_Row(fe, expr):
     # TODO: expr.elements[1] is a separator
     do = lambda e: mode.layout_expr(fe, e)
@@ -303,7 +305,8 @@ def layout_Row(fe, expr):
     layout = mode.row(row_content)
     return layout
 
-# TODO: I think this should be in mode_unbox.py
+# TODO: properly belongs in mode_unbox.py
+# remove when we remove mode_unbox.py and Unboxed demo hack
 def layout_Grid(fe, expr):
     # arrange in a ragged array
     do = lambda e: mode.layout_expr(fe, e)
