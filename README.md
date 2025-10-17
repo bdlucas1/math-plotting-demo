@@ -46,7 +46,7 @@ Supported now to some degree:
     PlotLegends -> BarLegend[name] where name is a Plotly colorscale name
     ColorFunction => name where name is a Plotly colorscale name
     Axes -> True or False
-    some rudimentary math formatting (see demo, jax.m, jax.py for details)
+    full math formatting using latex and mathjax
 
 ## UI options
 
@@ -117,36 +117,6 @@ For completeness, I tried two options for plotting, with plotly the clear winner
 * matplotlib - can be integrated with ipywidgets with poor performance
   for interactive orbit/pan/zoom; can be integrated with dash widgets
   with no support for interactive orbin/pan/zoom.
-
-
-## Boxes
-
-The demos above are done without using the box mechanism because as
-far as I can tell it isn't sufficiently in place. Instead they
-generate HTML via dash or ipywidgets directly from the parsed and
-evaluated expression. For example if the user enters `x^2` this
-generates the expressions ``System`Power[Global`x, 2]`` which is
-traversed for display to generate the latex express `$x^2$` and is
-then wrapped in the appropriate dash or ipwidgets object to be
-rendered using mathjax as $x^2$.
-
-In order to demo the ability to render boxes using dash or ipywidgets
-to combine formulas, rows, grids, plots, and so on, I have put
-together a couple demos that take as input pre-computed boxes (pending
-box support in the core of mathics). For example, the box form of the
-above example is `SuperscriptBox["x","2"]`.  Two examples are in
-`demos/simple-boxed.m` and `demos/complex-boxed.m`; to run these:
-
-    python fe.py --fe browser --dev simple-boxed
-    python fe.py --fe browser --dev complex-boxed
-    
-The second demo contains a simple formula, a plot with axes that
-you can rotate using the mouse, and a grid, all arranged in a row.
-
-The code that this exercises is in `mode_box.py`. The general strategy
-is to do as much of the formatting as possible using latex, and to use
-HTML features like flexbox and grid (via dash or ipywidgets) to do
-formatting that latex can't do like grids and graphics.
 
 
 ## Plotting performance
