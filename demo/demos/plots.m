@@ -32,4 +32,16 @@ Grid[{{
         ],
         {{a,1}, 0.7, 1.3, 0.01}
      ]
+}, {
+    Manipulate[Plot[Sin[x],{x,0,a}],{{a,1},0,10,0.1}]
+}, {
+    Manipulate[
+        Plot3D[
+            Sin[x]*Cos[y],
+            {x,0,xmax},
+            {y,0,ymax}
+        ],
+        {{xmax,1},0,10,0.1},
+        {{ymax,1},0,10,0.1}
+    ]
 }}]
