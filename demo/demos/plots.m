@@ -1,4 +1,3 @@
-(* Unboxed and Hold are temp hacks for demo, will be removed *)
 Grid[{{
     Manipulate[
         Plot[Sin[x*f], {x,0,10}, PlotPoints->10],

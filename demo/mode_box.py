@@ -90,12 +90,12 @@ special = {
 }
 
 #
-# takes boxed input, and uses the tables and functions above to compute a layout from the boxes
-# the general strategy is to allow latex (mathjax) do as much of the layout as possible
-# but where that isn't possible to use html primitives via mode_ipy or mode_dash
+# Takes boxed input, and uses the tables and functions above to compute a layout from the boxes.
+# The general strategy is to allow latex (mathjax) do as much of the layout as possible,
+# but where that isn't possible to use html primitives via mode_ipy or mode_dash.
 #
-# this function returns a string if it is latex output that can be concatenated with other latex output
-# otherwise it returns an object of some kind (via mode_ipy or mode_dash) representing an html layout
+# This function returns a string if it is latex output that can be concatenated with other latex output
+# otherwise it returns an object of some kind (via mode_ipy or mode_dash) representing an html layout.
 #
 
 def _layout_box_expr(fe, expr):
@@ -131,9 +131,10 @@ def _layout_box_expr(fe, expr):
     else:
         raise Exception(f"Don't know how to lay out {expr.head}")
 
+
+#
 # our main entry point
 # given an expr compute a layout
-
 #
 # TODO: missing from ToBoxes - not needed for now...
 #     GraphicsComplex -> ??? GraphicsComplexBox (check W)
@@ -143,16 +144,10 @@ def layout_expr(fe, expr):
 
     #print("xxx before boxing:"); util.prt(expr)
 
-    # box it if needed
-    # TODO: just look for ...Box in str(head)? seems like a hack?
+    # TODO: is this a hack? is it needed?
     if str(getattr(expr, "head", None)).endswith("Box"):
         boxed = expr
-    elif getattr(expr, "head", None) == mcs.Symbol("Global`Unboxed"):
-        # special hack for demo to allow Manipulate in Grid
-        # remove this when Manipulate is properly integrated
-        boxed = expr.elements[0] # not really boxed - depends for now on unboxed support in graphics
     else:
-        #print("xxx boxing")
         form = mcs.SymbolTraditionalForm
         boxed = mcs.Expression(mcs.Symbol("System`ToBoxes"), expr, form).evaluate(fe.session.evaluation)
 
