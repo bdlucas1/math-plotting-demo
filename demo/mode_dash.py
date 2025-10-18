@@ -161,7 +161,7 @@ def eval(s):
     expr = mode.the_fe.session.parse(s)
     app = dash.Dash()
     register_callbacks(app)
-    app.layout = lt.expression_layout(mode.the_fe, expr)
+    app.layout = lt.expression_to_layout(mode.the_fe, expr)
     app.run(mode = "inline")
     return None
 

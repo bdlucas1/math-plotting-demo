@@ -101,7 +101,7 @@ def manipulate(init_target_layout, sliders, eval_and_layout):
 def eval(s):
     expr = mode.the_fe.session.parse(s)
     expr = expr.evaluate(mode.the_fe.session.evaluation)
-    layout = lt.expression_layout(mode.the_fe, expr)
+    layout = lt.expression_to_layout(mode.the_fe, expr)
     display(layout)
     return None
 

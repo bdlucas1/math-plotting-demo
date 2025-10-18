@@ -1,7 +1,7 @@
 """
 Compute a layout for Row, Grid, graphics, and equations.
 Graphics layouts are delegated to graphics.layout_funs.
-Main entry point here is expression_layout.
+Main entry point here is expression_to_layout.
 
 A layout is a data structure that a front-end can display.
 The layout is constructed here and in graphics.py by calling
@@ -18,9 +18,6 @@ import mode
 import util
 
 import mathics.core.formatter as fmt
-
-def join(fe, expr, sep):
-    return "{" + sep.join(_box_expr_layout(fe, e) for e in expr.elements) + "}"
 
 def wrap_math(s):
     return mode.latex(s) if isinstance(s, str) else s
@@ -41,7 +38,7 @@ def row_box(fe, expr):
     # surprise! unlike a RowBox Expression, a RowBox object has elements that are not in a list!
     #for e in expr.elements[0]:
     for e in expr.elements:
-        l = _box_expr_layout(fe, e)
+        l = _boxes_to_latex_or_layout(fe, e)
         if isinstance(l,str):
             s += l
         else:
@@ -57,21 +54,10 @@ def row_box(fe, expr):
     else:
         return mode.row(list(wrap_math(p) for p in parts))
 
-def style_box(fe, expr):
-    # TODO: handle this appropriately
-    return _box_expr_layout(fe, expr.elements[0])
-
-def template_box(fe, expr):
-    return row_box(fe, expr)
-
-def tag_box(fe, expr):
-    #util.prt(expr.elements[0])
-    return _box_expr_layout(fe, expr.elements[0])
-
 def grid_box(fe, expr):
 
     def do(e):
-        layout = _box_expr_layout(fe, e)
+        layout = _boxes_to_latex_or_layout(fe, e)
         layout = wrap_math(layout)
         return layout
 
@@ -81,8 +67,6 @@ def grid_box(fe, expr):
     return layout
 
 layout_funs = {
-    mcs.SymbolTemplateBox: template_box,
-    mcs.SymbolTagBox: tag_box,
     mcs.SymbolRowBox: row_box,
     mcs.SymbolGridBox: grid_box,
 }
@@ -101,10 +85,10 @@ special = {
 # otherwise it returns an object of some kind (via mode_ipy or mode_dash) representing an html layout.
 #
 
-def _box_expr_layout(fe, expr):
+def _boxes_to_latex_or_layout(fe, expr):
 
     #util.print_stack_reversed()
-    #print("xxx _box_expr_layout", type(expr))
+    #print("xxx _boxes_to_latex_or_layout", type(expr))
 
     def try_latex():
         try:
@@ -136,14 +120,16 @@ def _box_expr_layout(fe, expr):
 
 
 #
-# our main entry point
-# given an expr compute a layout
-#
 # TODO: missing from ToBoxes - not needed for now...
 #     GraphicsComplex -> ??? GraphicsComplexBox (check W)
 #
 
-def expression_layout(fe, expr):
+def expression_to_layout(fe, expr):
+
+    """
+    Our main entry point.
+    Given an expression, box it if necessary, and compute a layout
+    """
 
     #print("xxx before boxing:"); util.prt(expr)
 
@@ -158,7 +144,7 @@ def expression_layout(fe, expr):
 
     # compute a layout, which will either be a string containing latex,
     # or an object representing an html layout
-    layout = _box_expr_layout(fe, boxed)
+    layout = _boxes_to_latex_or_layout(fe, boxed)
 
     # if it's a latex string, wrap it in an object that represents an html element that invokes mathjax
     layout = wrap_math(layout)

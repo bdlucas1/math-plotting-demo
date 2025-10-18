@@ -1,6 +1,6 @@
 """
 Layout functions for GraphicsBox, Graphics3DBox, and ManipulateBox.
-These functions are called by expression_layout in layout.py; see
+These functions are called by expression_to_layout in layout.py; see
 comment there for general explanation of layouts.
 """
 
@@ -49,9 +49,13 @@ class Manipulate(Builtin):
     }
     """
 
-# marker class
+# TODO: Mathematica does something more complicated, and, I think,
+# more general here. Do we need to also? Investigate whether there are
+# other functions besides Manipulate that might generate an
+# interactive ui.
 class ManipulateBox(mcs.BoxExpression):
-    pass
+    def __init__(self, expr, sliders):
+        super().__init__(self, expr, sliders)
 
 # regarding expression=False: see mathics/core/builtin.py:221 "can be confusing"
 add_builtins([("System`Manipulate", Manipulate(expression=False))])
@@ -68,7 +72,7 @@ def layout_ManipulateBox(fe, manipulate_expr):
 
     # TODO: slider_expr came from matching an ___ pattern in Manipulate (see above)
     # According to Mathematica documentation(?), the ___ notation is meant to take
-    # the rest of elements and wrap them in a list, even if only one.
+    # the rest of elements and wrap them in a List, even if there is only one.
     # Instead we get just the element if only one, and the elements in a Sequence (not List) if >1
     # Am I doing something wrong or misunderstanding?
     if slider_expr.head == mcs.SymbolSequence:
@@ -98,7 +102,7 @@ def layout_ManipulateBox(fe, manipulate_expr):
             expr = target_expr.replace_vars({"Global`"+n: mcs.Real(v) for n, v in values.items()})
             expr = expr.evaluate(fe.session.evaluation)
         with util.Timer("layout"):
-            layout = lt.expression_layout(fe, expr)
+            layout = lt.expression_to_layout(fe, expr)
         return layout
 
     # compute the layout for the plot

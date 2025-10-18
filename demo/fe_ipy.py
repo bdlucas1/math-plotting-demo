@@ -122,7 +122,7 @@ class XXXShellFrontEnd(IpyFrontEnd):
                     expr = self.session.parse(s)
                     if expr:
                         expr = expr.evaluate(self.session.evaluation)
-                        layout = lt.expression_layout(self, expr)
+                        layout = lt.expression_to_layout(self, expr)
                 except Exception as e:
                     if args.run == "dev" or mode.debug:
                         traceback.print_exc()
@@ -217,7 +217,7 @@ class BrowserFrontEnd(IpyFrontEnd):
                 expr = self.session.parse(s)
                 if expr:
                     expr = expr.evaluate(self.session.evaluation)
-                    result = lt.expression_layout(self, expr)
+                    result = lt.expression_to_layout(self, expr)
             except Exception as e:
                 if args.run == "dev" or mode.debug:
                     traceback.print_exc()
