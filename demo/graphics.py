@@ -3,21 +3,12 @@ import itertools
 import numpy as np
 import os
 
+from mathics.core.builtin import Builtin
+from mathics.core.load_builtin import add_builtins
+
 import mcs
 import mode
 import util
-
-#
-# Functions related to processing expressions for display using dash and plotly
-# by computing a dash layout
-#
-
-# compute a unique id for use in html
-ids = collections.defaultdict(lambda: 0)
-def uid(s):
-    ids[s] += 1
-    return f"{s}-{ids[s]}"
-
 
 #
 # given a Manipulate Expression, compute a layout
@@ -29,20 +20,19 @@ def uid(s):
 # and it would complicate the implementation
 # 
 
-def layout_Manipulate(fe, manipulate_expr):
+def layout_ManipulateBox(fe, manipulate_expr):
 
-    # UNBOXED
-    #target_expr = manipulate_expr.elements[0]
-    #slider_exprs = manipulate_expr.elements[1:]
-
-    # BOXED
     target_expr = manipulate_expr.elements[0]
     slider_expr = manipulate_expr.elements[1]
 
     if isinstance(target_expr, mcs.String):
         target_expr = fe.session.evaluation.parse(target_expr.value)
 
-    # see note in eval_makebox - is always supposted to be List?
+    # TODO: slider_expr came from matching an ___ pattern in Manipulate
+    # according to Mathematica documentation(?), the ___ notation is meant to take
+    # the rest of elements and wrap them in a list, even if only one.
+    # Instead we get just the element if only one, and the elements in a Sequence (not List) if >1
+    # Am I doing something wrong or misunderstanding?
     if slider_expr.head == mcs.SymbolSequence:
         slider_specs = [s.to_python() for s in slider_expr.elements]
     else:
@@ -81,9 +71,6 @@ def layout_Manipulate(fe, manipulate_expr):
     return layout
 
 
-from mathics.core.builtin import Builtin
-from mathics.core.load_builtin import add_builtins
-
 class Manipulate(Builtin):
 
     attributes = mcs.A_HOLD_FIRST
@@ -94,11 +81,6 @@ class Manipulate(Builtin):
             return mcs.Expression(mcs.Symbol("System`Manipulate"), mcs.String(str(expr)), sliders)
 
     def eval_makeboxes(self, evaluation, expr, sliders, form, *args, **kwargs):
-
-        # TODO: according to Mathematica documentation, the ___ notation is meant to take
-        # the rest of elements and wrap them in a list, even if only one.
-        # Instead we get just the elemnt if only one, and the elements in a Sequence (not List) if >1
-        # Am I doing something wrong or misunderstanding?
         "MakeBoxes[Manipulate[expr_, sliders___], form:StandardForm|TraditionalForm|OutputForm|InputForm]"
         return ManipulateBox(expr, sliders)
 
@@ -305,24 +287,8 @@ def collect_graphics(expr):
 
     return xyzs, ijks, lines, points
 
-# dim=3, mode.plot3d
-def layout_Graphics3D(fe, expr):
-    xyzs, ijks, lines, points = collect_graphics(expr)
-    options = process_options(fe, expr, dim=3)
-    # TODO: lines and points are currently ignored
-    figure = mode.plot3d(xyzs, ijks, lines, points, options)
-    layout = mode.graph(figure, options.height)
-    return layout
 
 # dim=2, mode.plot2d
-def layout_Graphics(fe, expr):
-    xyzs, ijks, lines, points = collect_graphics(expr)
-    options = process_options(fe, expr, dim=2)
-    # TODO: xyzs, ijks in 2d mode?
-    figure = mode.plot2d(lines, points, options)
-    layout = mode.graph(figure, options.height)
-    return layout
-
 def layout_GraphicsBox(fe, expr):
     xyzs, ijks, lines, points = collect_graphics(expr)
     options = process_options(fe, expr, dim=2)
@@ -331,6 +297,7 @@ def layout_GraphicsBox(fe, expr):
     layout = mode.graph(figure, options.height)
     return layout
 
+# dim=3, mode.plot3d
 def layout_Graphics3DBox(fe, expr):
     options = process_options(fe, expr, dim=3)
     xyzs, ijks, lines, points = collect_graphics(expr)
@@ -338,44 +305,9 @@ def layout_Graphics3DBox(fe, expr):
     layout = mode.graph(figure, options.height)
     return layout
 
-
-
-
-#
-#
-#
-
-# TODO: properly belongs in mode_unbox.py
-# remove when we remove mode_unbox.py and Unboxed demo hack
-def layout_Row(fe, expr):
-    # TODO: expr.elements[1] is a separator
-    do = lambda e: mode.layout_expr(fe, e)
-    row_content = [do(e) for e in expr.elements[0].elements]
-    layout = mode.row(row_content)
-    return layout
-
-# TODO: properly belongs in mode_unbox.py
-# remove when we remove mode_unbox.py and Unboxed demo hack
-def layout_Grid(fe, expr):
-    # arrange in a ragged array
-    do = lambda e: mode.layout_expr(fe, e)
-    grid_content = [[do(cell) for cell in row] for row in expr.elements[0]]
-    layout = mode.grid(grid_content)
-    return layout
-
-#
-# Compute a layout 
-#
-
 layout_funs = {
-    mcs.SymbolManipulate: layout_Manipulate, # unbox - remove
-    mcs.SymbolManipulateBox: layout_Manipulate,
-    mcs.SymbolGraphics: layout_Graphics, # unbox - remove
-    mcs.SymbolGraphics3D: layout_Graphics3D, # unbox - remove
+    mcs.SymbolManipulateBox: layout_ManipulateBox,
     mcs.SymbolGraphicsBox: layout_GraphicsBox,
     mcs.SymbolGraphics3DBox: layout_Graphics3DBox,
-    mcs.SymbolRow: layout_Row, # unbox - remove
-    mcs.SymbolGrid: layout_Grid, # unbox - remove
-    mcs.SymbolHold: lambda fe, expr: expr.elements[0],
 }
 
