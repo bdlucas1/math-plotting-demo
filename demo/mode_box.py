@@ -141,15 +141,18 @@ def _layout_box_expr(fe, expr):
 
 def layout_expr(fe, expr):
 
+    #print("xxx before boxing:"); util.prt(expr)
+
     # box it if needed
-    # TODO: just look for ...Box in str(head)?
-    if getattr(expr, "head", None) in box_types:
+    # TODO: just look for ...Box in str(head)? seems like a hack?
+    if str(getattr(expr, "head", None)).endswith("Box"):
         boxed = expr
     elif getattr(expr, "head", None) == mcs.Symbol("Global`Unboxed"):
         # special hack for demo to allow Manipulate in Grid
         # remove this when Manipulate is properly integrated
         boxed = expr.elements[0] # not really boxed - depends for now on unboxed support in graphics
     else:
+        #print("xxx boxing")
         form = mcs.SymbolTraditionalForm
         boxed = mcs.Expression(mcs.Symbol("System`ToBoxes"), expr, form).evaluate(fe.session.evaluation)
 

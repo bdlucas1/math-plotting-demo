@@ -6,13 +6,15 @@ import os
 # for now, to make writing the demo a bit easier
 #
 
-
 from mathics.core.symbols import Symbol, SymbolList, SymbolPlus, SymbolTimes, SymbolPower, SymbolList
 from mathics.core.systemsymbols import SymbolSin, SymbolCos, SymbolSqrt, SymbolAbs, SymbolGamma, \
     SymbolRule, SymbolI, SymbolE, SymbolPi, SymbolRow, SymbolGrid, SymbolMakeBoxes, \
     SymbolTraditionalForm, SymbolStandardForm, SymbolMathMLForm, SymbolOutputForm, SymbolTeXForm, \
     SymbolRowBox, SymbolFractionBox, SymbolSqrtBox, SymbolSuperscriptBox, SymbolHold
-from mathics.core.attributes import A_HOLD_FIRST, A_PROTECTED
+from mathics.core.attributes import A_HOLD_FIRST, A_PROTECTED, A_HOLD_ALL
+
+from mathics.builtin.box.graphics import LineBox
+from mathics.builtin.box.expression import BoxExpression
 
 from mathics.core.atoms import Integer, Real, Complex, String
 from mathics.core.list import ListExpression
@@ -43,7 +45,8 @@ SymbolBarLegend = Symbol("Global`BarLegend") # TODO: move to System
 SymbolImageSize = Symbol("System`ImageSize")
 SymbolAspectRatio = Symbol("System`AspectRatio")
 
-SymbolManipulate = Symbol("Global`Manipulate") # TODO: move to System
+SymbolManipulate = Symbol("System`Manipulate") # TODO: move to System
+SymbolManipulateBox = Symbol("System`ManipulateBox") # TODO: move to System
 SymbolGraphics3D = Symbol("System`Graphics3D")
 SymbolGraphics3DBox = Symbol("System`Graphics3DBox")
 SymbolGraphics = Symbol("System`Graphics")
@@ -62,5 +65,6 @@ SymbolStyleBox = Symbol("System`StyleBox")
 SymbolTagBox = Symbol("System`TagBox")
 SymbolGridBox = Symbol("System`GridBox")
 
-# class, not symbol
-from mathics.builtin.box.graphics import LineBox
+SymbolSequence = Symbol("System`Sequence")
+
+

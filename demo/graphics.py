@@ -31,20 +31,33 @@ def uid(s):
 
 def layout_Manipulate(fe, manipulate_expr):
 
+    # UNBOXED
+    #target_expr = manipulate_expr.elements[0]
+    #slider_exprs = manipulate_expr.elements[1:]
+
+    # BOXED
     target_expr = manipulate_expr.elements[0]
-    slider_exprs = manipulate_expr.elements[1:]
+    slider_expr = manipulate_expr.elements[1]
+
+    if isinstance(target_expr, mcs.String):
+        target_expr = fe.session.evaluation.parse(target_expr.value)
+
+    # see note in eval_makebox - is always supposted to be List?
+    if slider_expr.head == mcs.SymbolSequence:
+        slider_specs = [s.to_python() for s in slider_expr.elements]
+    else:
+        slider_specs = [slider_expr.to_python()]
 
     # parse slider specs
     S = collections.namedtuple("S", ["name", "lo", "init", "hi", "step"])
-    def slider(e):
-        spec = e.to_python()
+    def slider(spec):
         v, lo, hi = spec[0:3]
         step = spec[3] if len(spec) > 3 else (hi-lo)/10 # TODO: better default step
         v, init = v if isinstance(v, (list,tuple)) else (v, lo)
         v = str(v).split("`")[-1] # strip off namespace pfx
         spec = S(v, lo, init, hi, step)
         return spec
-    sliders = [slider(e) for e in slider_exprs]
+    sliders = [slider(spec) for spec in slider_specs]
 
     # compute a layout for an expr given a set of values
     # this is the callback for this Manipulate to update the target with new values
@@ -67,6 +80,42 @@ def layout_Manipulate(fe, manipulate_expr):
         
     return layout
 
+
+from mathics.core.builtin import Builtin
+from mathics.core.load_builtin import add_builtins
+
+class Manipulate(Builtin):
+
+    attributes = mcs.A_HOLD_FIRST
+
+    def eval(self, evaluation, expr, sliders):
+        """Manipulate[expr_, sliders___]"""
+        if not isinstance(expr, mcs.String):
+            return mcs.Expression(mcs.Symbol("System`Manipulate"), mcs.String(str(expr)), sliders)
+
+    def eval_makeboxes(self, evaluation, expr, sliders, form, *args, **kwargs):
+
+        # TODO: according to Mathematica documentation, the ___ notation is meant to take
+        # the rest of elements and wrap them in a list, even if only one.
+        # Instead we get just the elemnt if only one, and the elements in a Sequence (not List) if >1
+        # Am I doing something wrong or misunderstanding?
+        "MakeBoxes[Manipulate[expr_, sliders___], form:StandardForm|TraditionalForm|OutputForm|InputForm]"
+        return ManipulateBox(expr, sliders)
+
+
+    """
+    options = {
+        "Axes": "{False, True}",
+        "AspectRatio": "1 / GoldenRatio",
+    }
+    """
+
+
+class ManipulateBox(mcs.BoxExpression):
+    pass
+
+# regarding expression=False: see mathics/core/builtin.py:221 "can be confusing"
+add_builtins([("System`Manipulate", Manipulate(expression=False))])
 
 #
 # collect options from a Graphics or Graphics3D element
@@ -187,10 +236,10 @@ def collect_graphics(expr):
 
         elif g.head == mcs.SymbolLine or g.head == mcs.SymbolLineBox or g.head == mcs.SymbolLine3DBox:
             value = g.elements[0].to_python()
-            if isinstance(value[0][0], (tuple,list)):
+            if len(value) and len(value[0]) and isinstance(value[0][0], (tuple,list)):
                 for line in value:
                     lines.append(np.array(line))
-            else:
+            elif len(value):
                 lines.append(np.array(value))
 
         elif g.head == mcs.SymbolPoint or g.head == mcs.SymbolPointBox:
@@ -319,13 +368,14 @@ def layout_Grid(fe, expr):
 #
 
 layout_funs = {
-    mcs.SymbolManipulate: layout_Manipulate,
-    mcs.SymbolGraphics: layout_Graphics,
-    mcs.SymbolGraphics3D: layout_Graphics3D,
+    mcs.SymbolManipulate: layout_Manipulate, # unbox - remove
+    mcs.SymbolManipulateBox: layout_Manipulate,
+    mcs.SymbolGraphics: layout_Graphics, # unbox - remove
+    mcs.SymbolGraphics3D: layout_Graphics3D, # unbox - remove
     mcs.SymbolGraphicsBox: layout_GraphicsBox,
     mcs.SymbolGraphics3DBox: layout_Graphics3DBox,
-    mcs.SymbolRow: layout_Row,
-    mcs.SymbolGrid: layout_Grid,
+    mcs.SymbolRow: layout_Row, # unbox - remove
+    mcs.SymbolGrid: layout_Grid, # unbox - remove
     mcs.SymbolHold: lambda fe, expr: expr.elements[0],
 }
 
