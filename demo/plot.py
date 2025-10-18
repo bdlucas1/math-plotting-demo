@@ -45,8 +45,15 @@ def demo_eval_plot3d(
     with util.Timer("compile"):
         fun = compile.demo_compile(evaluation, functions, [x_name, y_name]) # XXX
 
+    # compute number of plot points nx, ny
+    # TODO: for now, here's where we supply a default of 200x200
+    pp = options["System`PlotPoints"].to_python()
+    if not isinstance(pp, (tuple,list)):
+        pp = [pp] * 2
+    pp = [p if isinstance(p, (int,float)) else 200 for p in pp]
+    nx, ny = pp
+
     # compute xs and ys
-    nx, ny = options["System`PlotPoints"].to_python() # xxx default values
     xs = np.linspace(xstart.value, xstop.value, nx)
     ys = np.linspace(ystart.value, ystop.value, ny)
     xs, ys = np.meshgrid(xs, ys)
