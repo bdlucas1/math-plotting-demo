@@ -8,6 +8,7 @@ import itertools
 import numpy as np
 import time
 
+import layout as lt
 import mcs
 import mode
 import util
@@ -160,7 +161,7 @@ def eval(s):
     expr = mode.the_fe.session.parse(s)
     app = dash.Dash()
     register_callbacks(app)
-    app.layout = mode.layout_expr(mode.the_fe, expr)
+    app.layout = lt.expression_layout(mode.the_fe, expr)
     app.run(mode = "inline")
     return None
 

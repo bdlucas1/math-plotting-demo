@@ -59,14 +59,6 @@ if use_plot == "plotly":
 elif use_plot == "matplotlib":
     from mode_matplotlib import *
 
-# whether to use boxes or not
-use_boxes = not "unboxed" in use
-if use_boxes:
-    from mode_box import *
-else:
-    from mode_unbox import *
-
-
 # in jupyterlite install requirements
 # TODO: this would require an async function for it to be called from
 # not sure how to do that (or if it's possible) while importing modules

@@ -1,3 +1,17 @@
+"""
+Compute a layout for Row, Grid, graphics, and equations.
+Graphics layouts are delegated to graphics.layout_funs.
+Main entry point here is expression_layout.
+
+A layout is a data structure that a front-end can display.
+The layout is constructed here and in graphics.py by calling
+mode.grid, mode.row, mode.plot, mode.manipulate, etc.
+These will be functions from either mode_dash or mode_ipy,
+depending on which widget set is needed for the current front end.
+So the net result will be either a dash or ipywidgets data structure
+that can be displayed by the front-end.
+"""
+
 import graphics
 import mcs
 import mode
@@ -6,15 +20,15 @@ import util
 import mathics.core.formatter as fmt
 
 def join(fe, expr, sep):
-    return "{" + sep.join(_layout_box_expr(fe, e) for e in expr.elements) + "}"
+    return "{" + sep.join(_box_expr_layout(fe, e) for e in expr.elements) + "}"
 
 def wrap_math(s):
     return mode.latex(s) if isinstance(s, str) else s
 
-# concatenate latex strings as much as possible, allowing latex to handle the layout
-# where not possible use an object representing an html layout
+# Concatenate latex strings as much as possible, allowing latex to handle the layout.
+# Where not possible use a object (dash or ipywidgets) representing an html layout.
 #
-# the return value of this function is either
+# The return value of this function is either
 #   * a single string containing latex if everything can be handled in latex, or
 #   * a layout object representing html elements that will form a baseline-aligned row,
 #     some of which might be contain latex to be rendered by mathjax
@@ -27,7 +41,7 @@ def row_box(fe, expr):
     # surprise! unlike a RowBox Expression, a RowBox object has elements that are not in a list!
     #for e in expr.elements[0]:
     for e in expr.elements:
-        l = _layout_box_expr(fe, e)
+        l = _box_expr_layout(fe, e)
         if isinstance(l,str):
             s += l
         else:
@@ -45,19 +59,19 @@ def row_box(fe, expr):
 
 def style_box(fe, expr):
     # TODO: handle this appropriately
-    return _layout_box_expr(fe, expr.elements[0])
+    return _box_expr_layout(fe, expr.elements[0])
 
 def template_box(fe, expr):
     return row_box(fe, expr)
 
 def tag_box(fe, expr):
     #util.prt(expr.elements[0])
-    return _layout_box_expr(fe, expr.elements[0])
+    return _box_expr_layout(fe, expr.elements[0])
 
 def grid_box(fe, expr):
 
     def do(e):
-        layout = _layout_box_expr(fe, e)
+        layout = _box_expr_layout(fe, e)
         layout = wrap_math(layout)
         return layout
 
@@ -65,13 +79,6 @@ def grid_box(fe, expr):
     grid_content = [[do(cell) for cell in row] for row in expr.elements[0]]
     layout = mode.grid(grid_content)
     return layout
-
-# TODO: temp for demo
-# allows Hold on box expressions as input forms to bypass evaluation
-# why are they being modified by evaluation anyway?
-def hold(fe, expr):
-    #util.prt(expr.elements[0])
-    return _layout_box_expr(fe, expr.elements[0])
 
 layout_funs = {
     mcs.SymbolTemplateBox: template_box,
@@ -94,10 +101,10 @@ special = {
 # otherwise it returns an object of some kind (via mode_ipy or mode_dash) representing an html layout.
 #
 
-def _layout_box_expr(fe, expr):
+def _box_expr_layout(fe, expr):
 
     #util.print_stack_reversed()
-    #print("xxx _layout_box_expr", type(expr))
+    #print("xxx _box_expr_layout", type(expr))
 
     def try_latex():
         try:
@@ -136,7 +143,7 @@ def _layout_box_expr(fe, expr):
 #     GraphicsComplex -> ??? GraphicsComplexBox (check W)
 #
 
-def layout_expr(fe, expr):
+def expression_layout(fe, expr):
 
     #print("xxx before boxing:"); util.prt(expr)
 
@@ -151,7 +158,7 @@ def layout_expr(fe, expr):
 
     # compute a layout, which will either be a string containing latex,
     # or an object representing an html layout
-    layout = _layout_box_expr(fe, boxed)
+    layout = _box_expr_layout(fe, boxed)
 
     # if it's a latex string, wrap it in an object that represents an html element that invokes mathjax
     layout = wrap_math(layout)

@@ -7,6 +7,7 @@
 import ipywidgets as ipw
 import time
 
+import layout as lt
 import mcs
 import mode
 import util
@@ -100,7 +101,7 @@ def manipulate(init_target_layout, sliders, eval_and_layout):
 def eval(s):
     expr = mode.the_fe.session.parse(s)
     expr = expr.evaluate(mode.the_fe.session.evaluation)
-    layout = mode.layout_expr(mode.the_fe, expr)
+    layout = lt.expression_layout(mode.the_fe, expr)
     display(layout)
     return None
 

@@ -4,6 +4,7 @@ import traceback
 import util
 import werkzeug
 
+import layout as lt
 import mcs
 import mode # really just need mode_dash
 
@@ -70,7 +71,7 @@ class ShellFrontEnd(DashFrontEnd):
                     expr = self.session.parse(s)
                     if expr:
                         expr = expr.evaluate(self.session.evaluation)
-                        layout = mode.layout_expr(self, expr)
+                        layout = lt.expression_layout(self, expr)
                 except Exception as e:
                     if True: #args.run == "dev" or mode.debug:
                         traceback.print_exc()
@@ -157,7 +158,7 @@ class BrowserFrontEnd(DashFrontEnd):
                 expr = self.session.parse(s)
                 if expr:
                     expr = expr.evaluate(self.session.evaluation)
-                    result = mode.layout_expr(self, expr)
+                    result = lt.expression_layout(self, expr)
             except Exception as e:
                 print(e)
                 util.print_exc_reversed()

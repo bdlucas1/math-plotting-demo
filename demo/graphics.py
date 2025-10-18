@@ -6,6 +6,7 @@ import os
 from mathics.core.builtin import Builtin
 from mathics.core.load_builtin import add_builtins
 
+import layout as lt
 import mcs
 import mode
 import util
@@ -91,7 +92,7 @@ def layout_ManipulateBox(fe, manipulate_expr):
             expr = target_expr.replace_vars({"Global`"+n: mcs.Real(v) for n, v in values.items()})
             expr = expr.evaluate(fe.session.evaluation)
         with util.Timer("layout"):
-            layout = mode.layout_expr(fe, expr)
+            layout = lt.expression_layout(fe, expr)
         return layout
 
     # compute the layout for the plot
