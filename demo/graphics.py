@@ -1,3 +1,9 @@
+"""
+Layout functions for GraphicsBox, Graphics3DBox, and ManipulateBox.
+These functions are called by expression_layout in layout.py; see
+comment there for general explanation of layouts.
+"""
+
 import collections 
 import itertools
 import numpy as np

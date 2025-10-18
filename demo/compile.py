@@ -1,3 +1,9 @@
+"""
+Cheap and cheerful demo compilaton function that compiles a Mathics expression
+into a Python expression using numpy functions that take numpy arrays as arguments.
+Used by plot.demo_eval_plot3d for efficient computation of functions to be plotted.
+"""
+
 import math
 import numpy as np
 import scipy
@@ -80,7 +86,6 @@ def to_python_expr(expr, lib = "np"):
     return result
 
 def demo_compile(evaluation, expr, arg_names, lib = "np"):
-    #expr = expr.evaluate(evaluation) # pick up e.g. parameters for Plot. TODO: is this the right place?
     python_expr = to_python_expr(expr, lib)
     python_arg_names = [n.split("`")[-1] for n in arg_names]
     arg_list = ','.join(python_arg_names)

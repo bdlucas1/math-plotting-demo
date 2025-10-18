@@ -1,3 +1,16 @@
+"""
+Implementation of eval_plot3d that use numpy to efficiently evaluate Plot3D
+(that is, compute a Graphics3D) by using numpy.
+
+Uses compile.demo_compile to compile the function to be plotted into
+a Python function that will take numpy arrays for efficient computation of the function.
+
+Generates Graphics3D that contains GraphicsComplex, which is an efficient
+representation of graphics objects like meshes. As far as I know this, while standard
+Mathematica, is not yet understood by any part of Mathics, although it is understood
+by the demo layout functions in graphics.py. 
+"""
+
 import collections 
 import itertools
 import math
