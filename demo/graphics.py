@@ -11,25 +11,56 @@ import mode
 import util
 
 #
-# given a Manipulate Expression, compute a layout
+# Manipulate builtin
 #
-# note that on every slider move this evaluates target_expr (e.g. Plot3D),
-# which then compiles its expr (e.g. Sin etc.) on every slider move
-# we could lift that compilation into Manipulate by compiling target_expr,
-# but timings show that would be practically meaningless for performance,
-# and it would complicate the implementation
-# 
+
+class Manipulate(Builtin):
+
+    attributes = mcs.A_HOLD_FIRST
+
+    # TODO: expr is held so it arrives here safely, but for some reason by the time it
+    # gets to eval_makeboxes it has some funky HoldForm's interspersed. To see that,
+    # comment this eval out and look at the expr in eval_makeboxes. Don't know why or how to avoid.
+    # So hack: immediately turn it into a String, then re-parse in eval_makeboxes.
+    # There must be a better way.
+    def eval(self, evaluation, expr, sliders):
+        "Manipulate[expr_, sliders___]"
+        if not isinstance(expr, mcs.String):
+            return mcs.Expression(mcs.SymbolManipulate, mcs.String(str(expr)), sliders)
+        return None
+
+    def eval_makeboxes(self, evaluation, expr, sliders, form, *args, **kwargs):
+        "MakeBoxes[Manipulate[expr_, sliders___], form:StandardForm|TraditionalForm|OutputForm|InputForm]"
+        expr = evaluation.parse(expr.value) # hack - see note above
+        return ManipulateBox(expr, sliders)
+
+
+    """
+    options = {
+        "Axes": "{False, True}",
+        "AspectRatio": "1 / GoldenRatio",
+    }
+    """
+
+# marker class
+class ManipulateBox(mcs.BoxExpression):
+    pass
+
+# regarding expression=False: see mathics/core/builtin.py:221 "can be confusing"
+add_builtins([("System`Manipulate", Manipulate(expression=False))])
+
+
+#
+# given a ManipulateBox Expression, compute a layout
+#
 
 def layout_ManipulateBox(fe, manipulate_expr):
 
     target_expr = manipulate_expr.elements[0]
     slider_expr = manipulate_expr.elements[1]
 
-    if isinstance(target_expr, mcs.String):
-        target_expr = fe.session.evaluation.parse(target_expr.value)
-
-    # TODO: slider_expr came from matching an ___ pattern in Manipulate
-    # according to Mathematica documentation(?), the ___ notation is meant to take
+    # TODO: slider_expr came from matching an ___ pattern in Manipulate (see above)
+    # According to Mathematica documentation(?), the ___ notation is meant to take
     # the rest of elements and wrap them in a list, even if only one.
     # Instead we get just the element if only one, and the elements in a Sequence (not List) if >1
     # Am I doing something wrong or misunderstanding?
@@ -70,34 +101,6 @@ def layout_ManipulateBox(fe, manipulate_expr):
         
     return layout
 
-
-class Manipulate(Builtin):
-
-    attributes = mcs.A_HOLD_FIRST
-
-    def eval(self, evaluation, expr, sliders):
-        """Manipulate[expr_, sliders___]"""
-        if not isinstance(expr, mcs.String):
-            return mcs.Expression(mcs.Symbol("System`Manipulate"), mcs.String(str(expr)), sliders)
-
-    def eval_makeboxes(self, evaluation, expr, sliders, form, *args, **kwargs):
-        "MakeBoxes[Manipulate[expr_, sliders___], form:StandardForm|TraditionalForm|OutputForm|InputForm]"
-        return ManipulateBox(expr, sliders)
-
-
-    """
-    options = {
-        "Axes": "{False, True}",
-        "AspectRatio": "1 / GoldenRatio",
-    }
-    """
-
-
-class ManipulateBox(mcs.BoxExpression):
-    pass
-
-# regarding expression=False: see mathics/core/builtin.py:221 "can be confusing"
-add_builtins([("System`Manipulate", Manipulate(expression=False))])
 
 #
 # collect options from a Graphics or Graphics3D element

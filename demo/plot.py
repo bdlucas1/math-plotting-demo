@@ -20,7 +20,14 @@ def demo_eval_plot3d(
     evaluation: mcs.Evaluation,
     options: dict,
 ):
-    # compile fun
+    # TODO: handle multiple functions
+
+    # compile the function
+    # In the case of Manipulate we are doing this compilation on every slider move.
+    # We could lift that compilation into ManipulateBox, but that would require
+    # somehow getting it through Plot3D to here. Or we could cache the result.
+    # But timings show that would be practically meaningless for performance,
+    # so better to spend effort elsewhere.
     x_name, y_name = str(x).split("`")[-1], str(y).split("`")[-1]
     with util.Timer("compile"):
         fun = compile.demo_compile(evaluation, functions, [x_name, y_name]) # XXX
