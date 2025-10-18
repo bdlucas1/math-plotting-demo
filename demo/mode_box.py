@@ -73,11 +73,7 @@ def hold(fe, expr):
     #util.prt(expr.elements[0])
     return _layout_box_expr(fe, expr.elements[0])
 
-box_types = {
-
-    mcs.SymbolHold: hold,
-
-    #mcs.SymbolStyleBox: style_box,
+layout_funs = {
     mcs.SymbolTemplateBox: template_box,
     mcs.SymbolTagBox: tag_box,
     mcs.SymbolRowBox: row_box,
@@ -109,8 +105,8 @@ def _layout_box_expr(fe, expr):
         except:
             return None
 
-    if getattr(expr, "head", None) in box_types:
-        return box_types[expr.head](fe, expr)
+    if getattr(expr, "head", None) in layout_funs:
+        return layout_funs[expr.head](fe, expr)
     elif getattr(expr, "head", None) in graphics.layout_funs:
         return graphics.layout_funs[expr.head](fe, expr)
     elif isinstance(expr,mcs.String):
