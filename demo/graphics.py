@@ -49,10 +49,9 @@ class Manipulate(Builtin):
     }
     """
 
-# TODO: Mathematica does something more complicated, and, I think,
-# more general here. Do we need to also? Investigate whether there are
-# other functions besides Manipulate that might generate an
-# interactive ui.
+# TODO: Mathematica does something more complicated, and more general,
+# involving DynamicModule, Dymanic, Dynamic*Box, etc.
+# Do we want to emulate that?
 class ManipulateBox(mcs.BoxExpression):
     def __init__(self, expr, sliders):
         super().__init__(self, expr, sliders)
