@@ -114,4 +114,3 @@ class NumpyArrayListExpression(LazyListExpression):
                 else:
                     return from_python(v.item())
             return tuple(np_to_m(v) for v in self.value)
-    

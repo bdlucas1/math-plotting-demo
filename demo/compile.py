@@ -2,6 +2,15 @@
 Cheap and cheerful demo compilaton function that compiles a Mathics expression
 into a Python expression using numpy functions that take numpy arrays as arguments.
 Used by plot.demo_eval_plot3d for efficient computation of functions to be plotted.
+
+TODO: An alternative might be to find all the places where mpmath or sympy are used
+to evaluate something and teach them instead to call numpy if args are numpy array(s).
+For the Plot3D case this would give essentially the same performance because
+essentially all the execution time is being spent in numpy, and relatively speaking
+very little is spent in the non-numpy part of the expression evaluation, so the
+conversion to a Python expression is actually buying very little in terms of
+performance - essentially all the perform gain comes from using
+Python vectorized functions.
 """
 
 import math
@@ -27,7 +36,20 @@ def gamma(*args):
 
 def to_python_expr(expr, lib = "np"):
 
+    # TODO: to build this out, look for
+    # mpmath_name
+    # symbol_name
+    # Greater etc. from mathics.builtin.testing_expressions.equality_inequality
+    # If from mathics.builtin.procedural
+    # Plus from mathics.builtin.arithfns
+    # what else?
+
     funs = {
+
+        # TODO: this can generate discontinuous plots - need mechanism for segmented results?
+        # This is a more general problem though - compare Plot[If[x>0.1, 1, -1],{x,-1,1}] in Mathematica vs Mathics
+        mcs.SymbolIf: f"{lib}.where",
+
         mcs.SymbolSin: f"{lib}.sin",
         mcs.SymbolCos: f"{lib}.cos",
         mcs.SymbolSqrt: f"{lib}.sqrt",
@@ -51,6 +73,7 @@ def to_python_expr(expr, lib = "np"):
 
     binops = {
         mcs.SymbolPower: "**",
+        mcs.SymbolGreater: ">",
     }
 
     symbols = {

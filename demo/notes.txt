@@ -1,5 +1,0 @@
-                    200x200                 10x10
-                  update     push     update     push
-browser+dash       45 ms    18 ms       9 ms     1 ms
-jupyter+dash       70 ms   120 ms      25 ms   100 ms
-jupyter+ipw        70 ms   350 ms      26 ms   150 ms

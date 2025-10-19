@@ -44,4 +44,21 @@ Grid[{{
         {{xmax,1},0,10,0.1},
         {{ymax,1},0,10,0.1}
     ]
+}, {
+    Manipulate[
+        Plot[
+            If[x > threshold, x, -x],
+            {x,-1,1}
+        ],
+        {{threshold,0},-1,1,0.05}
+    ]
+}, {
+    Manipulate[
+        Plot3D[
+            If[x y > threshold, x y, -x y],
+            {x,-1,1},
+            {y,-1,1}
+        ],
+        {{threshold,0},-1,1,0.05}
+    ]
 }}]
