@@ -32,7 +32,16 @@ def gamma(*args):
         a, x = args
         return scipy.special.gammainc(a, np.abs(x)) # TODO: is np.abs correct?
     else:
-        raise Exception(f"gamma with {len(gamma)} args")
+        raise Exception(f"gamma with {len(args)} args")
+
+def arctan(*args):
+    if len(args) == 1:
+        return np.arctan(args[0])
+    elif len(args) == 2:
+        return np.arctan2(*args)
+    else:
+        raise Exception(f"arctan with {len(args)} args")
+
 
 def to_python_expr(expr, lib = "np"):
 
@@ -54,6 +63,7 @@ def to_python_expr(expr, lib = "np"):
         mcs.SymbolCos: f"{lib}.cos",
         mcs.SymbolSqrt: f"{lib}.sqrt",
         mcs.SymbolAbs: f"{lib}.abs",
+        mcs.SymbolArcTan: "arctan",
 
         # just do Hypergemetric, no simplification
         mcs.Symbol("Demo`Hypergeometric1F1"): "scipy.special.hyp1f1",

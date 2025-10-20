@@ -7,7 +7,7 @@ import os
 #
 
 from mathics.core.symbols import Symbol, SymbolList, SymbolPlus, SymbolTimes, SymbolPower, SymbolList
-from mathics.core.systemsymbols import SymbolSin, SymbolCos, SymbolSqrt, SymbolAbs, SymbolGamma, \
+from mathics.core.systemsymbols import SymbolSin, SymbolCos, SymbolArcTan, SymbolSqrt, SymbolAbs, SymbolGamma, \
     SymbolRule, SymbolI, SymbolE, SymbolPi, SymbolRow, SymbolGrid, SymbolMakeBoxes, \
     SymbolTraditionalForm, SymbolStandardForm, SymbolMathMLForm, SymbolOutputForm, SymbolTeXForm, \
     SymbolRowBox, SymbolFractionBox, SymbolSqrtBox, SymbolSuperscriptBox, SymbolHold
@@ -20,6 +20,10 @@ from mathics.core.atoms import Integer, Real, Complex, String
 from mathics.core.list import ListExpression
 from mathics.core.expression import Expression
 from mathics.session import MathicsSession, Evaluation
+
+from mathics.core.builtin import Builtin
+from mathics.core.load_builtin import add_builtins
+
 
 # choose whether to use NALE from mathics.core.list or from ext
 # use the former once merged; otherwise use the latter

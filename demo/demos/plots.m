@@ -61,4 +61,14 @@ Grid[{{
         ],
         {{threshold,0},-1,1,0.05}
     ]
+}, {
+    Manipulate[
+        Plot3D[
+            Sin[5 Sqrt[x^2 + y^2] + n ArcTan[x, y]] / (1 + (x^2 + y^2)),
+            {x, -2, 2}, {y, -2, 2},
+            PlotRange -> {System`Automatic, System`Automatic, {-2,2}},
+            ColorFunction -> "Rainbow"
+        ],
+        {{n,3},0,5,1}
+    ]
 }}]
