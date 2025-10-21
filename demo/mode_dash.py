@@ -93,7 +93,8 @@ def register_callbacks(app):
 
         global last_slider_update
         if last_slider_update:
-            print(f"between slider updates: {(time.time()-last_slider_update)*1000:.1f}")
+            pass
+            #print(f"between slider updates: {(time.time()-last_slider_update)*1000:.1f}")
 
         with util.Timer("slider update"):
             panel_number = dash.ctx.outputs_list["id"]["panel_number"]

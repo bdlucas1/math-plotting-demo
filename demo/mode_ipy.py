@@ -67,7 +67,8 @@ def manipulate(init_target_layout, sliders, eval_and_layout):
 
         global last_slider_update
         if last_slider_update:
-            print(f"between slider updates: {(time.time()-last_slider_update)*1000:.1f}")
+            pass
+            #print(f"between slider updates: {(time.time()-last_slider_update)*1000:.1f}")
 
         with util.Timer("slider update"):
             target_layout = eval_and_layout([s.value for s in sliders])
