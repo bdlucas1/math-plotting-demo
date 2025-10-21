@@ -100,36 +100,59 @@ def strip_context(s):
     return str(s).split("`")[-1]
 
 
+# Scope rules are different from Python, so we explicitly
+# manage scope. All variable access and update go through here.
+# TODO: check whether these scope rules are really correct
+
 class Scope:
 
+    # initialize the scope with a name, a parent scope,
+    # and a set of initial values as kwargs
     def __init__(self, name, parent, **kwargs):
         self.name = name
         self.parent = parent
         for n, v in kwargs.items():
             setattr(self, n, v)
-
+            
+    # determine what scope attr should be resolved in
     def scope(self, attr):
         if hasattr(self, attr):
             return self
         elif self.parent is not None:
             return self.parent.scope(attr)
         else:
-            raise Exception(f"variable {attr} not found in an any scope")
+            raise Exception(f"Variable {attr} not found in an any scope")
 
+    # get the value of an attr from this or parent scope
     def get(self, attr):
         scope = self.scope(attr)
         return getattr(scope, attr)
 
+    # set the attr to a new value and return the new value
+    # for things like =, AddTo, etc.
+    # TODO: check this
     def set(self, attr, value):
         scope = self.scope(attr)
         setattr(scope, attr, value)
         return value
 
+    # set the attr to a new value and return the old value
+    # for things like Increment
+    # TODO: check this
     def set_old(self, attr, value):
         scope = self.scope(attr)
         old = getattr(scope, attr)
         setattr(scope, attr, value)
         return old
+
+# Sequential constructs like CompoundExpression, Module, and For also have a value,
+# unlike Python. So we implement them as a function that executes a series of statements,
+# then the compiled code calls the function to execute the statements and get a value.
+# Main entry point is to_python_expr which collects a series of statements and returns
+# string which is the code to get the value of that expression, which will be function call
+# that executes the statements and gets the value.
+#
+# TODO: check the above description
 
 class Ctx:
 
@@ -171,7 +194,8 @@ class Ctx:
             target = strip_context(expr.elements[0])
             rhs = self.to_python_expr(expr.elements[1]) if len(expr.elements) > 1 else None
             lhs = self.to_python_expr(expr.elements[0])
-            result = f"__.{method}('{target}', {update(lhs,rhs)})"
+            value = update.format(lhs=lhs, rhs=rhs)
+            result = f"__.{method}('{target}', {value})"
             return result
 
         if not hasattr(expr, "head"):
@@ -188,10 +212,23 @@ class Ctx:
 
         elif expr.head == mcs.SymbolModule:
 
-            head = expr.elements[0]
+            #head = expr.elements[0]
             body = expr.elements[1]
 
-            scope_vars = [("z", 0), ("i", None), ("freq", None), ("amp", None)]
+            scope_vars = []
+            for e in expr.elements[0].elements:
+                if hasattr(e, "head") and e.head == mcs.SymbolSet:
+                    var = strip_context(str(e.elements[0]))
+                    val = self.to_python_expr(e.elements[1])
+                elif isinstance(e, mcs.Symbol):
+                    var = strip_context(str(e))
+                    val = "None"
+                else:
+                    # TODO: proper terminology?
+                    # TODO: what else does this accept
+                    raise Exception(f"Don't understand head element {str(e)} in {module}")
+                scope_vars.append((var, val))
+
             ctx = Ctx("module", True, "__", [], scope_vars)
             ctx.append_stmt(body)
             ctx.emit(self)
@@ -231,15 +268,15 @@ class Ctx:
 
         # TODO: make this a table?
         elif expr.head == mcs.SymbolSet:
-            result = update(expr, lambda lhs, rhs: rhs, "set")
+            result = update(expr, "{rhs}", "set")
         elif expr.head == mcs.SymbolIncrement:
-            result = update(expr, lambda lhs, rhs: f"{lhs}+1", "set_old")
+            result = update(expr, "{lhs}+1", "set_old")
         elif expr.head == mcs.SymbolAddTo:
-            result = update(expr, lambda lhs, rhs: f"{lhs}+{rhs}", "set")
+            result = update(expr, "{lhs}+{rhs}", "set")
         elif expr.head == mcs.SymbolTimesBy:
-            result = update(expr, lambda lhs, rhs: f"{lhs}*{rhs}", "set")
+            result = update(expr, "{lhs}*{rhs}", "set")
         elif expr.head == mcs.SymbolDivideBy:
-            result = update(expr, lambda lhs, rhs: f"{lhs}/{rhs}", "set")
+            result = update(expr, "{lhs}/{rhs}", "set")
 
         elif expr.head in funs:
             fun = funs[expr.head]
@@ -289,7 +326,8 @@ def demo_compile(evaluation, expr, arg_names, lib = "np"):
     ns = locals()
     exec(code, globals(), ns)
 
-    # top-level compiled function expects a scope, so we suppy None
+    # top-level compiled function expects a scope, so we supply None
+    # TODO: cleaner way to do this?
     def fun(**kwargs):
         result = ns[ctx.name](None, **kwargs)
         #print("xxx result", type(result), result.shape, result.dtype)

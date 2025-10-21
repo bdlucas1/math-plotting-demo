@@ -62,6 +62,7 @@ Grid[{{
         {{threshold,0},-1,1,0.05}
     ]
 }, {
+    (* funky swirl, example courtesy of ChatGPT *)
     Manipulate[
         Plot3D[
             Sin[5 Sqrt[x^2 + y^2] + n ArcTan[x, y]] / (1 + (x^2 + y^2)),
@@ -70,5 +71,26 @@ Grid[{{
             ColorFunction -> "Rainbow"
         ],
         {{n,3},0,5,1}
+    ]
+}, {
+    (* fractal-ish landscape, example courtesy of ChatGPT *)
+    Manipulate[
+        Plot3D[
+            Module[
+                {z = 0, i, freq, amp},
+                freq = 1;
+                amp = 1;
+                (* TODO: n==0 doesn't work - need to accept scalar z=0 in plot and promote to array *)
+                For[i = 1, i <= n, i++,
+                    z += amp * Sin[freq x] * Cos[freq y];
+                    freq *= 2;
+                    amp /= 2;
+                ];
+                z
+            ],
+            (* TODO: Pi doesn't work - I think we need to N[...] these exprs *)
+            {x, -3, 3}, {y, -3, 3}
+        ],
+        {{n,6}, 1, 10, 1}
     ]
 }}]
