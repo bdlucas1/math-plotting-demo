@@ -86,11 +86,13 @@ listfuns = {
 binops = {
     mcs.SymbolPower: "**",
     mcs.SymbolGreater: ">",
+    mcs.SymbolLessEqual: "<=",
 }
 
 symbols = {
     mcs.SymbolI: "1j",
-    mcs.SymbolE: f"{lib}.e"
+    mcs.SymbolE: f"{lib}.e",
+    mcs.SymbolNull: "None"
 }
 
 def strip_context(s):
@@ -101,7 +103,7 @@ class Ctx:
     fun_number = 0
 
     def __init__(self):
-        self.defns = []
+        self.stmts = []
 
     def next_identifier(s="fun"):
         Ctx.fun_number += 1
@@ -133,13 +135,14 @@ class Ctx:
                     return ctx.to_python_expr(e)
             head = [do(e) for e in expr.elements[0].elements]
             value = (ctx.to_python_expr(expr.elements[1]))
-            body = [*head, *ctx.defns, f"return {value}"]
-            self.defns.append(f"def {fun}():")
-            self.defns.append(body)
+            body = [*head, *ctx.stmts, f"return {value}"]
+            self.stmts.append(f"def {fun}():")
+            self.stmts.append(body)
             return f"{fun}()"            
 
         elif expr.head == mcs.SymbolCompoundExpression:
 
+            # TODO: don't need a function here
             fun = Ctx.next_identifier("compound")
             def do(e):
                 if hasattr(e,"head") and e.head == mcs.SymbolSet:
@@ -148,22 +151,58 @@ class Ctx:
             body = list(s for e in expr.elements for s in do(e))
             print("xxx body", body)
             body[-1] = "return " + body[-1]
-            self.defns.append(f"def {fun}():")
-            self.defns.append(body)
+            self.stmts.append(f"def {fun}():")
+            self.stmts.append(body)
 
-            #self.defns.extend(self.to_python_expr(e) for e in expr.elements)
+            #self.stmts.extend(self.to_python_expr(e) for e in expr.elements)
 
             return f"{fun}()"            
 
         elif expr.head == mcs.SymbolFor:
 
-            return "FOR"
+            value = Ctx.next_identifier("for")
+
+            init = self.to_python_expr(expr.elements[0])
+            test = self.to_python_expr(expr.elements[1])
+            incr = self.to_python_expr(expr.elements[2])
+            body = self.to_python_expr(expr.elements[3])
+            
+            self.stmts.append(init)
+            self.stmts.extend([f"while {test}:", [f"{value} = {body}", incr]])
+
+            # TBD: is this the correct value?
+            return value
 
         elif expr.head == mcs.SymbolSet:
 
             rhs = self.to_python_expr(expr.elements[1])
             result = f"{strip_context(expr.elements[0])} = {rhs}"
-            print("xxx symbolset", result)
+            return result
+
+        elif expr.head == mcs.SymbolIncrement:
+
+            # TODO - returns old value
+            result = f"{strip_context(expr.elements[0])} += 1"            
+
+        elif expr.head == mcs.SymbolAddTo:
+
+            # TODO - returns new value
+            by = self.to_python_expr(expr.elements[1])
+            result = f"{strip_context(expr.elements[0])} += {by}"
+            return result
+
+        elif expr.head == mcs.SymbolTimesBy:
+
+            # TODO - returns new value
+            by = self.to_python_expr(expr.elements[1])
+            result = f"{strip_context(expr.elements[0])} *= {by}"
+            return result
+
+        elif expr.head == mcs.SymbolDivideBy:
+
+            # TODO - returns new value
+            by = self.to_python_expr(expr.elements[1])
+            result = f"{strip_context(expr.elements[0])} /= {by}"
             return result
 
         elif expr.head in funs:
@@ -183,18 +222,16 @@ class Ctx:
         #print("compile", expr, "->", result)
         return result
 
-    def defns_to_string(self):
-        def indent_defns(defns, indent=-1): # TODO: hmm
-            if isinstance(defns, str):
-                yield f"{' ' * (4 * indent)}{defns}"
-            else:
-                for d in defns:
-                    yield from indent_defns(d, indent = indent + 1)
-        return "\n".join(indent_defns(self.defns))
+    def stmts_to_string(self):
+        def indent_stmts(stmts, indent=-1): # TODO: hmm
+            if isinstance(stmts, str):
+                yield f"{' ' * (4 * indent)}{stmts}"
+            elif isinstance(stmts, (list,tuple)):
+                for d in stmts:
+                    yield from indent_stmts(d, indent = indent + 1)
+        return "\n".join(indent_stmts(self.stmts))
 
 def demo_compile(evaluation, expr, arg_names, lib = "np"):
-
-    #print("compiling:"); util.prt(expr)
 
     #Ctx.lib = lib # TODO: not actually hooked up
 
@@ -206,9 +243,10 @@ def demo_compile(evaluation, expr, arg_names, lib = "np"):
 
     # put them together
     top = Ctx()
-    top.defns = [f"def {top_fun}({arg_list}):", [*ctx.defns, f"return {python_expr}"]]
-    top = top.defns_to_string()
+    top.stmts = [f"def {top_fun}({arg_list}):", [*ctx.stmts, f"return {python_expr}"]]
+    top = top.stmts_to_string()
 
+    #print("compiling:"); util.prt(expr)
     #print("compiled:"); print(top)
 
     # compute the top-level function
