@@ -73,3 +73,7 @@ SymbolSequence = Symbol("System`Sequence")
 
 SymbolGreater = Symbol("System`Greater")
 SymbolIf = Symbol("System`If")
+SymbolModule = Symbol("System`Module")
+SymbolCompoundExpression = Symbol("System`CompoundExpression")
+SymbolSet = Symbol("System`Set")
+SymbolFor = Symbol("System`For")
