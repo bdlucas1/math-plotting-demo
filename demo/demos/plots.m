@@ -83,14 +83,16 @@ Grid[{{
                 (* TODO: n==0 doesn't work - need to accept scalar z=0 in plot and promote to array *)
                 For[i = 1, i <= n, i++,
                     z += amp * Sin[freq x] * Cos[freq y];
-                    freq *= 2;
-                    amp /= 2;
+                    freq *= fmul;
+                    amp /= adiv;
                 ];
                 z
             ],
             (* TODO: Pi doesn't work - I think we need to N[...] these exprs *)
             {x, -3, 3}, {y, -3, 3}
         ],
-        {{n,6}, 1, 10, 1}
+        {{n,6}, 1, 10, 1},
+        {{fmul,2}, 1, 3, 0.1},
+        {{adiv,2}, 1, 3, 0.1}
     ]
 }}]
