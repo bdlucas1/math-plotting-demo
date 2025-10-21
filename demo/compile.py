@@ -92,28 +92,92 @@ binops = {
 symbols = {
     mcs.SymbolI: "1j",
     mcs.SymbolE: f"{lib}.e",
-    mcs.SymbolNull: "None"
+    mcs.SymbolNull: "None",
+    mcs.SymbolPi: "math.pi"
 }
 
 def strip_context(s):
     return str(s).split("`")[-1]
 
+
+class Scope:
+
+    def __init__(self, name, parent, **kwargs):
+        self.name = name
+        self.parent = parent
+        for n, v in kwargs.items():
+            setattr(self, n, v)
+
+    def scope(self, attr):
+        if hasattr(self, attr):
+            return self
+        elif self.parent is not None:
+            return self.parent.scope(attr)
+        else:
+            raise Exception(f"variable {attr} not found in an any scope")
+
+    def get(self, attr):
+        scope = self.scope(attr)
+        return getattr(scope, attr)
+
+    def set(self, attr, value):
+        scope = self.scope(attr)
+        setattr(scope, attr, value)
+        return value
+
+    def set_old(self, attr, value):
+        scope = self.scope(attr)
+        old = getattr(scope, attr)
+        setattr(scope, attr, value)
+        return old
+
 class Ctx:
 
     fun_number = 0
 
-    def __init__(self):
-        self.stmts = []
+    def __init__(self, kind, has_scope=False, parent_scope=None, arg_names=[], scope_vars=[]):
 
+        self.name = Ctx.next_identifier(kind)
+        self.arg_names = arg_names
+        self.value = f"{self.name}(__)"
+
+        if has_scope:
+            vals = ", ".join(f"{n}={v}" for n, v in scope_vars)
+            self.stmts = [f"__ = Scope('{self.name}', {parent_scope}, {vals})"]
+        else:
+            self.stmts = []
+        
     def next_identifier(s="fun"):
         Ctx.fun_number += 1
         return f"__{s}{Ctx.fun_number}"
 
+    def append_stmt(self, stmt_expr):
+        value = self.to_python_expr(stmt_expr)
+        self.stmts.append(value)
+
+    def emit(self, parent):
+        arg_names = ["__", *(strip_context(n) for n in self.arg_names)]
+        parent.stmts.append(f"def {self.name}({", ".join(arg_names)}):")
+        if len(self.stmts) and not isinstance(self.stmts[-1], (list,tuple)):
+            self.stmts[-1] = "return " + str(self.stmts[-1])
+        else:
+            print("xxx not returning", self.stmts)
+        parent.stmts.append(self.stmts)
+
     def to_python_expr(self, expr):
+
+        # helper for update operators like =, +=, *=, ++, et.
+        def update(expr, update, method):
+            target = strip_context(expr.elements[0])
+            rhs = self.to_python_expr(expr.elements[1]) if len(expr.elements) > 1 else None
+            lhs = self.to_python_expr(expr.elements[0])
+            result = f"__.{method}('{target}', {update(lhs,rhs)})"
+            return result
 
         if not hasattr(expr, "head"):
             if str(expr).startswith("Global`"):
-                result = str(expr).split("`")[-1]
+                var = str(expr).split("`")[-1]
+                result = f"__.get('{var}')"
             elif expr in symbols:
                 result = symbols[expr]
             elif str(expr) == "I":
@@ -124,102 +188,77 @@ class Ctx:
 
         elif expr.head == mcs.SymbolModule:
 
-            ctx = Ctx()
-            fun = Ctx.next_identifier("module")
-            def do(e):
-                if isinstance(e, mcs.Symbol):
-                    print("xxx just a var", type(e))
-                    # just a variable, not a Set
-                    return ctx.to_python_expr(e) + " = " + "..."
-                else:
-                    return ctx.to_python_expr(e)
-            head = [do(e) for e in expr.elements[0].elements]
-            value = (ctx.to_python_expr(expr.elements[1]))
-            body = [*head, *ctx.stmts, f"return {value}"]
-            self.stmts.append(f"def {fun}():")
-            self.stmts.append(body)
-            return f"{fun}()"            
+            head = expr.elements[0]
+            body = expr.elements[1]
+
+            scope_vars = [("z", 0), ("i", None), ("freq", None), ("amp", None)]
+            ctx = Ctx("module", True, "__", [], scope_vars)
+            ctx.append_stmt(body)
+            ctx.emit(self)
+            return ctx.value
 
         elif expr.head == mcs.SymbolCompoundExpression:
 
-            # TODO: don't need a function here
-            fun = Ctx.next_identifier("compound")
-            def do(e):
-                if hasattr(e,"head") and e.head == mcs.SymbolSet:
-                    yield f"nonlocal {strip_context(e.elements[0])}"
-                yield self.to_python_expr(e)
-            body = list(s for e in expr.elements for s in do(e))
-            print("xxx body", body)
-            body[-1] = "return " + body[-1]
-            self.stmts.append(f"def {fun}():")
-            self.stmts.append(body)
-
-            #self.stmts.extend(self.to_python_expr(e) for e in expr.elements)
+            ctx = Ctx("compound")
+            for e in expr.elements:
+                ctx.append_stmt(e)
+            ctx.emit(self)
+            return ctx.value
 
             return f"{fun}()"            
 
         elif expr.head == mcs.SymbolFor:
 
-            value = Ctx.next_identifier("for")
+            ctx = Ctx("for")
 
             init = self.to_python_expr(expr.elements[0])
             test = self.to_python_expr(expr.elements[1])
             incr = self.to_python_expr(expr.elements[2])
             body = self.to_python_expr(expr.elements[3])
-            
-            self.stmts.append(init)
-            self.stmts.extend([f"while {test}:", [f"{value} = {body}", incr]])
 
-            # TBD: is this the correct value?
-            return value
+            ctx.stmts.extend([
+                init,
+                f"while {test}:", [
+                    f"{ctx.name} = {body}",
+                    incr
+                ],
+                ctx.name
+            ])
 
+            ctx.emit(self)
+
+            return ctx.value
+
+        # TODO: make this a table?
         elif expr.head == mcs.SymbolSet:
-
-            rhs = self.to_python_expr(expr.elements[1])
-            result = f"{strip_context(expr.elements[0])} = {rhs}"
-            return result
-
+            result = update(expr, lambda lhs, rhs: rhs, "set")
         elif expr.head == mcs.SymbolIncrement:
-
-            # TODO - returns old value
-            result = f"{strip_context(expr.elements[0])} += 1"            
-
+            result = update(expr, lambda lhs, rhs: f"{lhs}+1", "set_old")
         elif expr.head == mcs.SymbolAddTo:
-
-            # TODO - returns new value
-            by = self.to_python_expr(expr.elements[1])
-            result = f"{strip_context(expr.elements[0])} += {by}"
-            return result
-
+            result = update(expr, lambda lhs, rhs: f"{lhs}+{rhs}", "set")
         elif expr.head == mcs.SymbolTimesBy:
-
-            # TODO - returns new value
-            by = self.to_python_expr(expr.elements[1])
-            result = f"{strip_context(expr.elements[0])} *= {by}"
-            return result
-
+            result = update(expr, lambda lhs, rhs: f"{lhs}*{rhs}", "set")
         elif expr.head == mcs.SymbolDivideBy:
-
-            # TODO - returns new value
-            by = self.to_python_expr(expr.elements[1])
-            result = f"{strip_context(expr.elements[0])} /= {by}"
-            return result
+            result = update(expr, lambda lhs, rhs: f"{lhs}/{rhs}", "set")
 
         elif expr.head in funs:
             fun = funs[expr.head]
             args = (self.to_python_expr(e) for e in expr.elements)
             result = f"{fun}({",".join(args)})"
+
         elif expr.head in listfuns:
             fun = listfuns[expr.head]
             args = (self.to_python_expr(e) for e in expr.elements)
             result = f"{fun}([{",".join(args)}])"
+
         elif expr.head in binops:
             arg1 = self.to_python_expr(expr.elements[0])
             arg2 = self.to_python_expr(expr.elements[1])
             result = f"({arg1}{binops[expr.head]}{arg2})"
+
         else:
             raise Exception(f"Unknown head {expr.head} in {expr}")
-        #print("compile", expr, "->", result)
+
         return result
 
     def stmts_to_string(self):
@@ -235,22 +274,26 @@ def demo_compile(evaluation, expr, arg_names, lib = "np"):
 
     #Ctx.lib = lib # TODO: not actually hooked up
 
-    # get the pieces
-    ctx = Ctx()
-    top_fun = Ctx.next_identifier("compiled")
-    arg_list = ",".join(strip_context(n) for n in arg_names)
-    python_expr = ctx.to_python_expr(expr)
+    ctx = Ctx("compiled", True, None, arg_names, zip(arg_names, arg_names))
+    ctx.append_stmt(expr)
 
-    # put them together
-    top = Ctx()
-    top.stmts = [f"def {top_fun}({arg_list}):", [*ctx.stmts, f"return {python_expr}"]]
-    top = top.stmts_to_string()
+    # TODO: hokey - rework
+    dummy = Ctx("dummy")
+    ctx.emit(dummy)
+    code = dummy.stmts_to_string()
 
-    #print("compiling:"); util.prt(expr)
-    #print("compiled:"); print(top)
+    #print("xxx compiling:"); util.prt(expr)
+    #print("xxx compiled:"); print(code)
 
     # compute the top-level function
     ns = locals()
-    exec(top, globals(), ns)
-    return ns[top_fun]
+    exec(code, globals(), ns)
+
+    # top-level compiled function expects a scope, so we suppy None
+    def fun(**kwargs):
+        result = ns[ctx.name](None, **kwargs)
+        #print("xxx result", type(result), result.shape, result.dtype)
+        return result
+
+    return fun
 
