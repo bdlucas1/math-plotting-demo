@@ -1,0 +1,46 @@
+=== demo
+
+=== transparent NumpyArrayListExpr vs opaque NumericArray
+GraphicsComplex[3D] using NumericArray is nonstandard afaics
+but NumpyArrayListExpr potentially fragile wrt performance
+
+=== compile
+good direction?
+AST?
+who?
+testing?
+
+=== layout
+architecture ok?
+dash vs ipywidgets
+repository organization
+    how to reuse across front-ends
+how to package front-ends
+jupyter/jupyterlite packaging - kernel
+how to use in shell front-end
+need browser front-end given jupyter?
+
+=== Graphics3D
+need GraphicsComplex for performance, but support across the board?
+    with NumpyArrayListExpr or NumericArray?
+boxing currently not standard
+needs considerable build-out itself
+how to test
+
+=== Plot3D
+needs considerable build-out
+how to test
+deploy unconditionally or conditionally
+    former requires support across the board
+
+=== ComplexPlot3D, etc
+identify others that uses Graphics3D and build out
+
+=== Graphics (2d)
+GraphicsComplex needed?
+support across the board?
+
+=== Manipulate
+non-standard ManipulateBox vs DynamicModule, Dymanic, Dynamic*Box, etc.
+other functions like Animate?
+
