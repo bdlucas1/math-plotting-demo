@@ -12,6 +12,8 @@ testing?
 
 === layout
 architecture ok?
+analgous to format, but data structure instead of string
+    any value to merging with format?
 dash vs ipywidgets
 repository organization
     how to reuse across front-ends
