@@ -1,14 +1,24 @@
 === demo
+Bruce will quickly run through demos to make sure we're on same page
+quick tour of demo code, maybe
 
 === transparent NumpyArrayListExpr vs opaque NumericArray
 GraphicsComplex[3D] using NumericArray is nonstandard afaics
 but NumpyArrayListExpr potentially fragile wrt performance
+-> decision by email is NumericArray seems like a good idea
+
+=== NumericArray
+questions from https://chatgpt.com/codex/tasks/task_e_6909b81266188330b5b22bac0b27c272
+questions from https://github.com/bdlucas1/mathics-core/tree/codex/implement-mathematica-numericarray-with-numpy
 
 === compile
-good direction?
-AST?
-who?
-testing?
+good direction? by email: maybe for plotting only? but would we really want two compiler implementations?
+AST vs code string?
+    pro: avoids Little Bobby Tables issues
+    con: maybe not completely stable?
+who? Bruce? Rocky?
+how to test
+    maybe monkey-patch "evaluate" to be "compile and run"
 
 === layout
 architecture ok?
