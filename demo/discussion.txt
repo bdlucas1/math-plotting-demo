@@ -15,6 +15,7 @@ but NumpyArrayListExpr potentially fragile wrt performance
 === NumericArray
 questions from https://chatgpt.com/codex/tasks/task_e_6909b81266188330b5b22bac0b27c272
 questions from https://github.com/bdlucas1/mathics-core/tree/codex/implement-mathematica-numericarray-with-numpy
+NumericArray as atom vs expression
 
 === compile
 good direction? by email: maybe for plotting only? but would we really want two compiler implementations?
