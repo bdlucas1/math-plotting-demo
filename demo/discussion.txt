@@ -1,3 +1,8 @@
+=== collaboration
+something better than email?
+like code review: shared doc with comments threads relating to specific items
+DISCUSSION.md pull request? google doc? just use email?
+
 === demo
 Bruce will quickly run through demos to make sure we're on same page
 quick tour of demo code, maybe
