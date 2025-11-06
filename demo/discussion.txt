@@ -2,6 +2,8 @@
 something better than email?
 like code review: shared doc with comments threads relating to specific items
 DISCUSSION.md pull request? google doc? just use email?
+for code pull requests for our discussion:
+    against main code base, or initially against my fork?
 
 === demo
 Bruce will quickly run through demos to make sure we're on same page
