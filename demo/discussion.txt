@@ -1,15 +1,13 @@
 === collaboration
-something better than email?
-like code review: shared doc with comments threads relating to specific items
-DISCUSSION.md pull request? google doc? just use email?
-for code pull requests for our discussion:
-    against main code base, or initially against my fork?
+Bruce will make PR with DISCUSSION.txt or md and make it a PR against my fork for discussion
+Bruce will make PR for NumericArray for discussion
 
 === demo
 Bruce will quickly run through demos to make sure we're on same page
 quick tour of demo code, maybe
 
 === transparent NumpyArrayListExpr vs opaque NumericArray
+bruce to show NumericArray impl
 GraphicsComplex[3D] using NumericArray is nonstandard afaics
 but NumpyArrayListExpr potentially fragile wrt performance
 -> decision by email is NumericArray seems like a good idea
