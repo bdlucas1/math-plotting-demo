@@ -29,7 +29,8 @@ class DashFrontEnd:
 
         # everybody needs a Mathics session
         self.session = mcs.MathicsSession()
-
+        # This loads the vectorizedplot package
+        self.session.evaluate('LoadModule["pymathics.vectorizedplot"];')
         # register pattern-matching callbacks for dymanically generated content, used by all front ends
         mode.register_callbacks(self.app)
 

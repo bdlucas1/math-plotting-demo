@@ -80,6 +80,8 @@ class IpyFrontEnd:
 
         # everybody needs a Mathics session
         self.session = mcs.MathicsSession()
+        # This loads the vectorizedplot package
+        self.session.evaluate('LoadModule["pymathics.vectorizedplot"];')
 
 
 # read expressions from terminal, display results in a browser winddow

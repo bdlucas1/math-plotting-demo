@@ -14,6 +14,12 @@ jobs:
       - run: pip install jupyterlite-core jupyterlite-pyodide-kernel jupyter-server ipywidgets anywidget
       # add other federated kernels as needed
       - run: jupyter lite build --contents demo --output-dir dist
+      - run: |
+            # Install the vectorizedplot Mathics3-Module from the github repo
+            git clone --depth 1 https://github.com/Mathics3/Mathics3-Module-vectorizedplot.git
+            cd Mathics3-Module-vectorizedplot
+            python -m pip install --no-build-isolation -e .
+            cd ..      
       - uses: actions/upload-pages-artifact@v3
         with: { path: dist }
   deploy:
