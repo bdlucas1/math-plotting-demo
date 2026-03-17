@@ -1,3 +1,5 @@
+**NOTE: THIS REPO HAS BEEN SUPERSEDED BY https://github.com/bdlucas1/mathics-m3d**
+
 ## Running demo
 
 * "shell" front-end - sparate window for each output
